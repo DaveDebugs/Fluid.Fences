@@ -1,0 +1,31 @@
+﻿<Window x:Class="DesktopFences.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Fence Settings" Height="250" Width="300" 
+        WindowStartupLocation="CenterScreen" Background="#222222" Foreground="White"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Fence Title:" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="TitleInput" Grid.Row="1" Padding="5" Background="#333333" Foreground="White" BorderBrush="#555555"/>
+
+        <TextBlock Grid.Row="2" Text="Background Color:" FontWeight="Bold" Margin="0,15,0,5"/>
+        <ComboBox x:Name="ColorDropdown" Grid.Row="3" Padding="5" VerticalAlignment="Top">
+            <ComboBoxItem Content="Classic Black" Tag="#000000"/>
+            <ComboBoxItem Content="Dark Gray" Tag="#222222"/>
+            <ComboBoxItem Content="Navy Blue" Tag="#001F3F"/>
+            <ComboBoxItem Content="Deep Red" Tag="#3B0000"/>
+            <ComboBoxItem Content="Forest Green" Tag="#003B11"/>
+        </ComboBox>
+
+        <Button Grid.Row="4" Content="Save Changes" Padding="10" Background="#0078D7" Foreground="White" 
+                FontWeight="Bold" BorderThickness="0" Click="SaveButton_Click" Cursor="Hand"/>
+    </Grid>
+</Window>
