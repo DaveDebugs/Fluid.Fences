@@ -27,38 +27,27 @@
         </Style>
     </Window.Resources>
 
-    <Border
-        x:Name="MainBorder"
-        Margin="10"
-        Background="#B2000000"
-        BorderBrush="#44FFFFFF"
-        BorderThickness="1"
-        CornerRadius="8">
+    <Border x:Name="MainBorder" Margin="10" Background="#B2000000" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="8">
         <Border.Effect>
-            <DropShadowEffect
-                BlurRadius="15"
-                Direction="270"
-                Opacity="0.5"
-                ShadowDepth="4" />
+            <DropShadowEffect BlurRadius="15" Direction="270" Opacity="0.5" ShadowDepth="4" />
         </Border.Effect>
 
-        <Grid>
+        <Grid x:Name="MainGrid">
             <Grid.RowDefinitions>
-                <RowDefinition Height="35" />
+                <RowDefinition x:Name="HeaderRowTop" Height="35" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="HeaderColLeft" Width="0" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="HeaderColRight" Width="0" />
+            </Grid.ColumnDefinitions>
 
-            <Border
-                Grid.Row="0"
-                Background="#55000000"
-                CornerRadius="7,7,0,0"
-                Cursor="SizeAll"
-                MouseLeftButtonDown="Header_MouseLeftButtonDown">
+            <Border x:Name="HeaderBorder" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="#55000000" CornerRadius="7,7,0,0" Cursor="SizeAll" MouseLeftButtonDown="Header_MouseLeftButtonDown">
 
                 <Border.ContextMenu>
                     <ContextMenu x:Name="HeaderContextMenu">
                         <MenuItem Header="Create New Fence" Click="Menu_NewFence_Click"/>
-
                         <MenuItem Header="View">
                             <MenuItem x:Name="MenuRollUpFence" Header="Roll-up Fence" Click="Menu_RollUp_Click"/>
                             <Separator/>
@@ -74,7 +63,6 @@
                             <MenuItem Header="Copy Color" Click="Menu_CopyColor_Click"/>
                             <MenuItem Header="Edit Color..." Click="Menu_EditColor_Click"/>
                         </MenuItem>
-
                         <MenuItem Header="Sort by">
                             <MenuItem Header="None" Tag="None" Click="Menu_Sort_Click"/>
                             <Separator/>
@@ -85,56 +73,40 @@
                             <MenuItem Header="Date Created" Tag="DateCre" Click="Menu_Sort_Click"/>
                             <MenuItem Header="Date added to Fence" Tag="DateAdd" Click="Menu_Sort_Click"/>
                         </MenuItem>
-
                         <Separator/>
                         <MenuItem Header="Settings (Classic Menu)..." Click="Menu_Settings_Click"/>
                         <MenuItem Header="Delete This Fence" Click="Menu_DeleteFence_Click" Foreground="Red"/>
                     </ContextMenu>
                 </Border.ContextMenu>
 
-                <Grid x:Name="HeaderGrid">
-                    <TextBlock x:Name="MenuIcon" Text="☰" Foreground="White" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Cursor="Hand" MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown" Background="Transparent" Padding="5"/>
-                    <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe UI Variable, Segoe UI" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="My Apps" Cursor="IBeam" MouseLeftButtonDown="TitleText_MouseLeftButtonDown" Background="Transparent" Padding="15,0,15,0"/>
+                <Grid x:Name="HeaderGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Background="Transparent" MouseLeftButtonDown="TitleText_MouseLeftButtonDown">
+                        <TextBlock x:Name="MenuIcon" Text="☰" Foreground="White" FontSize="16" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="TitleText" FontFamily="Segoe UI Variable, Segoe UI" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="My Apps" Cursor="IBeam" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="1" Grid.Column="1">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <WrapPanel
-                        x:Name="IconPanel"
-                        Margin="10"
-                        Background="Transparent"
-                        MouseLeftButtonDown="IconPanel_MouseLeftButtonDown"
-                        MouseLeftButtonUp="IconPanel_MouseLeftButtonUp"
-                        MouseMove="IconPanel_MouseMove"
-                        Orientation="Horizontal">
-                        <TextBlock
-                            Margin="10"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Foreground="#88FFFFFF"
-                            Text="Drop shortcuts here..." />
+                    <WrapPanel x:Name="IconPanel" Margin="10" Background="Transparent" MouseLeftButtonDown="IconPanel_MouseLeftButtonDown" MouseLeftButtonUp="IconPanel_MouseLeftButtonUp" MouseMove="IconPanel_MouseMove" Orientation="Horizontal">
+                        <TextBlock Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#88FFFFFF" Text="Drop shortcuts here..." />
                     </WrapPanel>
                 </ScrollViewer>
 
                 <Canvas x:Name="SelectionCanvas" IsHitTestVisible="False">
-                    <Rectangle
-                        x:Name="SelectionBox"
-                        Fill="#550078D7"
-                        Stroke="#0078D7"
-                        StrokeThickness="1"
-                        Visibility="Collapsed" />
+                    <Rectangle x:Name="SelectionBox" Fill="#550078D7" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" />
                 </Canvas>
             </Grid>
 
-            <Thumb Grid.RowSpan="2" Width="6" HorizontalAlignment="Left" Background="Transparent" Cursor="SizeWE" DragCompleted="Resize_DragCompleted" DragDelta="ResizeLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Width="6" HorizontalAlignment="Right" Background="Transparent" Cursor="SizeWE" DragCompleted="Resize_DragCompleted" DragDelta="ResizeRight_DragDelta" />
-            <Thumb Grid.RowSpan="2" Height="6" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNS" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTop_DragDelta" />
-            <Thumb Grid.RowSpan="2" Height="6" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNS" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottom_DragDelta" />
-            <Thumb Grid.RowSpan="2" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNWSE" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNESW" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopRight_DragDelta" />
-            <Thumb Grid.RowSpan="2" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNESW" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNWSE" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomRight_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Left" Background="Transparent" Cursor="SizeWE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeLeft_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Right" Background="Transparent" Cursor="SizeWE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeRight_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNS" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTop_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNS" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottom_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNWSE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopLeft_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNESW" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopRight_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNESW" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomLeft_DragDelta" />
+            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNWSE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomRight_DragDelta" />
         </Grid>
     </Border>
 </Window>
