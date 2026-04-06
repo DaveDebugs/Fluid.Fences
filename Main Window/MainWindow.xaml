@@ -9,33 +9,144 @@
     AllowsTransparency="True"
     Background="Transparent"
     Drop="Window_Drop"
+    DragEnter="Window_DragEnter"
+    DragOver="Window_DragOver"
+    DragLeave="Window_DragLeave"
     Loaded="Window_Loaded"
     MouseEnter="Window_MouseEnter"
     MouseLeave="Window_MouseLeave"
+    Deactivated="Window_Deactivated"
     ShowInTaskbar="False"
     WindowStyle="None">
 
     <Window.Resources>
-        <Style TargetType="Thumb">
+
+        <Style x:Key="ModernScrollThumb" TargetType="{x:Type Thumb}">
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Thumb">
-                        <Border Background="Transparent" />
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border CornerRadius="3" Background="#66FFFFFF" Margin="0,2,2,2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Background="{TemplateBinding Background}">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource ModernScrollThumb}"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Geometry x:Key="SubmenuArrowGeometry">M 0 0 L 4 3.5 L 0 7 Z</Geometry>
+
+        <Style TargetType="{x:Type ContextMenu}">
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Grid.IsSharedSizeScope" Value="True" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="Background" Value="#01FFFFFF" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ContextMenu}">
+                        <Border Background="#1A1A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="8">
+                            <ScrollViewer x:Name="DropDownScrollViewer" Focusable="False" Margin="1" Padding="{TemplateBinding Padding}">
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" KeyboardNavigation.TabNavigation="Cycle" />
+                            </ScrollViewer>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Separator}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Separator}">
+                        <Border Height="1" Background="#33FFFFFF" Margin="26,4,4,4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type MenuItem}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Arial" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type MenuItem}">
+                        <Border x:Name="templateRoot" BorderThickness="0" CornerRadius="4" Margin="2,1" Background="{TemplateBinding Background}">
+                            <Grid VerticalAlignment="Center" Margin="8,0,8,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter x:Name="Icon" ContentSource="Icon" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="Center"/>
+                                <Path x:Name="RightArrow" Grid.Column="3" VerticalAlignment="Center" Margin="8,0,0,0" Fill="White" Data="{StaticResource SubmenuArrowGeometry}" Visibility="Collapsed"/>
+
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Right" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <Border x:Name="SubMenuBorder" Background="#01FFFFFF" BorderThickness="0" Padding="2">
+                                        <Border Background="#1A1A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="8">
+                                            <ScrollViewer x:Name="SubMenuScrollViewer" Margin="1" Padding="2" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Auto">
+                                                <Grid RenderOptions.ClearTypeHint="Enabled">
+                                                    <ItemsPresenter x:Name="ItemsPresenter" KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.DirectionalNavigation="Cycle" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Grid.IsSharedSizeScope="True"/>
+                                                </Grid>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Icon" Value="{x:Null}">
+                                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="templateRoot" Property="Background" Value="#33FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="RightArrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </Window.Resources>
 
-    <Border x:Name="MainBorder" Margin="10" Background="#B2000000" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="8">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="15" Direction="270" Opacity="0.5" ShadowDepth="4" />
-        </Border.Effect>
-
-        <Grid x:Name="MainGrid">
+    <Border x:Name="MainBorder" Background="#B2000000" BorderThickness="0" CornerRadius="8">
+        <Grid x:Name="MainGrid" Focusable="True" PreviewMouseLeftButtonDown="MainGrid_PreviewMouseLeftButtonDown">
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="HeaderRowTop" Height="35" />
                 <RowDefinition Height="*" />
+                <RowDefinition x:Name="HeaderRowBottom" Height="0" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="HeaderColLeft" Width="0" />
@@ -43,10 +154,9 @@
                 <ColumnDefinition x:Name="HeaderColRight" Width="0" />
             </Grid.ColumnDefinitions>
 
-            <Border x:Name="HeaderBorder" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="#55000000" CornerRadius="7,7,0,0" Cursor="SizeAll" MouseLeftButtonDown="Header_MouseLeftButtonDown">
-
+            <Border x:Name="HeaderBorder" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="#55000000" CornerRadius="8,8,0,0" Cursor="SizeAll" MouseLeftButtonDown="Header_MouseLeftButtonDown">
                 <Border.ContextMenu>
-                    <ContextMenu x:Name="HeaderContextMenu">
+                    <ContextMenu x:Name="HeaderContextMenu" Opened="ContextMenu_Opened_ApplyBlur" MenuItem.SubmenuOpened="Submenu_Opened_ApplyBlur">
                         <MenuItem Header="Create New Fence" Click="Menu_NewFence_Click"/>
                         <MenuItem Header="View">
                             <MenuItem x:Name="MenuRollUpFence" Header="Roll-up Fence" Click="Menu_RollUp_Click"/>
@@ -74,22 +184,22 @@
                             <MenuItem Header="Date added to Fence" Tag="DateAdd" Click="Menu_Sort_Click"/>
                         </MenuItem>
                         <Separator/>
-                        <MenuItem Header="Settings (Classic Menu)..." Click="Menu_Settings_Click"/>
+                        <MenuItem Header="Settings" Click="Menu_Settings_Click"/>
                         <MenuItem Header="Delete This Fence" Click="Menu_DeleteFence_Click" Foreground="Red"/>
                     </ContextMenu>
                 </Border.ContextMenu>
 
                 <Grid x:Name="HeaderGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Background="Transparent" MouseLeftButtonDown="TitleText_MouseLeftButtonDown">
+                    <StackPanel x:Name="TitleStack" Orientation="Horizontal" Background="Transparent" MouseLeftButtonDown="TitleText_MouseLeftButtonDown">
                         <TextBlock x:Name="MenuIcon" Text="☰" Foreground="White" FontSize="16" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown" Margin="0,0,10,0"/>
-                        <TextBlock x:Name="TitleText" FontFamily="Segoe UI Variable, Segoe UI" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="My Apps" Cursor="IBeam" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TitleText" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="Fluid Fence" Cursor="IBeam" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <Grid Grid.Row="1" Grid.Column="1">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <WrapPanel x:Name="IconPanel" Margin="10" Background="Transparent" MouseLeftButtonDown="IconPanel_MouseLeftButtonDown" MouseLeftButtonUp="IconPanel_MouseLeftButtonUp" MouseMove="IconPanel_MouseMove" Orientation="Horizontal">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <WrapPanel x:Name="IconPanel" Margin="10" Background="#01000000" MouseLeftButtonDown="IconPanel_MouseLeftButtonDown" MouseLeftButtonUp="IconPanel_MouseLeftButtonUp" MouseMove="IconPanel_MouseMove" Orientation="Horizontal">
                         <TextBlock Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#88FFFFFF" Text="Drop shortcuts here..." />
                     </WrapPanel>
                 </ScrollViewer>
@@ -99,14 +209,14 @@
                 </Canvas>
             </Grid>
 
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Left" Background="Transparent" Cursor="SizeWE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Right" Background="Transparent" Cursor="SizeWE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeRight_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNS" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTop_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNS" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottom_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNWSE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Cursor="SizeNESW" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeTopRight_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNESW" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomLeft_DragDelta" />
-            <Thumb Grid.RowSpan="2" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNWSE" DragStarted="Resize_DragStarted" DragCompleted="Resize_DragCompleted" DragDelta="ResizeBottomRight_DragDelta" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Left" Fill="Transparent" Cursor="SizeWE" PreviewMouseLeftButtonDown="Resize_Left" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="6" HorizontalAlignment="Right" Fill="Transparent" Cursor="SizeWE" PreviewMouseLeftButtonDown="Resize_Right" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Top" Fill="Transparent" Cursor="SizeNS" PreviewMouseLeftButtonDown="Resize_Top" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Height="6" VerticalAlignment="Bottom" Fill="Transparent" Cursor="SizeNS" PreviewMouseLeftButtonDown="Resize_Bottom" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="Transparent" Cursor="SizeNWSE" PreviewMouseLeftButtonDown="Resize_TopLeft" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Fill="Transparent" Cursor="SizeNESW" PreviewMouseLeftButtonDown="Resize_TopRight" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" Fill="Transparent" Cursor="SizeNESW" PreviewMouseLeftButtonDown="Resize_BottomLeft" />
+            <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom" Fill="Transparent" Cursor="SizeNWSE" PreviewMouseLeftButtonDown="Resize_BottomRight" />
         </Grid>
     </Border>
 </Window>

@@ -7,13 +7,13 @@ namespace DesktopFences
     {
         private MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
+        private bool _isLoadingFenceData = false; // Prevents dropdown from overwriting during load
 
         public SettingsWindow(MainWindow callingFence)
         {
             InitializeComponent();
             _callingFence = callingFence;
-
-            // Start the engine!
+            PresetDropdown.SelectedIndex = 0; // Default to Custom
             LoadAllFences();
         }
 
@@ -21,12 +21,10 @@ namespace DesktopFences
         {
             FenceListBox.Items.Clear();
 
-            // Ask the operating system for every open window in this application
             foreach (Window window in Application.Current.Windows)
             {
                 if (window is MainWindow fence && fence.Visibility == Visibility.Visible)
                 {
-                    // Create a list item and securely attach the literal window object to its 'Tag'
                     ListBoxItem item = new ListBoxItem
                     {
                         Content = fence.FenceTitle,
@@ -35,7 +33,6 @@ namespace DesktopFences
 
                     FenceListBox.Items.Add(item);
 
-                    // Automatically highlight the fence that the user clicked 'Settings' on
                     if (fence == _callingFence)
                     {
                         FenceListBox.SelectedItem = item;
@@ -49,11 +46,14 @@ namespace DesktopFences
             if (FenceListBox.SelectedItem is ListBoxItem selectedItem && selectedItem.Tag is MainWindow fence)
             {
                 _currentlySelectedFence = fence;
+                _isLoadingFenceData = true;
 
-                // Load the specific fence's details into the textboxes
                 TitleInput.Text = fence.FenceTitle;
+                AutoSortInput.Text = fence.AutoSortExtensions;
 
-                // Match the dropdown to the fence's saved sort rule
+                // Reset dropdown to "Custom" when loading a new fence so we don't accidentally overwrite their rules
+                PresetDropdown.SelectedIndex = 0;
+
                 foreach (ComboBoxItem item in SortDropdown.Items)
                 {
                     string itemText = item.Content.ToString() ?? "";
@@ -67,6 +67,38 @@ namespace DesktopFences
                         break;
                     }
                 }
+
+                _isLoadingFenceData = false;
+            }
+        }
+
+        // FIXED: The Library of Extension Rules!
+        private void PresetDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isLoadingFenceData || PresetDropdown.SelectedItem == null) return;
+
+            string selection = ((ComboBoxItem)PresetDropdown.SelectedItem).Content.ToString() ?? "";
+
+            switch (selection)
+            {
+                case "Images & Photos":
+                    AutoSortInput.Text = ".jpg, .jpeg, .png, .gif, .bmp, .webp, .svg, .ico, .tif";
+                    break;
+                case "Documents":
+                    AutoSortInput.Text = ".doc, .docx, .pdf, .txt, .rtf, .odt, .xls, .xlsx, .csv, .ppt, .pptx";
+                    break;
+                case "Audio & Music":
+                    AutoSortInput.Text = ".mp3, .wav, .flac, .ogg, .m4a, .wma";
+                    break;
+                case "Videos":
+                    AutoSortInput.Text = ".mp4, .mkv, .avi, .mov, .wmv, .webm, .m4v";
+                    break;
+                case "Archives (.zip)":
+                    AutoSortInput.Text = ".zip, .rar, .7z, .tar, .gz";
+                    break;
+                case "Apps & Shortcuts":
+                    AutoSortInput.Text = ".lnk, .exe, .url, .bat, .msi";
+                    break;
             }
         }
 
@@ -74,10 +106,9 @@ namespace DesktopFences
         {
             if (_currentlySelectedFence != null)
             {
-                // 1. Push the new title back to the live window
                 _currentlySelectedFence.FenceTitle = TitleInput.Text;
+                _currentlySelectedFence.AutoSortExtensions = AutoSortInput.Text;
 
-                // 2. Translate and push the new sorting rule
                 string sortSelection = ((ComboBoxItem)SortDropdown.SelectedItem).Content.ToString() ?? "None";
                 _currentlySelectedFence.FenceSortMethod = sortSelection switch
                 {
@@ -88,16 +119,13 @@ namespace DesktopFences
                     _ => sortSelection
                 };
 
-                // 3. Command the window to securely save its own new data to the hard drive
                 _currentlySelectedFence.DashboardSaveAndRefresh();
 
-                // 4. Instantly rename the item in the listbox so you see the change
                 if (FenceListBox.SelectedItem is ListBoxItem item)
                 {
                     item.Content = TitleInput.Text;
                 }
 
-                // Give a satisfying confirmation!
                 MessageBox.Show("Settings successfully applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -109,7 +137,7 @@ namespace DesktopFences
                 if (MessageBox.Show($"Are you absolutely sure you want to permanently delete the '{_currentlySelectedFence.FenceTitle}' fence? This cannot be undone.", "Delete Fence", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     _currentlySelectedFence.DashboardDelete();
-                    LoadAllFences(); // Refresh the list so the deleted fence disappears
+                    LoadAllFences();
                 }
             }
         }

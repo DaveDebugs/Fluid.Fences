@@ -1,100 +1,139 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Windows;
+using System.Windows.Forms;
 
 namespace DesktopFences
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
-        // We use the full namespace path here to avoid colliding with WPF classes
-        private System.Windows.Forms.NotifyIcon _notifyIcon;
-        private bool _fencesHidden = false;
+        private NotifyIcon? _trayIcon;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            // ----------------------------------------------------------------------
-            // 1. SYSTEM TRAY SETUP
-            // ----------------------------------------------------------------------
-            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            _trayIcon = new NotifyIcon
+            {
+                Icon = System.Drawing.SystemIcons.Application,
+                Visible = true,
+                Text = "Fluid Fences"
+            };
 
-            // We use the default Windows application icon for now. 
-            _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
-            _notifyIcon.Text = "Desktop Fences";
-            _notifyIcon.Visible = true;
+            _trayIcon.ContextMenuStrip = new ContextMenuStrip();
+            _trayIcon.ContextMenuStrip.Items.Add("Clean Up Desktop (Auto-Sort)", null, OnCleanDesktopClicked);
+            _trayIcon.ContextMenuStrip.Items.Add("-");
+            _trayIcon.ContextMenuStrip.Items.Add("Create New Fence", null, OnNewFenceClicked);
+            _trayIcon.ContextMenuStrip.Items.Add("Settings", null, OnSettingsClicked);
+            _trayIcon.ContextMenuStrip.Items.Add("-");
+            _trayIcon.ContextMenuStrip.Items.Add("Exit Fluid Fences", null, OnExitClicked);
 
-            // Create the right-click menu for the tray icon
-            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-            contextMenu.Items.Add("Create New Fence", null, Menu_CreateFence_Click);
-            contextMenu.Items.Add("Toggle Visibility", null, Menu_ToggleVisibility_Click);
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator()); // Adds a nice dividing line
-            contextMenu.Items.Add("Exit Fences", null, Menu_Exit_Click);
-
-            _notifyIcon.ContextMenuStrip = contextMenu;
-
-            // ----------------------------------------------------------------------
-            // 2. THE SPAWNER LOGIC
-            // ----------------------------------------------------------------------
             string saveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Fences");
-            Directory.CreateDirectory(saveDirectory);
+            bool loadedFences = false;
 
-            string[] fenceFiles = Directory.GetFiles(saveDirectory, "*.json");
-
-            if (fenceFiles.Length == 0)
+            if (Directory.Exists(saveDirectory))
             {
-                // First time running, or user deleted all fences. Spawn one default fence.
-                new MainWindow(Guid.NewGuid().ToString()).Show();
-            }
-            else
-            {
-                // Load all existing fences
-                foreach (string file in fenceFiles)
+                string[] fenceFiles = Directory.GetFiles(saveDirectory, "*.json");
+                if (fenceFiles.Length > 0)
                 {
-                    string fenceId = Path.GetFileNameWithoutExtension(file);
-                    new MainWindow(fenceId).Show();
+                    foreach (string file in fenceFiles)
+                    {
+                        string fenceId = Path.GetFileNameWithoutExtension(file);
+                        MainWindow fence = new MainWindow(fenceId);
+                        fence.Show();
+                    }
+                    loadedFences = true;
                 }
             }
-        }
 
-        // ----------------------------------------------------------------------
-        // 3. TRAY MENU CLICK EVENTS
-        // ----------------------------------------------------------------------
-        private void Menu_CreateFence_Click(object sender, EventArgs e)
-        {
-            // If the user tries to create a fence while they are all hidden, unhide them first!
-            if (_fencesHidden) Menu_ToggleVisibility_Click(null, null);
-
-            new MainWindow(Guid.NewGuid().ToString()).Show();
-        }
-
-        private void Menu_ToggleVisibility_Click(object sender, EventArgs e)
-        {
-            _fencesHidden = !_fencesHidden;
-
-            // Loop through every open window in the application and hide/show them
-            foreach (Window window in Application.Current.Windows)
+            if (!loadedFences)
             {
-                if (window is MainWindow fence)
+                MainWindow defaultFence = new MainWindow("designer");
+                defaultFence.Show();
+            }
+        }
+
+        // ======================================================================
+        // THE AUTO-SORTING ENGINE
+        // ======================================================================
+        private void OnCleanDesktopClicked(object? sender, EventArgs e)
+        {
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string[] desktopFiles = Directory.GetFiles(desktopPath);
+            int movedCount = 0;
+
+            foreach (string filePath in desktopFiles)
+            {
+                // Never touch system configuration files
+                if (Path.GetFileName(filePath).ToLower() == "desktop.ini") continue;
+
+                string extension = Path.GetExtension(filePath).ToLower();
+
+                // Check every open fence to see if it wants this file type
+                foreach (Window window in System.Windows.Application.Current.Windows)
                 {
-                    fence.Visibility = _fencesHidden ? Visibility.Hidden : Visibility.Visible;
+                    if (window is MainWindow fence && !string.IsNullOrWhiteSpace(fence.AutoSortExtensions))
+                    {
+                        string[] rules = fence.AutoSortExtensions.ToLower().Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        bool isMatch = false;
+
+                        foreach (string rule in rules)
+                        {
+                            if (extension == rule || extension == "." + rule) { isMatch = true; break; }
+                        }
+
+                        if (isMatch)
+                        {
+                            try
+                            {
+                                // To truly clear the desktop, we move the files into a dedicated storage folder
+                                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Fluid Fences Storage", fence.FenceTitle);
+                                Directory.CreateDirectory(storageDir);
+
+                                string newFilePath = Path.Combine(storageDir, Path.GetFileName(filePath));
+
+                                if (!File.Exists(newFilePath))
+                                {
+                                    File.Move(filePath, newFilePath);
+                                    fence.AddFileFromAutoSort(newFilePath);
+                                    movedCount++;
+                                }
+                            }
+                            catch { /* Ignore files that are currently open/locked by Windows */ }
+                            break; // Once a file is sorted into one fence, stop checking the other fences
+                        }
+                    }
                 }
             }
-        }
 
-        private void Menu_Exit_Click(object sender, EventArgs e)
-        {
-            // Clean up the icon so it doesn't get stuck in the user's taskbar
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-
-            // Gracefully close all windows to trigger their auto-saves
-            foreach (Window window in Application.Current.Windows.Cast<Window>().ToList())
+            if (movedCount > 0)
             {
-                window.Close();
+                foreach (Window window in System.Windows.Application.Current.Windows)
+                {
+                    if (window is MainWindow fence) fence.DashboardSaveAndRefresh();
+                }
+                System.Windows.MessageBox.Show($"Successfully swept up and sorted {movedCount} files from your desktop!", "Desktop Cleaned", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-
-            // Force the background process to completely shut down
-            Application.Current.Shutdown();
         }
+
+        private void OnNewFenceClicked(object? sender, EventArgs e) { MainWindow fence = new MainWindow(Guid.NewGuid().ToString()); fence.Show(); }
+
+        private void OnSettingsClicked(object? sender, EventArgs e)
+        {
+            foreach (Window window in System.Windows.Application.Current.Windows)
+            {
+                if (window is MainWindow main) { SettingsWindow settings = new SettingsWindow(main); settings.Show(); return; }
+            }
+        }
+
+        private void OnExitClicked(object? sender, EventArgs e)
+        {
+            foreach (Window window in System.Windows.Application.Current.Windows)
+            {
+                if (window is MainWindow main) main.DashboardSaveAndRefresh();
+            }
+            _trayIcon?.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        protected override void OnExit(ExitEventArgs e) { _trayIcon?.Dispose(); base.OnExit(e); }
     }
 }
