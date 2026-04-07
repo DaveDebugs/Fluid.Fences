@@ -1,26 +1,12 @@
-﻿<Window
-    x:Class="DesktopFences.MainWindow"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Fence"
-    Width="250"
-    Height="300"
-    AllowDrop="True"
-    AllowsTransparency="True"
-    Background="Transparent"
-    Drop="Window_Drop"
-    DragEnter="Window_DragEnter"
-    DragOver="Window_DragOver"
-    DragLeave="Window_DragLeave"
-    Loaded="Window_Loaded"
-    MouseEnter="Window_MouseEnter"
-    MouseLeave="Window_MouseLeave"
-    Deactivated="Window_Deactivated"
-    ShowInTaskbar="False"
-    WindowStyle="None">
+﻿<Window x:Class="DesktopFences.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Fence" Width="250" Height="300" AllowDrop="True" AllowsTransparency="True" Background="Transparent"
+        Drop="Window_Drop" DragEnter="Window_DragEnter" DragOver="Window_DragOver" DragLeave="Window_DragLeave"
+        Loaded="Window_Loaded" MouseEnter="Window_MouseEnter" MouseLeave="Window_MouseLeave" Deactivated="Window_Deactivated"
+        ShowInTaskbar="False" WindowStyle="None">
 
     <Window.Resources>
-
         <Style x:Key="ModernScrollThumb" TargetType="{x:Type Thumb}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -110,9 +96,12 @@
                                 <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="Center"/>
                                 <Path x:Name="RightArrow" Grid.Column="3" VerticalAlignment="Center" Margin="8,0,0,0" Fill="White" Data="{StaticResource SubmenuArrowGeometry}" Visibility="Collapsed"/>
 
-                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Right" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Right" HorizontalOffset="4" VerticalOffset="-4" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
                                     <Border x:Name="SubMenuBorder" Background="#01FFFFFF" BorderThickness="0" Padding="2">
                                         <Border Background="#1A1A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="8">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="10" Opacity="0.6" ShadowDepth="4" Direction="315" Color="Black"/>
+                                            </Border.Effect>
                                             <ScrollViewer x:Name="SubMenuScrollViewer" Margin="1" Padding="2" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Auto">
                                                 <Grid RenderOptions.ClearTypeHint="Enabled">
                                                     <ItemsPresenter x:Name="ItemsPresenter" KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.DirectionalNavigation="Cycle" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Grid.IsSharedSizeScope="True"/>
@@ -123,7 +112,6 @@
                                 </Popup>
                             </Grid>
                         </Border>
-
                         <ControlTemplate.Triggers>
                             <Trigger Property="Icon" Value="{x:Null}">
                                 <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
@@ -159,15 +147,26 @@
                     <ContextMenu x:Name="HeaderContextMenu" Opened="ContextMenu_Opened_ApplyBlur" MenuItem.SubmenuOpened="Submenu_Opened_ApplyBlur">
                         <MenuItem Header="Create New Fence" Click="Menu_NewFence_Click"/>
                         <MenuItem Header="View">
-                            <MenuItem x:Name="MenuRollUpFence" Header="Roll-up Fence" Click="Menu_RollUp_Click"/>
+                            <MenuItem Header="Icon Size">
+                                <MenuItem Header="Small (32px)" Tag="32" Click="Menu_IconSize_Click"/>
+                                <MenuItem Header="Medium (48px)" Tag="48" Click="Menu_IconSize_Click"/>
+                                <MenuItem Header="Large (64px)" Tag="64" Click="Menu_IconSize_Click"/>
+                            </MenuItem>
                             <Separator/>
-                            <MenuItem Header="Opacity">
-                                <MenuItem Header="0% (Mouseover Reveal)" Tag="0.0" Click="Menu_Opacity_Click"/>
-                                <MenuItem Header="20%" Tag="0.2" Click="Menu_Opacity_Click"/>
-                                <MenuItem Header="40%" Tag="0.4" Click="Menu_Opacity_Click"/>
-                                <MenuItem Header="60%" Tag="0.6" Click="Menu_Opacity_Click"/>
-                                <MenuItem Header="80%" Tag="0.8" Click="Menu_Opacity_Click"/>
-                                <MenuItem Header="100% (Fully Visible)" Tag="1.0" Click="Menu_Opacity_Click"/>
+                            <MenuItem x:Name="MenuRollUpFence" Header="Roll-up Fence" Click="Menu_RollUp_Click"/>
+                            <MenuItem Header="Opacity" StaysOpenOnClick="True">
+                                <MenuItem Background="Transparent" StaysOpenOnClick="True">
+                                    <MenuItem.Header>
+                                        <Grid Width="150" Margin="0,5">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Adjust Transparency" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,5"/>
+                                            <Slider x:Name="MenuOpacitySlider" Grid.Row="1" Minimum="0" Maximum="1" Value="0.7" ValueChanged="MenuOpacitySlider_ValueChanged"/>
+                                        </Grid>
+                                    </MenuItem.Header>
+                                </MenuItem>
                             </MenuItem>
                             <Separator/>
                             <MenuItem Header="Copy Color" Click="Menu_CopyColor_Click"/>
@@ -189,10 +188,23 @@
                     </ContextMenu>
                 </Border.ContextMenu>
 
-                <Grid x:Name="HeaderGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <StackPanel x:Name="TitleStack" Orientation="Horizontal" Background="Transparent" MouseLeftButtonDown="TitleText_MouseLeftButtonDown">
+                <Grid x:Name="HeaderGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0">
+                    <StackPanel x:Name="TitleStack" Orientation="Horizontal" HorizontalAlignment="Center" Background="Transparent" MouseLeftButtonDown="TitleText_MouseLeftButtonDown">
                         <TextBlock x:Name="MenuIcon" Text="☰" Foreground="White" FontSize="16" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown" Margin="0,0,10,0"/>
                         <TextBlock x:Name="TitleText" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="14" FontWeight="SemiBold" Foreground="White" Text="Fluid Fence" Cursor="IBeam" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="SearchPanel" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent">
+                        <TextBox x:Name="SearchBox" Width="120" Height="22" Visibility="Collapsed" Foreground="White" Padding="5,0" VerticalContentAlignment="Center" Margin="0,0,8,0" CaretBrush="White" TextChanged="SearchBox_TextChanged" LostFocus="SearchBox_LostFocus">
+                            <TextBox.Template>
+                                <ControlTemplate TargetType="TextBox">
+                                    <Border Background="#33000000" BorderBrush="#55FFFFFF" BorderThickness="1" CornerRadius="4">
+                                        <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </TextBox.Template>
+                        </TextBox>
+                        <TextBlock x:Name="SearchIcon" Text="🔍" Foreground="White" FontSize="13" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="SearchIcon_MouseLeftButtonDown"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -203,7 +215,6 @@
                         <TextBlock Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#88FFFFFF" Text="Drop shortcuts here..." />
                     </WrapPanel>
                 </ScrollViewer>
-
                 <Canvas x:Name="SelectionCanvas" IsHitTestVisible="False">
                     <Rectangle x:Name="SelectionBox" Fill="#550078D7" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" />
                 </Canvas>

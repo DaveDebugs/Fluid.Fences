@@ -6,89 +6,98 @@ namespace DesktopFences
 {
     public partial class ColorPickerWindow : Window
     {
-        public SolidColorBrush SelectedBrush { get; private set; }
+        public SolidColorBrush? SelectedBrush { get; private set; }
         private bool _isInitializing = true;
 
-        public ColorPickerWindow(SolidColorBrush currentBrush)
+        public ColorPickerWindow(SolidColorBrush initialBrush)
         {
             InitializeComponent();
 
-            // Extract the current color's data
-            Color c = currentBrush.Color;
-            System.Drawing.Color drawingColor = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
+            // Extract starting HSL/Alpha from the provided brush
+            Color startColor = initialBrush.Color;
+            AlphaSlider.Value = (initialBrush.Opacity * 100.0);
 
-            // Set sliders to match current color
-            HueSlider.Value = drawingColor.GetHue();
-            SaturationSlider.Value = drawingColor.GetSaturation();
-            BrightnessSlider.Value = drawingColor.GetBrightness();
-            TransparencySlider.Value = currentBrush.Opacity;
+            System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
+            HueSlider.Value = sysColor.GetHue();
+            SaturationSlider.Value = sysColor.GetSaturation() * 100.0;
+            LightnessSlider.Value = sysColor.GetBrightness() * 100.0;
+
+            ColorPreview.Background = initialBrush;
+            SelectedBrush = initialBrush;
 
             _isInitializing = false;
-            UpdatePreview();
+            UpdateColorFromSliders();
         }
 
-        private void Sliders_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_isInitializing) return;
-            UpdatePreview();
+            UpdateColorFromSliders();
         }
 
-        private void UpdatePreview()
+        private void UpdateColorFromSliders()
         {
-            // Calculate new color from sliders
-            Color newColor = ColorFromHSL(HueSlider.Value, SaturationSlider.Value, BrightnessSlider.Value);
+            double h = HueSlider.Value;
+            double s = SaturationSlider.Value / 100.0;
+            double l = LightnessSlider.Value / 100.0;
+            double a = AlphaSlider.Value / 100.0;
 
-            // Create a brush and apply the transparency slider
-            SelectedBrush = new SolidColorBrush(newColor)
-            {
-                Opacity = TransparencySlider.Value
-            };
+            Color rgbColor = HslToRgb(h, s, l);
+            Color finalColor = Color.FromArgb((byte)(a * 255), rgbColor.R, rgbColor.G, rgbColor.B);
 
-            // Update the live preview box in the UI
-            ColorOverlay.Background = SelectedBrush;
+            // Update UI preview
+            SelectedBrush = new SolidColorBrush(finalColor) { Opacity = a };
+            ColorPreview.Background = SelectedBrush;
+
+            // Dynamically update the slider gradient tracks to match the hue
+            Color pureHue = HslToRgb(h, 1.0, 0.5);
+            BrightnessEndColor.Color = pureHue;
+            SaturationEndColor.Color = pureHue;
+            AlphaEndColor.Color = pureHue;
         }
 
-        private void Apply_Click(object sender, RoutedEventArgs e)
+        private void ApplyButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
             this.Close();
         }
 
-        private void Cancel_Click(object sender, RoutedEventArgs e)
+        // Standard Math formula to convert HSL (Hue, Saturation, Lightness) to RGB
+        private Color HslToRgb(double h, double s, double l)
         {
-            this.DialogResult = false;
-            this.Close();
-        }
+            double r, g, b;
 
-        // --- HSL TO RGB ALGORITHM ---
-        private static Color ColorFromHSL(double h, double s, double l)
-        {
-            byte r = 0, g = 0, b = 0;
             if (s == 0)
             {
-                r = g = b = (byte)(l * 255);
+                r = g = b = l; // achromatic
             }
             else
             {
-                double v1, v2;
-                double hue = h / 360;
-                v2 = (l < 0.5) ? (l * (1 + s)) : ((l + s) - (l * s));
-                v1 = 2 * l - v2;
-                r = (byte)(255 * HueToRGB(v1, v2, hue + (1.0f / 3)));
-                g = (byte)(255 * HueToRGB(v1, v2, hue));
-                b = (byte)(255 * HueToRGB(v1, v2, hue - (1.0f / 3)));
+                Func<double, double, double, double> hue2rgb = (p, q, t) =>
+                {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6.0) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2.0) return q;
+                    if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6;
+                    return p;
+                };
+
+                double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                double p = 2 * l - q;
+                h /= 360;
+
+                r = hue2rgb(p, q, h + 1 / 3.0);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3.0);
             }
-            return Color.FromArgb(255, r, g, b);
+
+            return Color.FromRgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
         }
 
-        private static double HueToRGB(double v1, double v2, double vH)
+        private void ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (vH < 0) vH += 1;
-            if (vH > 1) vH -= 1;
-            if ((6 * vH) < 1) return (v1 + (v2 - v1) * 6 * vH);
-            if ((2 * vH) < 1) return v2;
-            if ((3 * vH) < 2) return (v1 + (v2 - v1) * ((2.0f / 3) - vH) * 6);
-            return v1;
+
         }
     }
 }

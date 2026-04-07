@@ -11,4 +11,17 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Settings Window\BuyMeACoffeeQR.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\BuyMeACoffeeQR.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Settings Window\BuyMeACoffeeQR.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
 </Project>
