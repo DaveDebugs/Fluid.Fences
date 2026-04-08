@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Media.Animation;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace DesktopFences
 {
@@ -22,20 +23,20 @@ namespace DesktopFences
         internal enum DWMWINDOWATTRIBUTE { DWMWA_WINDOW_CORNER_PREFERENCE = 33 }
         internal enum DWM_WINDOW_CORNER_PREFERENCE { DWMWCP_DEFAULT = 0, DWMWCP_DONOTROUND = 1, DWMWCP_ROUND = 2, DWMWCP_ROUNDSMALL = 3 }
 
-        [DllImport("dwmapi.dll")] internal static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
-        [DllImport("user32.dll")] internal static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
-        [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-        [DllImport("user32.dll", CharSet = CharSet.Auto)] private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-        [DllImport("user32.dll")] public static extern bool ReleaseCapture();
+        [LibraryImport("dwmapi.dll")] internal static partial int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+        [LibraryImport("user32.dll")] internal static partial int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
+        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+        [LibraryImport("user32.dll", EntryPoint = "SendMessageW")] private static partial IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] internal static partial bool ReleaseCapture();
 
-        [ComImport, Guid("bcc18b79-ba16-442f-80c4-8a59c30d463b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        internal interface IShellItemImageFactory { void GetImage([In] NativeSize size, [In] int flags, [Out] out IntPtr phbm); }
+        [GeneratedComInterface, Guid("bcc18b79-ba16-442f-80c4-8a59c30d463b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        internal partial interface IShellItemImageFactory { void GetImage(in NativeSize size, int flags, out IntPtr phbm); }
 
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal static extern void SHCreateItemFromParsingName([In, MarshalAs(UnmanagedType.LPWStr)] string pszPath, [In] IntPtr pbc, [In, MarshalAs(UnmanagedType.LPStruct)] Guid riid, [Out, MarshalAs(UnmanagedType.Interface, IidParameterIndex = 2)] out IShellItemImageFactory ppv);
+        [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        internal static partial int SHCreateItemFromParsingName(string pszPath, IntPtr pbc, in Guid riid, out IShellItemImageFactory ppv);
 
         [StructLayout(LayoutKind.Sequential)] internal struct NativeSize { public int Width; public int Height; }
-        [DllImport("gdi32.dll")] public static extern bool DeleteObject(IntPtr hObject);
+        [LibraryImport("gdi32.dll")][return: MarshalAs(UnmanagedType.Bool)] internal static partial bool DeleteObject(IntPtr hObject);
 
         private const int WM_SYSCOMMAND = 0x0112;
         private const int SC_SIZE = 0xF000;
@@ -49,10 +50,15 @@ namespace DesktopFences
 
         public enum DockState { Floating, Top, Bottom, Left, Right }
 
-        private List<string> _currentFiles = new List<string>();
-        private string _saveDirectory = string.Empty;
-        private string _saveFilePath = string.Empty;
-        private string _fenceId = string.Empty;
+        private readonly System.Windows.Threading.DispatcherTimer _saveTimer = new();
+        private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+        private readonly List<string> _currentFiles = new();
+        private readonly List<StackPanel> _selectedItems = new();
+        private readonly SolidColorBrush _highlightBrush = new(System.Windows.Media.Color.FromArgb(85, 0, 120, 215));
+
+        private readonly string _saveDirectory = string.Empty;
+        private readonly string _saveFilePath = string.Empty;
+        private readonly string _fenceId = string.Empty;
 
         private bool _isRolledUp = false;
         private double _expandedHeight = 300;
@@ -66,22 +72,27 @@ namespace DesktopFences
         private string _saveSortMethod = "None";
         private bool _isContextMenuOpen = false;
         private bool _isDeleted = false;
-        private bool _isSliderInit = true;
 
         private Color _currentFenceColor = Colors.Black;
         private double _currentOpacity = 0.7;
         private double _currentIconSize = 48;
 
-        private List<StackPanel> _selectedItems = new List<StackPanel>();
         private System.Windows.Point _selectionStartPoint;
         private bool _isDraggingSelectionBox = false;
-        private SolidColorBrush _highlightBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(85, 0, 120, 215));
+        private bool _isManualDragging = false;
+        private System.Windows.Point _manualDragStartMouse;
+        private double _manualDragStartLeft;
+        private double _manualDragStartTop;
+        private bool _wasRolledUpBeforeDrag = false;
 
-        public string FenceTitle { get => TitleText.Text; set => TitleText.Text = value; }
-        public string FenceSortMethod { get => _saveSortMethod; set => _saveSortMethod = value; }
-        public string AutoSortExtensions { get; set; } = "";
-        public bool ShowSearch { get; set; } = true;
+        [System.Text.Json.Serialization.JsonIgnore] public string FenceTitle { get => TitleText.Text; set => TitleText.Text = value; }
+        [System.Text.Json.Serialization.JsonIgnore] public string FenceSortMethod { get => _saveSortMethod; set => _saveSortMethod = value; }
+        [System.Text.Json.Serialization.JsonIgnore] public string AutoSortExtensions { get; set; } = "";
+        [System.Text.Json.Serialization.JsonIgnore] public bool ShowSearch { get; set; } = true;
+        [System.Text.Json.Serialization.JsonIgnore] public Color FenceColor { get => _currentFenceColor; }
+        [System.Text.Json.Serialization.JsonIgnore] public double FenceOpacity { get => _currentOpacity; }
 
+        public void SetFenceColor(Color color, double opacity) { ApplyAcrylicBlur(color, opacity); SaveFenceState(); }
         public void DashboardSaveAndRefresh() { ApplySorting(); SaveFenceState(); }
         public void DashboardDelete() { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); }
         public void AddFileFromAutoSort(string filePath) { if (!_currentFiles.Contains(filePath)) _currentFiles.Add(filePath); }
@@ -92,6 +103,9 @@ namespace DesktopFences
             _fenceId = "DESIGNER";
             _saveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Fences");
             _saveFilePath = Path.Combine(_saveDirectory, "designer.json");
+
+            _saveTimer.Interval = TimeSpan.FromSeconds(1.5);
+            _saveTimer.Tick += (s, e) => { _saveTimer.Stop(); PerformDiskWrite(); };
         }
 
         public MainWindow(string fenceId) : this()
@@ -135,8 +149,8 @@ namespace DesktopFences
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    HwndSource? source = PresentationSource.FromVisual(menu) as HwndSource;
-                    if (source != null && source.Handle != IntPtr.Zero) ApplyAcrylicToHwnd(source.Handle, Color.FromRgb(26, 26, 26), 0.8);
+                    if (PresentationSource.FromVisual(menu) is HwndSource source && source.Handle != IntPtr.Zero)
+                        ApplyAcrylicToHwnd(source.Handle, Color.FromRgb(26, 26, 26), 0.8);
                 }), System.Windows.Threading.DispatcherPriority.Background);
             }
         }
@@ -147,21 +161,13 @@ namespace DesktopFences
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    var popup = menuItem.Template.FindName("PART_Popup", menuItem) as System.Windows.Controls.Primitives.Popup;
-                    if (popup != null && popup.Child != null)
+                    if (menuItem.Template.FindName("PART_Popup", menuItem) is System.Windows.Controls.Primitives.Popup popup && popup.Child != null)
                     {
-                        HwndSource? source = PresentationSource.FromVisual(popup.Child) as HwndSource;
-                        if (source != null && source.Handle != IntPtr.Zero) ApplyAcrylicToHwnd(source.Handle, Color.FromRgb(26, 26, 26), 0.8);
+                        if (PresentationSource.FromVisual(popup.Child) is HwndSource source && source.Handle != IntPtr.Zero)
+                            ApplyAcrylicToHwnd(source.Handle, Color.FromRgb(26, 26, 26), 0.8);
                     }
                 }), System.Windows.Threading.DispatcherPriority.Background);
             }
-        }
-
-        private void MenuOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isSliderInit) return;
-            ApplyAcrylicBlur(_currentFenceColor, e.NewValue);
-            SaveFenceState();
         }
 
         private void LoadFenceState()
@@ -171,10 +177,23 @@ namespace DesktopFences
                 try
                 {
                     string json = File.ReadAllText(_saveFilePath);
-                    FenceData? data = JsonSerializer.Deserialize<FenceData>(json);
-                    if (data != null)
+                    if (JsonSerializer.Deserialize<FenceData>(json) is FenceData data)
                     {
-                        this.Left = data.Left; this.Top = data.Top; _isRolledUp = data.IsRolledUp;
+                        this.Left = data.Left; this.Top = data.Top;
+
+                        bool isOnScreen = false;
+                        foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+                        {
+                            if (screen.WorkingArea.Contains((int)this.Left, (int)this.Top) ||
+                                screen.WorkingArea.Contains((int)(this.Left + data.Width), (int)this.Top))
+                            {
+                                isOnScreen = true;
+                                break;
+                            }
+                        }
+                        if (!isOnScreen) { this.Left = 100; this.Top = 100; }
+
+                        _isRolledUp = data.IsRolledUp;
                         _expandedHeight = data.ExpandedHeight; _expandedWidth = data.ExpandedWidth > 0 ? data.ExpandedWidth : 250;
                         _expandedLeft = data.ExpandedWidth > 0 ? data.ExpandedLeft : data.Left; _expandedTop = data.ExpandedWidth > 0 ? data.ExpandedTop : data.Top;
                         TitleText.Text = data.Title; _saveSortMethod = data.SortMethod;
@@ -185,8 +204,6 @@ namespace DesktopFences
 
                         try { _currentFenceColor = (Color)ColorConverter.ConvertFromString(data.HexColor); } catch { }
                         _currentOpacity = data.Opacity;
-
-                        _isSliderInit = true; MenuOpacitySlider.Value = _currentOpacity; _isSliderInit = false;
 
                         if (_isRolledUp) { if (data.Width <= 40) { this.Width = HEADER_SIZE; this.Height = data.Height; } else { this.Height = HEADER_SIZE; this.Width = data.Width; } }
                         else { this.Height = data.Height; this.Width = data.Width; }
@@ -199,14 +216,14 @@ namespace DesktopFences
             }
         }
 
-        private void SaveFenceState()
-        {
-            // FIXED: Added TitleText null check
-            if (_isDeleted || TitleText == null) return;
+        private void SaveFenceState() { _saveTimer.Stop(); _saveTimer.Start(); }
 
+        private void PerformDiskWrite()
+        {
+            if (_isDeleted || TitleText == null) return;
             try
             {
-                FenceData data = new FenceData
+                FenceData data = new()
                 {
                     Left = this.Left,
                     Top = this.Top,
@@ -227,26 +244,31 @@ namespace DesktopFences
                     Files = _currentFiles
                 };
                 Directory.CreateDirectory(_saveDirectory);
-                File.WriteAllText(_saveFilePath, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(_saveFilePath, JsonSerializer.Serialize(data, _jsonOptions));
             }
             catch { }
         }
 
         private void DetermineDockState()
         {
-            var workArea = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle).WorkingArea;
+            var helper = new WindowInteropHelper(this);
+            var workArea = System.Windows.Forms.Screen.FromHandle(helper.Handle).WorkingArea;
             double dpiX = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
             double dpiY = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M22 ?? 1.0;
 
             int physLeft = (int)(this.Left * dpiX); int physTop = (int)(this.Top * dpiY);
             int physRight = (int)((this.Left + this.Width) * dpiX); int physBottom = (int)((this.Top + this.Height) * dpiY);
-            int thresh = 25;
 
-            if (Math.Abs(physLeft - workArea.Left) < thresh) _dockState = DockState.Left;
-            else if (Math.Abs(physRight - workArea.Right) < thresh) _dockState = DockState.Right;
-            else if (Math.Abs(physTop - workArea.Top) < thresh) _dockState = DockState.Top;
-            else if (Math.Abs(physBottom - workArea.Bottom) < thresh) _dockState = DockState.Bottom;
-            else _dockState = DockState.Floating;
+            int thresh = 35;
+            int dLeft = Math.Abs(physLeft - workArea.Left); int dRight = Math.Abs(physRight - workArea.Right);
+            int dTop = Math.Abs(physTop - workArea.Top); int dBottom = Math.Abs(physBottom - workArea.Bottom);
+
+            int minH = Math.Min(dLeft, dRight); int minV = Math.Min(dTop, dBottom);
+
+            if (minH >= thresh && minV >= thresh) { _dockState = DockState.Floating; }
+            else if (minV < minH) { _dockState = dBottom < dTop ? DockState.Bottom : DockState.Top; }
+            else if (minH < minV) { _dockState = dRight < dLeft ? DockState.Right : DockState.Left; }
+            else { _dockState = this.Width > this.Height ? (dBottom <= dTop ? DockState.Bottom : DockState.Top) : (dRight <= dLeft ? DockState.Right : DockState.Left); }
         }
 
         private void UpdateDockOrientation()
@@ -283,7 +305,7 @@ namespace DesktopFences
 
         private void AnimateRollUp()
         {
-            double d = 250; QuarticEase ease = new QuarticEase { EasingMode = EasingMode.EaseInOut };
+            double d = 250; QuarticEase ease = new() { EasingMode = EasingMode.EaseInOut };
             if (_dockState == DockState.Left) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Right) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.LeftProperty, new DoubleAnimation { To = _expandedLeft + (_expandedWidth - HEADER_SIZE), Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Bottom) { this.BeginAnimation(Window.HeightProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.TopProperty, new DoubleAnimation { To = _expandedTop + (_expandedHeight - HEADER_SIZE), Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
@@ -292,7 +314,7 @@ namespace DesktopFences
 
         private void AnimateReveal()
         {
-            double d = 250; QuarticEase ease = new QuarticEase { EasingMode = EasingMode.EaseInOut };
+            double d = 250; QuarticEase ease = new() { EasingMode = EasingMode.EaseInOut };
             if (_dockState == DockState.Left) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = _expandedWidth, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Right) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = _expandedWidth, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.LeftProperty, new DoubleAnimation { To = _expandedLeft, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Bottom) { this.BeginAnimation(Window.HeightProperty, new DoubleAnimation { To = _expandedHeight, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.TopProperty, new DoubleAnimation { To = _expandedTop, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
@@ -304,31 +326,112 @@ namespace DesktopFences
             if (e.ChangedButton == MouseButton.Left)
             {
                 if (e.ClickCount == 2) { ToggleRollUp(); return; }
+
                 this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null);
                 this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.HeightProperty, null);
-                bool wasRolledUpBeforeDrag = _isRolledUp || _isTemporarilyRevealed;
-                double savedExpandedWidth = _expandedWidth; double savedExpandedHeight = _expandedHeight;
+
+                _wasRolledUpBeforeDrag = _isRolledUp || _isTemporarilyRevealed;
+
+                if (_wasRolledUpBeforeDrag)
+                {
+                    this.Width = _expandedWidth; this.Height = _expandedHeight;
+                    if (_dockState == DockState.Right) this.Left -= (_expandedWidth - HEADER_SIZE);
+                    if (_dockState == DockState.Bottom) this.Top -= (_expandedHeight - HEADER_SIZE);
+                }
 
                 _isRolledUp = false; _isTemporarilyRevealed = false;
-                _dockState = DockState.Floating; UpdateDockOrientation();
-                this.DragMove();
+                _dockState = DockState.Floating;
+                UpdateDockOrientation();
+
+                _isManualDragging = true;
+                _manualDragStartMouse = new System.Windows.Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+                _manualDragStartLeft = this.Left;
+                _manualDragStartTop = this.Top;
+
+                HeaderBorder.CaptureMouse();
+            }
+        }
+
+        private void Header_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isManualDragging)
+            {
+                PresentationSource? source = PresentationSource.FromVisual(this);
+                double dpiX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+                double dpiY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1.0;
+
+                double mouseDX = (System.Windows.Forms.Cursor.Position.X - _manualDragStartMouse.X) / dpiX;
+                double mouseDY = (System.Windows.Forms.Cursor.Position.Y - _manualDragStartMouse.Y) / dpiY;
+
+                double newLeft = _manualDragStartLeft + mouseDX;
+                double newTop = _manualDragStartTop + mouseDY;
+
+                var helper = new WindowInteropHelper(this);
+                var screen = System.Windows.Forms.Screen.FromHandle(helper.Handle).WorkingArea;
+                double screenLeft = screen.Left / dpiX; double screenTop = screen.Top / dpiY;
+                double screenRight = screen.Right / dpiX; double screenBottom = screen.Bottom / dpiY;
+
+                double snapThresh = 25;
+
+                if (Math.Abs(newLeft - screenLeft) < snapThresh) newLeft = screenLeft;
+                else if (Math.Abs((newLeft + this.Width) - screenRight) < snapThresh) newLeft = screenRight - this.Width;
+
+                if (Math.Abs(newTop - screenTop) < snapThresh) newTop = screenTop;
+                else if (Math.Abs((newTop + this.Height) - screenBottom) < snapThresh) newTop = screenBottom - this.Height;
+
+                this.Left = newLeft; this.Top = newTop;
+
+                DockState oldState = _dockState;
+                DetermineDockState();
+                if (oldState != _dockState) UpdateDockOrientation();
+            }
+        }
+
+        private void Header_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isManualDragging)
+            {
+                _isManualDragging = false;
+                HeaderBorder.ReleaseMouseCapture();
+
+                double savedExpandedWidth = _expandedWidth; double savedExpandedHeight = _expandedHeight;
+
                 DetermineDockState(); UpdateDockOrientation();
 
                 _expandedWidth = savedExpandedWidth; _expandedHeight = savedExpandedHeight;
 
-                if (_dockState == DockState.Bottom) { var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle).WorkingArea; double dpiY = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M22 ?? 1.0; _expandedTop = (screen.Bottom / dpiY) - _expandedHeight; _expandedLeft = this.Left; }
-                else if (_dockState == DockState.Right) { var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle).WorkingArea; double dpiX = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M11 ?? 1.0; _expandedLeft = (screen.Right / dpiX) - _expandedWidth; _expandedTop = this.Top; }
-                else if (_dockState == DockState.Left) { var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle).WorkingArea; double dpiX = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M11 ?? 1.0; _expandedLeft = screen.Left / dpiX; _expandedTop = this.Top; }
-                else if (_dockState == DockState.Top) { var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle).WorkingArea; double dpiY = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M22 ?? 1.0; _expandedTop = screen.Top / dpiY; _expandedLeft = this.Left; }
+                var helper = new WindowInteropHelper(this);
+                var screen = System.Windows.Forms.Screen.FromHandle(helper.Handle).WorkingArea;
+                double dpiX = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+                double dpiY = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice.M22 ?? 1.0;
+
+                if (_dockState == DockState.Bottom) { _expandedTop = (screen.Bottom / dpiY) - _expandedHeight; _expandedLeft = this.Left; }
+                else if (_dockState == DockState.Right) { _expandedLeft = (screen.Right / dpiX) - _expandedWidth; _expandedTop = this.Top; }
+                else if (_dockState == DockState.Left) { _expandedLeft = screen.Left / dpiX; _expandedTop = this.Top; }
+                else if (_dockState == DockState.Top) { _expandedTop = screen.Top / dpiY; _expandedLeft = this.Left; }
                 else { _expandedLeft = this.Left; _expandedTop = this.Top; }
 
-                if (wasRolledUpBeforeDrag)
+                if (_wasRolledUpBeforeDrag)
                 {
                     _isRolledUp = true;
-                    if (this.IsMouseOver) { _isTemporarilyRevealed = true; if (_dockState == DockState.Left || _dockState == DockState.Right) this.Width = _expandedWidth; else this.Height = _expandedHeight; this.Left = _expandedLeft; this.Top = _expandedTop; }
-                    else { _isTemporarilyRevealed = false; if (_dockState == DockState.Bottom) { this.Height = HEADER_SIZE; this.Top = _expandedTop + (_expandedHeight - HEADER_SIZE); } else if (_dockState == DockState.Right) { this.Width = HEADER_SIZE; this.Left = _expandedLeft + (_expandedWidth - HEADER_SIZE); } else { this.Height = HEADER_SIZE; this.Width = _expandedWidth; this.Left = _expandedLeft; this.Top = _expandedTop; } AnimateRollUp(); }
+                    if (this.IsMouseOver)
+                    {
+                        _isTemporarilyRevealed = true;
+                        if (_dockState == DockState.Left || _dockState == DockState.Right) this.Width = _expandedWidth;
+                        else this.Height = _expandedHeight;
+                        this.Left = _expandedLeft; this.Top = _expandedTop;
+                    }
+                    else
+                    {
+                        _isTemporarilyRevealed = false;
+                        if (_dockState == DockState.Bottom) { this.Height = HEADER_SIZE; this.Top = _expandedTop + (_expandedHeight - HEADER_SIZE); }
+                        else if (_dockState == DockState.Right) { this.Width = HEADER_SIZE; this.Left = _expandedLeft + (_expandedWidth - HEADER_SIZE); }
+                        else { this.Height = HEADER_SIZE; this.Width = _expandedWidth; this.Left = _expandedLeft; this.Top = _expandedTop; }
+                        AnimateRollUp();
+                    }
                 }
                 else { this.Left = _expandedLeft; this.Top = _expandedTop; }
+
                 SaveFenceState();
             }
         }
@@ -345,7 +448,9 @@ namespace DesktopFences
             if (_isRolledUp && !_isTemporarilyRevealed) return;
             this.BeginAnimation(Window.HeightProperty, null); this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null);
             if (_isRolledUp || _isTemporarilyRevealed) { _isRolledUp = false; _isTemporarilyRevealed = false; }
-            ReleaseCapture(); SendMessage(new WindowInteropHelper(this).Handle, WM_SYSCOMMAND, (IntPtr)(SC_SIZE + direction), IntPtr.Zero);
+            ReleaseCapture();
+            var helper = new WindowInteropHelper(this);
+            SendMessage(helper.Handle, WM_SYSCOMMAND, (IntPtr)(SC_SIZE + direction), IntPtr.Zero);
             DetermineDockState(); UpdateDockOrientation(); _expandedLeft = this.Left; _expandedTop = this.Top; _expandedWidth = this.Width; _expandedHeight = this.Height; SaveFenceState();
         }
 
@@ -362,7 +467,7 @@ namespace DesktopFences
         {
             if (e.ClickCount == 2) return;
             e.Handled = true; TitleText.Visibility = Visibility.Collapsed;
-            TextBox renameBox = new TextBox { Text = TitleText.Text, Width = 140, Height = 22, Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Foreground = Brushes.White, BorderThickness = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, TextAlignment = TextAlignment.Left, FontFamily = TitleText.FontFamily, FontWeight = FontWeights.SemiBold, Padding = new Thickness(2, 0, 0, 0) };
+            TextBox renameBox = new() { Text = TitleText.Text, Width = 140, Height = 22, Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Foreground = Brushes.White, BorderThickness = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, TextAlignment = TextAlignment.Left, FontFamily = TitleText.FontFamily, FontWeight = FontWeights.SemiBold, Padding = new Thickness(2, 0, 0, 0) };
             TitleStack.Children.Add(renameBox); renameBox.Focus(); renameBox.SelectAll();
             renameBox.KeyDown += (s2, e2) => { if (e2.Key == Key.Enter) { TitleText.Text = renameBox.Text; TitleStack.Children.Remove(renameBox); TitleText.Visibility = Visibility.Visible; SaveFenceState(); } else if (e2.Key == Key.Escape) { TitleStack.Children.Remove(renameBox); TitleText.Visibility = Visibility.Visible; } };
             renameBox.LostFocus += (s2, e2) => { if (TitleStack.Children.Contains(renameBox)) { TitleText.Text = renameBox.Text; TitleStack.Children.Remove(renameBox); TitleText.Visibility = Visibility.Visible; SaveFenceState(); } };
@@ -384,69 +489,209 @@ namespace DesktopFences
         private void Window_DragLeave(object sender, DragEventArgs e) { Point pt = e.GetPosition(this); if (pt.X <= 2 || pt.Y <= 2 || pt.X >= this.ActualWidth - 2 || pt.Y >= this.ActualHeight - 2) { if (_isRolledUp && _isTemporarilyRevealed) { AnimateRollUp(); _isTemporarilyRevealed = false; } } }
         private void HandleMenuClosed() { _isContextMenuOpen = false; if (!this.IsMouseOver && _isRolledUp && _isTemporarilyRevealed && !_isDraggingSelectionBox) { AnimateRollUp(); _isTemporarilyRevealed = false; } }
 
-        private void MenuIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { e.Handled = true; HeaderContextMenu.PlacementTarget = HeaderBorder; HeaderContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom; HeaderContextMenu.IsOpen = true; }
-        private void Menu_NewFence_Click(object sender, RoutedEventArgs e) { MainWindow newFence = new MainWindow(Guid.NewGuid().ToString()); newFence.Left = this.Left + 50; newFence.Top = this.Top + 50; newFence.Show(); }
+        private void MenuIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; _isContextMenuOpen = true;
+            HeaderContextMenu.PlacementTarget = HeaderBorder;
+            HeaderContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            HeaderContextMenu.IsOpen = true;
+        }
+        private void Menu_NewFence_Click(object sender, RoutedEventArgs e) { MainWindow newFence = new(Guid.NewGuid().ToString()); newFence.Left = this.Left + 50; newFence.Top = this.Top + 50; newFence.Show(); }
         private void Menu_DeleteFence_Click(object sender, RoutedEventArgs e) { if (MessageBox.Show("Permanently delete this fence?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); } }
         private void Menu_RollUp_Click(object sender, RoutedEventArgs e) { ToggleRollUp(); }
         private void Menu_Sort_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedSort || clickedSort.Tag == null) return; _saveSortMethod = clickedSort.Tag.ToString() ?? "None"; ApplySorting(); SaveFenceState(); }
 
         private void Menu_IconSize_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedItem || clickedItem.Tag == null) return; if (double.TryParse(clickedItem.Tag.ToString(), out double newSize)) { _currentIconSize = newSize; RefreshIconUI(); SaveFenceState(); } }
-        private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new SettingsWindow(this); settings.Owner = this; settings.ShowDialog(); }
+        private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.ShowDialog(); }
         private void Menu_CopyColor_Click(object sender, RoutedEventArgs e) { string hexColor = $"#{_currentFenceColor.R:X2}{_currentFenceColor.G:X2}{_currentFenceColor.B:X2}"; for (int i = 0; i < 10; i++) { try { Clipboard.SetText(hexColor); return; } catch (System.Runtime.InteropServices.COMException) { System.Threading.Thread.Sleep(10); } } }
-        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new SolidColorBrush(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new ColorPickerWindow(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
+        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
 
         private void ApplySorting() { if (_saveSortMethod != "None" && _saveSortMethod != "DateAdd") { try { switch (_saveSortMethod) { case "Name": _currentFiles.Sort((a, b) => string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase)); break; case "Size": _currentFiles.Sort((a, b) => GetFileSize(b).CompareTo(GetFileSize(a))); break; case "Type": _currentFiles.Sort((a, b) => string.Compare(Path.GetExtension(a), Path.GetExtension(b), StringComparison.OrdinalIgnoreCase)); break; case "DateMod": _currentFiles.Sort((a, b) => File.GetLastWriteTime(b).CompareTo(File.GetLastWriteTime(a))); break; case "DateCre": _currentFiles.Sort((a, b) => File.GetCreationTime(b).CompareTo(File.GetCreationTime(a))); break; } } catch { } } RefreshIconUI(); }
-        private long GetFileSize(string path) { try { return new FileInfo(path).Length; } catch { return 0; } }
+        private static long GetFileSize(string path) { try { return new FileInfo(path).Length; } catch { return 0; } }
 
         private void RefreshIconUI()
         {
             IconPanel.Children.Clear(); ClearSelection();
             if (_currentFiles.Count == 0) { IconPanel.Children.Add(new TextBlock { Margin = new Thickness(10), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#88FFFFFF")!, Text = "Drop shortcuts here..." }); return; }
-            string searchQuery = SearchBox.Text.ToLower();
-            foreach (string file in _currentFiles) { if (!string.IsNullOrWhiteSpace(searchQuery) && !Path.GetFileNameWithoutExtension(file).ToLower().Contains(searchQuery)) continue; AddIconToUI(file); }
+
+            string searchQuery = SearchBox.Text;
+            foreach (string file in _currentFiles)
+            {
+                if (!string.IsNullOrWhiteSpace(searchQuery) && !Path.GetFileNameWithoutExtension(file).Contains(searchQuery, StringComparison.OrdinalIgnoreCase)) continue;
+                AddIconToUI(file);
+            }
         }
 
-        private void Window_Drop(object sender, DragEventArgs e) { if (e.Data.GetDataPresent(DataFormats.FileDrop)) { string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[]; if (files != null) { foreach (string file in files) { if (!_currentFiles.Contains(file)) { _currentFiles.Add(file); } } ApplySorting(); SaveFenceState(); } string? sourceId = e.Data.GetData("FenceSourceId") as string; if (!string.IsNullOrEmpty(sourceId) && sourceId != _fenceId) e.Effects = DragDropEffects.Move; else e.Effects = DragDropEffects.None; } }
+        private void Window_Drop(object sender, DragEventArgs e) { if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files) { foreach (string file in files) { if (!_currentFiles.Contains(file)) { _currentFiles.Add(file); } } ApplySorting(); SaveFenceState(); string? sourceId = e.Data.GetData("FenceSourceId") as string; if (!string.IsNullOrEmpty(sourceId) && sourceId != _fenceId) e.Effects = DragDropEffects.Move; else e.Effects = DragDropEffects.None; } }
 
         private ImageSource? GetHighResIcon(string filePath)
         {
-            try { Guid iid = new Guid("bcc18b79-ba16-442f-80c4-8a59c30d463b"); SHCreateItemFromParsingName(filePath, IntPtr.Zero, iid, out IShellItemImageFactory factory); factory.GetImage(new NativeSize { Width = 128, Height = 128 }, 0x0, out IntPtr hbitmap); ImageSource imgSrc = Imaging.CreateBitmapSourceFromHBitmap(hbitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); DeleteObject(hbitmap); return imgSrc; }
-            catch { try { using (System.Drawing.Icon? sysIcon = System.Drawing.Icon.ExtractAssociatedIcon(filePath)) { if (sysIcon == null) return null; return Imaging.CreateBitmapSourceFromHIcon(sysIcon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); } } catch { return null; } }
+            try
+            {
+                Guid iid = new("bcc18b79-ba16-442f-80c4-8a59c30d463b");
+                int hr = SHCreateItemFromParsingName(filePath, IntPtr.Zero, in iid, out IShellItemImageFactory factory);
+
+                if (hr == 0 && factory != null)
+                {
+                    factory.GetImage(new NativeSize { Width = 128, Height = 128 }, 0x0, out IntPtr hbitmap);
+
+                    if (hbitmap != IntPtr.Zero)
+                    {
+                        ImageSource imgSrc = Imaging.CreateBitmapSourceFromHBitmap(hbitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        DeleteObject(hbitmap);
+                        return imgSrc;
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                using System.Drawing.Icon? sysIcon = System.Drawing.Icon.ExtractAssociatedIcon(filePath);
+                if (sysIcon != null)
+                {
+                    return Imaging.CreateBitmapSourceFromHIcon(sysIcon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                }
+            }
+            catch { }
+
+            return null;
         }
 
         private void AddIconToUI(string file)
         {
             string currentFilePath = file; double containerWidth = _currentIconSize + 24;
-            StackPanel itemContainer = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(8), Width = containerWidth, ToolTip = currentFilePath, Background = System.Windows.Media.Brushes.Transparent };
-            System.Windows.Controls.Image iconImage = new System.Windows.Controls.Image { Source = GetHighResIcon(currentFilePath), Width = _currentIconSize, Height = _currentIconSize, Margin = new Thickness(0, 0, 0, 5) };
-            TextBlock textBlock = new TextBlock { Text = Path.GetFileNameWithoutExtension(currentFilePath), Foreground = System.Windows.Media.Brushes.White, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, FontSize = 11, TextWrapping = TextWrapping.Wrap };
+            StackPanel itemContainer = new() { Orientation = Orientation.Vertical, Margin = new Thickness(8), Width = containerWidth, ToolTip = currentFilePath, Background = System.Windows.Media.Brushes.Transparent };
+            System.Windows.Controls.Image iconImage = new() { Source = GetHighResIcon(currentFilePath), Width = _currentIconSize, Height = _currentIconSize, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock textBlock = new() { Text = Path.GetFileNameWithoutExtension(currentFilePath), Foreground = System.Windows.Media.Brushes.White, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, FontSize = 11, TextWrapping = TextWrapping.Wrap };
 
-            ContextMenu rightClickMenu = new ContextMenu(); rightClickMenu.Opened += ContextMenu_Opened_ApplyBlur; rightClickMenu.AddHandler(MenuItem.SubmenuOpenedEvent, new RoutedEventHandler(Submenu_Opened_ApplyBlur));
-            MenuItem renameItem = new MenuItem { Header = "Rename File" }; MenuItem removeItem = new MenuItem { Header = "Remove from Fence" }; removeItem.Click += (s, args) => { _currentFiles.Remove(currentFilePath); ApplySorting(); SaveFenceState(); };
+            ContextMenu rightClickMenu = new(); rightClickMenu.Opened += ContextMenu_Opened_ApplyBlur; rightClickMenu.AddHandler(MenuItem.SubmenuOpenedEvent, new RoutedEventHandler(Submenu_Opened_ApplyBlur));
+            MenuItem renameItem = new() { Header = "Rename File" };
+            MenuItem removeItem = new() { Header = "Remove from Fence" };
 
-            Action triggerRename = () => {
-                textBlock.Visibility = Visibility.Collapsed; TextBox renameBox = new TextBox { Text = textBlock.Text, Width = containerWidth, Margin = new Thickness(-5, 0, -5, 0), Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Foreground = Brushes.White, BorderThickness = new Thickness(0), TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
-                itemContainer.Children.Add(renameBox); renameBox.Focus(); renameBox.SelectAll();
-                renameBox.KeyDown += (s2, e2) => { if (e2.Key == Key.Enter) { try { string? dir = Path.GetDirectoryName(currentFilePath); string ext = Path.GetExtension(currentFilePath); if (dir != null) { string newPath = Path.Combine(dir, renameBox.Text + ext); if (currentFilePath != newPath && !File.Exists(newPath)) { File.Move(currentFilePath, newPath); _currentFiles.Remove(currentFilePath); _currentFiles.Add(newPath); ApplySorting(); SaveFenceState(); } else { itemContainer.Children.Remove(renameBox); textBlock.Visibility = Visibility.Visible; } } } catch { MessageBox.Show("Could not rename file.", "Error"); itemContainer.Children.Remove(renameBox); textBlock.Visibility = Visibility.Visible; } } else if (e2.Key == Key.Escape) { itemContainer.Children.Remove(renameBox); textBlock.Visibility = Visibility.Visible; } };
-                renameBox.LostFocus += (s2, e2) => { if (itemContainer.Children.Contains(renameBox)) { itemContainer.Children.Remove(renameBox); textBlock.Visibility = Visibility.Visible; } };
+            removeItem.Click += (s, args) => {
+                if (_selectedItems.Count > 1 && _selectedItems.Contains(itemContainer))
+                {
+                    foreach (StackPanel selectedPanel in _selectedItems)
+                    {
+                        if (selectedPanel.ToolTip is string path) _currentFiles.Remove(path);
+                    }
+                }
+                else
+                {
+                    _currentFiles.Remove(currentFilePath);
+                }
+
+                ClearSelection();
+                ApplySorting();
+                SaveFenceState();
             };
 
-            renameItem.Click += (s, args) => triggerRename(); rightClickMenu.Items.Add(renameItem); rightClickMenu.Items.Add(removeItem); itemContainer.ContextMenu = rightClickMenu; rightClickMenu.Opened += (s, args) => _isContextMenuOpen = true; rightClickMenu.Closed += (s, args) => HandleMenuClosed();
-            textBlock.MouseLeftButtonDown += (s, args) => { if (args.ClickCount == 2) return; args.Handled = true; triggerRename(); };
+            void TriggerRename()
+            {
+                textBlock.Visibility = Visibility.Collapsed;
+                TextBox renameBox = new() { Text = textBlock.Text, Width = containerWidth, Margin = new Thickness(-5, 0, -5, 0), Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Foreground = Brushes.White, BorderThickness = new Thickness(0), TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
+                itemContainer.Children.Add(renameBox); renameBox.Focus(); renameBox.SelectAll();
+
+                bool isHandlingRename = false;
+
+                void CommitRename()
+                {
+                    if (isHandlingRename) return;
+                    isHandlingRename = true;
+
+                    try
+                    {
+                        string? dir = Path.GetDirectoryName(currentFilePath);
+                        string ext = Path.GetExtension(currentFilePath);
+                        if (dir != null)
+                        {
+                            string newPath = Path.Combine(dir, renameBox.Text + ext);
+                            if (currentFilePath != newPath && !File.Exists(newPath))
+                            {
+                                File.Move(currentFilePath, newPath);
+                                _currentFiles.Remove(currentFilePath);
+                                _currentFiles.Add(newPath);
+                                ApplySorting();
+                                SaveFenceState();
+                                return;
+                            }
+                        }
+                    }
+                    catch { MessageBox.Show("Could not rename file.", "Error"); }
+
+                    if (itemContainer.Children.Contains(renameBox))
+                    {
+                        itemContainer.Children.Remove(renameBox);
+                        textBlock.Visibility = Visibility.Visible;
+                    }
+                }
+
+                renameBox.KeyDown += (s2, e2) => {
+                    if (e2.Key == Key.Enter) { CommitRename(); }
+                    else if (e2.Key == Key.Escape)
+                    {
+                        isHandlingRename = true;
+                        if (itemContainer.Children.Contains(renameBox))
+                        {
+                            itemContainer.Children.Remove(renameBox);
+                            textBlock.Visibility = Visibility.Visible;
+                        }
+                    }
+                };
+
+                renameBox.LostFocus += (s2, e2) => { CommitRename(); };
+            }
+
+            renameItem.Click += (s, args) => TriggerRename(); rightClickMenu.Items.Add(renameItem); rightClickMenu.Items.Add(removeItem); itemContainer.ContextMenu = rightClickMenu; rightClickMenu.Opened += (s, args) => _isContextMenuOpen = true; rightClickMenu.Closed += (s, args) => HandleMenuClosed();
+            textBlock.MouseLeftButtonDown += (s, args) => { if (args.ClickCount == 2) return; args.Handled = true; TriggerRename(); };
 
             System.Windows.Point? dragStartPoint = null;
             itemContainer.PreviewMouseLeftButtonDown += (s, args) => { dragStartPoint = args.GetPosition(null); bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl); if (isCtrlPressed) { if (_selectedItems.Contains(itemContainer)) { itemContainer.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(itemContainer); } else { itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } } else if (!_selectedItems.Contains(itemContainer)) { ClearSelection(); itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } };
-            itemContainer.PreviewMouseMove += (s, args) => { if (args.LeftButton == MouseButtonState.Pressed && dragStartPoint.HasValue) { System.Windows.Point currentPoint = args.GetPosition(null); if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance) { DataObject dragData = new DataObject(DataFormats.FileDrop, new string[] { currentFilePath }); dragData.SetData("FenceSourceId", _fenceId); DragDropEffects result = DragDrop.DoDragDrop(itemContainer, dragData, DragDropEffects.Move | DragDropEffects.Copy); if (result == DragDropEffects.Move) { _currentFiles.Remove(currentFilePath); ApplySorting(); SaveFenceState(); } dragStartPoint = null; } } };
-            itemContainer.MouseDown += (s, args) => { if (args.ClickCount == 2 && args.ChangedButton == MouseButton.Left) { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = currentFilePath, UseShellExecute = true }); } catch (Exception ex) { MessageBox.Show($"Could not open file.\nError: {ex.Message}", "Launch Error"); } } };
+            itemContainer.PreviewMouseMove += (s, args) => { if (args.LeftButton == MouseButtonState.Pressed && dragStartPoint.HasValue) { System.Windows.Point currentPoint = args.GetPosition(null); if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance) { DataObject dragData = new(DataFormats.FileDrop, new[] { currentFilePath }); dragData.SetData("FenceSourceId", _fenceId); DragDropEffects result = DragDrop.DoDragDrop(itemContainer, dragData, DragDropEffects.Move | DragDropEffects.Copy); if (result == DragDropEffects.Move) { _currentFiles.Remove(currentFilePath); ApplySorting(); SaveFenceState(); } dragStartPoint = null; } } };
+            itemContainer.MouseDown += (s, args) => {
+                if (args.ClickCount == 2 && args.ChangedButton == MouseButton.Left)
+                {
+                    if (File.Exists(currentFilePath) || Directory.Exists(currentFilePath))
+                    {
+                        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = currentFilePath, UseShellExecute = true }); }
+                        catch (Exception ex) { MessageBox.Show($"Could not open file.\nError: {ex.Message}", "Launch Error"); }
+                    }
+                    else { MessageBox.Show("This file or folder no longer exists.", "Shortcut Error", MessageBoxButton.OK, MessageBoxImage.Warning); _currentFiles.Remove(currentFilePath); RefreshIconUI(); SaveFenceState(); }
+                }
+            };
             itemContainer.Children.Add(iconImage); itemContainer.Children.Add(textBlock); IconPanel.Children.Add(itemContainer);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadFenceState(); ApplyAcrylicBlur(_currentFenceColor, _currentOpacity);
-            IntPtr myWindowHandle = new WindowInteropHelper(this).Handle; SetWindowPos(myWindowHandle, (IntPtr)HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            var helper = new WindowInteropHelper(this);
+            IntPtr myWindowHandle = helper.Handle; SetWindowPos(myWindowHandle, (IntPtr)HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             HwndSource? source = HwndSource.FromHwnd(myWindowHandle); if (source != null) source.AddHook(new HwndSourceHook(WndProc));
-            this.PreviewKeyDown += Window_PreviewKeyDown; HeaderContextMenu.Opened += (s, args) => _isContextMenuOpen = true; HeaderContextMenu.Closed += (s, args) => HandleMenuClosed(); this.PreviewMouseRightButtonDown += (s, args) => _isContextMenuOpen = true;
+            this.PreviewKeyDown += Window_PreviewKeyDown;
+
+            HeaderContextMenu.Opened += (s, args) => {
+                _isContextMenuOpen = true; MenuRollUpFence.IsChecked = _isRolledUp;
+            };
+
+            HeaderContextMenu.Closed += (s, args) => HandleMenuClosed();
+            this.PreviewMouseRightButtonDown += (s, args) => _isContextMenuOpen = true;
+
+            // Load Taskbar Preference
+            string globalConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "global_config.json");
+            bool showInTaskbar = true;
+            try
+            {
+                if (File.Exists(globalConfigPath))
+                {
+                    string json = File.ReadAllText(globalConfigPath);
+                    if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config) showInTaskbar = config.ShowTaskbarIcon;
+                }
+            }
+            catch { }
+
+            this.ShowInTaskbar = showInTaskbar;
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -457,10 +702,23 @@ namespace DesktopFences
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (Keyboard.Modifiers == ModifierKeys.Control) { var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle); var workArea = screen.WorkingArea; PresentationSource? source = PresentationSource.FromVisual(this); double dpiX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0; double dpiY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1.0; double logicalLeft = workArea.Left / dpiX; double logicalTop = workArea.Top / dpiY; double logicalRight = workArea.Right / dpiX; double logicalBottom = workArea.Bottom / dpiY; bool wasHandled = false; this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null); this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.HeightProperty, null); if (_isRolledUp) { _isRolledUp = false; _isTemporarilyRevealed = false; this.Width = _expandedWidth; this.Height = _expandedHeight; } if (e.Key == Key.Up) { this.Top = logicalTop; wasHandled = true; } else if (e.Key == Key.Down) { this.Top = logicalBottom - this.Height; wasHandled = true; } else if (e.Key == Key.Left) { this.Left = logicalLeft; wasHandled = true; } else if (e.Key == Key.Right) { this.Left = logicalRight - this.Width; wasHandled = true; } if (wasHandled) { e.Handled = true; DetermineDockState(); UpdateDockOrientation(); _expandedLeft = this.Left; _expandedTop = this.Top; _expandedWidth = this.Width; _expandedHeight = this.Height; SaveFenceState(); } }
+            if (e.Key == Key.Delete && _selectedItems.Count > 0 && !(e.OriginalSource is TextBox))
+            {
+                foreach (StackPanel selectedPanel in _selectedItems)
+                {
+                    if (selectedPanel.ToolTip is string path) _currentFiles.Remove(path);
+                }
+                ClearSelection();
+                ApplySorting();
+                SaveFenceState();
+                e.Handled = true;
+                return;
+            }
+
+            if (Keyboard.Modifiers == ModifierKeys.Control) { var helper = new WindowInteropHelper(this); var screen = System.Windows.Forms.Screen.FromHandle(helper.Handle); var workArea = screen.WorkingArea; PresentationSource? source = PresentationSource.FromVisual(this); double dpiX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0; double dpiY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1.0; double logicalLeft = workArea.Left / dpiX; double logicalTop = workArea.Top / dpiY; double logicalRight = workArea.Right / dpiX; double logicalBottom = workArea.Bottom / dpiY; bool wasHandled = false; this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null); this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.HeightProperty, null); if (_isRolledUp) { _isRolledUp = false; _isTemporarilyRevealed = false; this.Width = _expandedWidth; this.Height = _expandedHeight; } if (e.Key == Key.Up) { this.Top = logicalTop; wasHandled = true; } else if (e.Key == Key.Down) { this.Top = logicalBottom - this.Height; wasHandled = true; } else if (e.Key == Key.Left) { this.Left = logicalLeft; wasHandled = true; } else if (e.Key == Key.Right) { this.Left = logicalRight - this.Width; wasHandled = true; } if (wasHandled) { e.Handled = true; DetermineDockState(); UpdateDockOrientation(); _expandedLeft = this.Left; _expandedTop = this.Top; _expandedWidth = this.Width; _expandedHeight = this.Height; SaveFenceState(); } }
         }
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e) { if (!_isDeleted) SaveFenceState(); base.OnClosing(e); }
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e) { if (!_isDeleted) PerformDiskWrite(); base.OnClosing(e); }
         private void ClearSelection() { foreach (var item in _selectedItems) item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Clear(); }
         private void IconPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is ScrollViewer || e.OriginalSource is WrapPanel) { ClearSelection(); _selectionStartPoint = e.GetPosition(SelectionCanvas); _isDraggingSelectionBox = true; SelectionBox.Visibility = Visibility.Visible; SelectionBox.Width = 0; SelectionBox.Height = 0; Canvas.SetLeft(SelectionBox, _selectionStartPoint.X); Canvas.SetTop(SelectionBox, _selectionStartPoint.Y); IconPanel.CaptureMouse(); } }
         private void IconPanel_MouseMove(object sender, MouseEventArgs e) { if (_isDraggingSelectionBox) { System.Windows.Point currentPoint = e.GetPosition(SelectionCanvas); double x = Math.Min(currentPoint.X, _selectionStartPoint.X); double y = Math.Min(currentPoint.Y, _selectionStartPoint.Y); double width = Math.Abs(currentPoint.X - _selectionStartPoint.X); double height = Math.Abs(currentPoint.Y - _selectionStartPoint.Y); Canvas.SetLeft(SelectionBox, x); Canvas.SetTop(SelectionBox, y); SelectionBox.Width = width; SelectionBox.Height = height; Rect selectionRect = new Rect(x, y, width, height); foreach (UIElement child in IconPanel.Children) { if (child is StackPanel item) { System.Windows.Point itemPos = item.TranslatePoint(new System.Windows.Point(0, 0), SelectionCanvas); Rect itemRect = new Rect(itemPos, new Size(item.ActualWidth, item.ActualHeight)); if (selectionRect.IntersectsWith(itemRect)) { if (!_selectedItems.Contains(item)) { item.Background = _highlightBrush; _selectedItems.Add(item); } } else if (_selectedItems.Contains(item)) { item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(item); } } } } }
@@ -469,17 +727,29 @@ namespace DesktopFences
 
     public class FenceData
     {
-        public double Left { get; set; }
-        public double Top { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public bool IsRolledUp { get; set; } = false;
-        public double ExpandedHeight { get; set; } = 300; public double ExpandedWidth { get; set; } = 250; public double ExpandedLeft { get; set; } = 0; public double ExpandedTop { get; set; } = 0;
-        public string Title { get; set; } = "Fluid Fence"; public string HexColor { get; set; } = "#000000";
-        public double Opacity { get; set; } = 0.7; public string SortMethod { get; set; } = "None";
-        public string AutoSortExtensions { get; set; } = "";
-        public double IconSize { get; set; } = 48;
-        public bool ShowSearch { get; set; } = true;
-        public List<string> Files { get; set; } = new List<string>();
+        [System.Text.Json.Serialization.JsonPropertyName("Left")] public double Left { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("Top")] public double Top { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("Width")] public double Width { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("Height")] public double Height { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("IsRolledUp")] public bool IsRolledUp { get; set; } = false;
+        [System.Text.Json.Serialization.JsonPropertyName("ExpandedHeight")] public double ExpandedHeight { get; set; } = 300;
+        [System.Text.Json.Serialization.JsonPropertyName("ExpandedWidth")] public double ExpandedWidth { get; set; } = 250;
+        [System.Text.Json.Serialization.JsonPropertyName("ExpandedLeft")] public double ExpandedLeft { get; set; } = 0;
+        [System.Text.Json.Serialization.JsonPropertyName("ExpandedTop")] public double ExpandedTop { get; set; } = 0;
+        [System.Text.Json.Serialization.JsonPropertyName("Title")] public string Title { get; set; } = "Fluid Fence";
+        [System.Text.Json.Serialization.JsonPropertyName("HexColor")] public string HexColor { get; set; } = "#000000";
+        [System.Text.Json.Serialization.JsonPropertyName("Opacity")] public double Opacity { get; set; } = 0.7;
+        [System.Text.Json.Serialization.JsonPropertyName("SortMethod")] public string SortMethod { get; set; } = "None";
+        [System.Text.Json.Serialization.JsonPropertyName("AutoSortExtensions")] public string AutoSortExtensions { get; set; } = "";
+        [System.Text.Json.Serialization.JsonPropertyName("IconSize")] public double IconSize { get; set; } = 48;
+        [System.Text.Json.Serialization.JsonPropertyName("ShowSearch")] public bool ShowSearch { get; set; } = true;
+        [System.Text.Json.Serialization.JsonPropertyName("Files")] public List<string> Files { get; set; } = new();
+    }
+
+    // NEW: Global Settings Object
+    public class GlobalConfig
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("FirstRunComplete")] public bool FirstRunComplete { get; set; } = true;
+        [System.Text.Json.Serialization.JsonPropertyName("ShowTaskbarIcon")] public bool ShowTaskbarIcon { get; set; } = true;
     }
 }

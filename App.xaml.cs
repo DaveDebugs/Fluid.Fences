@@ -1,139 +1,117 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
+using Application = System.Windows.Application;
 
 namespace DesktopFences
 {
-    public partial class App : System.Windows.Application
+    public partial class App : Application
     {
+        private static Mutex? _mutex = null;
         private NotifyIcon? _trayIcon;
 
-        private void Application_Startup(object sender, StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
-            _trayIcon = new NotifyIcon
+            // 1. SINGLE INSTANCE MUTEX: Prevent multiple versions of the app from running simultaneously
+            const string appName = "FluidFencesSingleInstance_v1";
+            _mutex = new Mutex(true, appName, out bool createdNew);
+
+            if (!createdNew)
             {
-                Icon = System.Drawing.SystemIcons.Application,
-                Visible = true,
-                Text = "Fluid Fences"
+                Application.Current.Shutdown();
+                return;
+            }
+
+            // 2. BACKGROUND MODE: Keep the app alive in the system tray even if all fences are deleted/closed
+            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            base.OnStartup(e);
+
+            InitializeTrayIcon();
+            LoadSavedFences();
+        }
+
+        private void InitializeTrayIcon()
+        {
+            _trayIcon = new NotifyIcon();
+            // Automatically grabs your app's main icon file
+            _trayIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName);
+            _trayIcon.Visible = true;
+            _trayIcon.Text = "Fluid Fences";
+
+            // Double-click to open Settings
+            _trayIcon.DoubleClick += (s, args) => { new SettingsWindow(null).Show(); };
+
+            // Right-click menu
+            ContextMenuStrip menu = new ContextMenuStrip();
+
+            ToolStripMenuItem newFenceItem = new ToolStripMenuItem("Create New Fence");
+            newFenceItem.Click += (s, args) => { new MainWindow(Guid.NewGuid().ToString()).Show(); };
+
+            ToolStripMenuItem settingsItem = new ToolStripMenuItem("Settings...");
+            settingsItem.Click += (s, args) => { new SettingsWindow(null).Show(); };
+
+            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit Fluid Fences");
+            exitItem.Click += (s, args) => {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                Application.Current.Shutdown();
             };
 
-            _trayIcon.ContextMenuStrip = new ContextMenuStrip();
-            _trayIcon.ContextMenuStrip.Items.Add("Clean Up Desktop (Auto-Sort)", null, OnCleanDesktopClicked);
-            _trayIcon.ContextMenuStrip.Items.Add("-");
-            _trayIcon.ContextMenuStrip.Items.Add("Create New Fence", null, OnNewFenceClicked);
-            _trayIcon.ContextMenuStrip.Items.Add("Settings", null, OnSettingsClicked);
-            _trayIcon.ContextMenuStrip.Items.Add("-");
-            _trayIcon.ContextMenuStrip.Items.Add("Exit Fluid Fences", null, OnExitClicked);
+            menu.Items.Add(newFenceItem);
+            menu.Items.Add(settingsItem);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(exitItem);
 
-            string saveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Fences");
-            bool loadedFences = false;
+            _trayIcon.ContextMenuStrip = menu;
+        }
 
-            if (Directory.Exists(saveDirectory))
+        private void LoadSavedFences()
+        {
+            string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
+            string globalConfigPath = Path.Combine(configFolder, "global_config.json");
+            string saveDirectory = Path.Combine(configFolder, "Fences");
+
+            // Check if this is the first time the app has ever been run
+            if (!File.Exists(globalConfigPath))
             {
-                string[] fenceFiles = Directory.GetFiles(saveDirectory, "*.json");
-                if (fenceFiles.Length > 0)
-                {
-                    foreach (string file in fenceFiles)
-                    {
-                        string fenceId = Path.GetFileNameWithoutExtension(file);
-                        MainWindow fence = new MainWindow(fenceId);
-                        fence.Show();
-                    }
-                    loadedFences = true;
-                }
-            }
+                Directory.CreateDirectory(configFolder);
+                File.WriteAllText(globalConfigPath, "{\"FirstRunComplete\": true, \"ShowTaskbarIcon\": true}");
 
-            if (!loadedFences)
-            {
+                // Spawn default fence and welcome screen
                 MainWindow defaultFence = new MainWindow("designer");
                 defaultFence.Show();
+                new SettingsWindow(defaultFence, true).ShowDialog();
+                return;
             }
-        }
 
-        // ======================================================================
-        // THE AUTO-SORTING ENGINE
-        // ======================================================================
-        private void OnCleanDesktopClicked(object? sender, EventArgs e)
-        {
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string[] desktopFiles = Directory.GetFiles(desktopPath);
-            int movedCount = 0;
-
-            foreach (string filePath in desktopFiles)
+            // Load all existing fences
+            if (Directory.Exists(saveDirectory))
             {
-                // Never touch system configuration files
-                if (Path.GetFileName(filePath).ToLower() == "desktop.ini") continue;
-
-                string extension = Path.GetExtension(filePath).ToLower();
-
-                // Check every open fence to see if it wants this file type
-                foreach (Window window in System.Windows.Application.Current.Windows)
+                string[] files = Directory.GetFiles(saveDirectory, "*.json");
+                if (files.Length > 0)
                 {
-                    if (window is MainWindow fence && !string.IsNullOrWhiteSpace(fence.AutoSortExtensions))
+                    foreach (string file in files)
                     {
-                        string[] rules = fence.AutoSortExtensions.ToLower().Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                        bool isMatch = false;
-
-                        foreach (string rule in rules)
-                        {
-                            if (extension == rule || extension == "." + rule) { isMatch = true; break; }
-                        }
-
-                        if (isMatch)
-                        {
-                            try
-                            {
-                                // To truly clear the desktop, we move the files into a dedicated storage folder
-                                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Fluid Fences Storage", fence.FenceTitle);
-                                Directory.CreateDirectory(storageDir);
-
-                                string newFilePath = Path.Combine(storageDir, Path.GetFileName(filePath));
-
-                                if (!File.Exists(newFilePath))
-                                {
-                                    File.Move(filePath, newFilePath);
-                                    fence.AddFileFromAutoSort(newFilePath);
-                                    movedCount++;
-                                }
-                            }
-                            catch { /* Ignore files that are currently open/locked by Windows */ }
-                            break; // Once a file is sorted into one fence, stop checking the other fences
-                        }
+                        new MainWindow(Path.GetFileNameWithoutExtension(file)).Show();
                     }
+                    return;
                 }
             }
 
-            if (movedCount > 0)
-            {
-                foreach (Window window in System.Windows.Application.Current.Windows)
-                {
-                    if (window is MainWindow fence) fence.DashboardSaveAndRefresh();
-                }
-                System.Windows.MessageBox.Show($"Successfully swept up and sorted {movedCount} files from your desktop!", "Desktop Cleaned", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            // If they deleted all fences but run the app, spawn an empty one so they aren't confused
+            new MainWindow(Guid.NewGuid().ToString()).Show();
         }
 
-        private void OnNewFenceClicked(object? sender, EventArgs e) { MainWindow fence = new MainWindow(Guid.NewGuid().ToString()); fence.Show(); }
-
-        private void OnSettingsClicked(object? sender, EventArgs e)
+        protected override void OnExit(ExitEventArgs e)
         {
-            foreach (Window window in System.Windows.Application.Current.Windows)
+            if (_trayIcon != null)
             {
-                if (window is MainWindow main) { SettingsWindow settings = new SettingsWindow(main); settings.Show(); return; }
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
             }
+            base.OnExit(e);
         }
-
-        private void OnExitClicked(object? sender, EventArgs e)
-        {
-            foreach (Window window in System.Windows.Application.Current.Windows)
-            {
-                if (window is MainWindow main) main.DashboardSaveAndRefresh();
-            }
-            _trayIcon?.Dispose();
-            System.Windows.Application.Current.Shutdown();
-        }
-
-        protected override void OnExit(ExitEventArgs e) { _trayIcon?.Dispose(); base.OnExit(e); }
     }
 }
