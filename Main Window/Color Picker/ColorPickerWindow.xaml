@@ -135,13 +135,13 @@
                 </ComboBox>
 
                 <TextBlock Grid.Column="1" Text="Copy/paste/reset group style" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="#999" FontSize="12" Cursor="Hand"/>
-                <TextBlock Grid.Column="2" Text="🖋" Foreground="White" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5">
+                <TextBlock Grid.Column="2" Text="🖋" Foreground="White" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown">
                     <TextBlock.RenderTransform>
                         <RotateTransform Angle="135"/>
                     </TextBlock.RenderTransform></TextBlock>
             </Grid>
 
-            <CheckBox Content="Blend into wallpaper with Chameleon" Foreground="White" Margin="0,0,0,20"/>
+            <CheckBox x:Name="BlendWallpaperToggle" Content="Blend into wallpaper" Foreground="White" Margin="0,0,0,20" Click="BlendWallpaperToggle_Click"/>
 
             <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
@@ -228,7 +228,7 @@
                             <ComboBoxItem Content="Use Fence background color" IsSelected="True"/>
                             <ComboBoxItem Content="Custom Color"/>
                         </ComboBox>
-                        <TextBlock Grid.Column="2" Text="🖋" Foreground="#888" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5">
+                        <TextBlock Grid.Column="2" Text="🖋" Foreground="#888" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown">
                             <TextBlock.RenderTransform>
                                 <RotateTransform Angle="135"/>
                             </TextBlock.RenderTransform></TextBlock>

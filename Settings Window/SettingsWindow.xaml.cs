@@ -3,13 +3,21 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32; // Required for Windows Startup Registry
+using Microsoft.Win32;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace DesktopFences
 {
     public partial class SettingsWindow : Window
     {
+        // NEW: Win32 APIs for the screen pixel capture
+        [LibraryImport("user32.dll")] internal static partial IntPtr GetDC(IntPtr hwnd);
+        [LibraryImport("user32.dll")] internal static partial int ReleaseDC(IntPtr hwnd, IntPtr hDC);
+        [LibraryImport("gdi32.dll")] internal static partial uint GetPixel(IntPtr hDC, int x, int y);
+
         private MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
         private bool _isLoadingFenceData = false;
@@ -48,9 +56,92 @@ namespace DesktopFences
             };
         }
 
+        // --- NEW EYEDROPPER LOGIC ---
+        private void Eyedropper_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Create an invisible overlay covering all monitors to catch the user's click
+            Window pickerOverlay = new Window
+            {
+                WindowStyle = WindowStyle.None,
+                AllowsTransparency = true,
+                Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), // 1/255 opacity catches clicks but is invisible
+                Topmost = true,
+                Cursor = Cursors.Cross,
+                ShowInTaskbar = false,
+                Left = SystemParameters.VirtualScreenLeft,
+                Top = SystemParameters.VirtualScreenTop,
+                Width = SystemParameters.VirtualScreenWidth,
+                Height = SystemParameters.VirtualScreenHeight
+            };
+
+            pickerOverlay.PreviewMouseLeftButtonDown += (s, args) =>
+            {
+                // 1. Get exact screen coordinates of the click
+                var mousePos = System.Windows.Forms.Cursor.Position;
+
+                // 2. Hide the overlay so it doesn't tint our pixel read
+                pickerOverlay.Hide();
+
+                // 3. Force WPF to render the hidden window immediately
+                Application.Current.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+
+                // 4. Use Win32 to steal the raw pixel directly off the graphics card!
+                IntPtr hdc = GetDC(IntPtr.Zero);
+                uint pixel = GetPixel(hdc, mousePos.X, mousePos.Y);
+                ReleaseDC(IntPtr.Zero, hdc);
+
+                // 5. Win32 returns ABGR, so we extract the RGB bytes
+                byte r = (byte)(pixel & 0x000000FF);
+                byte g = (byte)((pixel & 0x0000FF00) >> 8);
+                byte b = (byte)((pixel & 0x00FF0000) >> 16);
+
+                Color pickedColor = Color.FromRgb(r, g, b);
+
+                // 6. Convert to HSL and update our sliders automatically
+                RgbToHsl(pickedColor, out double h, out double sat, out double l);
+
+                _isColorInitializing = true;
+                HueSlider.Value = h;
+                SaturationSlider.Value = sat;
+                LightnessSlider.Value = l;
+                _isColorInitializing = false;
+
+                // Ensure Blend mode is turned off so they can actually see the color they picked
+                if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = false;
+                if (AlphaSlider.Value <= 1) AlphaSlider.Value = 70;
+
+                UpdateColorPreview();
+                pickerOverlay.Close();
+            };
+
+            // Allow user to cancel by pressing Escape
+            pickerOverlay.PreviewKeyDown += (s, args) => { if (args.Key == Key.Escape) pickerOverlay.Close(); };
+
+            pickerOverlay.Show();
+        }
+
+        private static void RgbToHsl(Color rgb, out double h, out double s, out double l)
+        {
+            double r = rgb.R / 255.0; double g = rgb.G / 255.0; double b = rgb.B / 255.0;
+            double max = Math.Max(r, Math.Max(g, b)); double min = Math.Min(r, Math.Min(g, b));
+            l = (max + min) / 2.0;
+
+            if (max == min) { h = s = 0; }
+            else
+            {
+                double d = max - min;
+                s = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
+                if (max == r) h = (g - b) / d + (g < b ? 6 : 0);
+                else if (max == g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+                h /= 6;
+            }
+            h *= 360; s *= 100; l *= 100;
+        }
+        // ----------------------------
+
         private void LoadGlobalSettings()
         {
-            // 1. Load Taskbar JSON
             string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
             string globalConfigPath = Path.Combine(configFolder, "global_config.json");
             if (File.Exists(globalConfigPath))
@@ -66,7 +157,6 @@ namespace DesktopFences
                 catch { }
             }
 
-            // 2. Load Startup Registry Key
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
@@ -77,7 +167,6 @@ namespace DesktopFences
 
         private void SaveGlobalSettings_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Save Taskbar JSON
             string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
             string globalConfigPath = Path.Combine(configFolder, "global_config.json");
             bool showTaskbar = TaskbarToggle.IsChecked ?? true;
@@ -90,7 +179,6 @@ namespace DesktopFences
                 if (window is MainWindow fence) fence.ShowInTaskbar = showTaskbar;
             }
 
-            // 2. Save Startup Registry Key
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
@@ -124,7 +212,6 @@ namespace DesktopFences
                     FenceListBox.Items.Add(item1);
                     ColorFenceListBox.Items.Add(item2);
 
-                    // Select the calling fence, OR select the first item if opened from System Tray
                     if (fence == _callingFence || (_callingFence == null && FenceListBox.SelectedItem == null))
                     {
                         FenceListBox.SelectedItem = item1;
@@ -176,8 +263,7 @@ namespace DesktopFences
             Color startColor = fence.FenceColor;
             AlphaSlider.Value = fence.FenceOpacity * 100.0;
 
-            // NEW: Check the box automatically if the fence is already in "Blend" mode (1% opacity)
-            BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
+            if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
 
             System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
             HueSlider.Value = sysColor.GetHue();
@@ -192,8 +278,7 @@ namespace DesktopFences
         {
             if (_isColorInitializing || _currentlySelectedFence == null) return;
 
-            // NEW: If the user manually drags the transparency slider to 1, check the box. Otherwise, uncheck it.
-            if (sender == AlphaSlider)
+            if (sender == AlphaSlider && BlendWallpaperToggle != null)
             {
                 BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
             }
@@ -201,19 +286,12 @@ namespace DesktopFences
             UpdateColorPreview();
         }
 
-        // NEW: The engine that creates the pure frosted glass effect
         private void BlendWallpaperToggle_Click(object sender, RoutedEventArgs e)
         {
             if (_isColorInitializing || _currentlySelectedFence == null) return;
 
-            if (BlendWallpaperToggle.IsChecked == true)
-            {
-                AlphaSlider.Value = 1; // Drop to 1% for pure frosted glass
-            }
-            else
-            {
-                AlphaSlider.Value = 70; // Restore to a default readable tint
-            }
+            if (BlendWallpaperToggle.IsChecked == true) AlphaSlider.Value = 1;
+            else AlphaSlider.Value = 70;
         }
 
         private void UpdateColorPreview()

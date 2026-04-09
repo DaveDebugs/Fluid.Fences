@@ -326,83 +326,63 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="WhiteSliderStyle" TargetType="Slider">
-            <Setter Property="Margin" Value="10,0,0,0" />
-            <Setter Property="IsSnapToTickEnabled" Value="True" />
-            <Setter Property="TickFrequency" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid>
-                            <Border
-                                Height="4"
-                                VerticalAlignment="Center"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="2" />
-                            <Track x:Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb Width="14" Height="22">
-                                        <Thumb.Template>
-                                            <ControlTemplate>
-                                                <Path Data="M0,0 L14,0 L14,14 L7,22 L0,14 Z" Fill="#DDDDDD" />
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
     </Window.Resources>
 
     <Grid>
         <TabControl SelectedIndex="0">
 
             <TabItem Header="About">
-                <Grid Margin="40">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border
-                            Width="120"
-                            Height="120"
-                            Margin="0,0,0,20"
-                            HorizontalAlignment="Center">
-                            <Image Source="/Assets/FluidFences16BitLogo.png" Stretch="Uniform" />
-                        </Border>
+                <Grid Margin="40,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="3*" />
+                    </Grid.RowDefinitions>
+
+                    <Viewbox
+                        Grid.Row="0"
+                        MaxHeight="250"
+                        Margin="0,0,0,20"
+                        Stretch="Uniform">
+                        <Image Source="/Settings Window/FluidFences16BitLogo.png" />
+                    </Viewbox>
+
+                    <TextBlock
+                        x:Name="AboutDescriptionText"
+                        Grid.Row="1"
+                        MaxWidth="600"
+                        Margin="0,0,0,20"
+                        HorizontalAlignment="Center"
+                        FontSize="14"
+                        Foreground="#CCCCCC"
+                        Text="Fluid Fences is an open-source solution for organizing your desktop. Create, resize, and take control of your clutter!"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center">
                         <TextBlock
-                            Margin="0,0,0,20"
                             HorizontalAlignment="Center"
-                            FontSize="32"
-                            FontWeight="Bold"
-                            Text="Fluid Fences" />
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Text="Support my project!" />
                         <TextBlock
-                            x:Name="AboutDescriptionText"
-                            MaxWidth="500"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="Fluid Fences is a streamlined solution for organizing your desktop. Create, resize, and manage your fence regions effortlessly."
-                            TextAlignment="Center"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,30,0,0"
+                            Margin="0,5,0,10"
                             HorizontalAlignment="Center"
-                            FontSize="18"
+                            FontSize="16"
                             Foreground="#AAAAAA"
-                            Text="Buy me a coffee ☕" />
-                        <Button
-                            Margin="0,10,0,0"
-                            HorizontalAlignment="Center"
-                            Click="BuyMeACoffee_Click"
-                            Style="{StaticResource ImageButtonStyle}">
-                            <Image
-                                Width="200"
-                                Height="215"
-                                Source="/Settings Window/BuyMeACoffeeQR.png"
-                                Stretch="Uniform" />
-                        </Button>
+                            Text="Scan the QR code to buy me a coffee! ☕ Or keep the internet on " />
                     </StackPanel>
+
+                    <Viewbox
+                        Grid.Row="3"
+                        MaxHeight="350"
+                        Stretch="Uniform">
+                        <Button Click="BuyMeACoffee_Click" Style="{StaticResource ImageButtonStyle}">
+                            <Image Source="/Settings Window/BuyMeACoffeeQR.png" />
+                        </Button>
+                    </Viewbox>
                 </Grid>
             </TabItem>
 
@@ -418,31 +398,33 @@
                             FontWeight="Bold"
                             Foreground="White"
                             Text="How to Use Fluid Fences" />
+
                         <TextBlock Style="{StaticResource SectionHeader}" Text="Basic Controls" />
                         <TextBlock
                             Margin="0,0,0,8"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Move a Fence: Click and drag the top title bar to move a fence anywhere on your screen."
+                            Text="• Move a Fence: Click and hold the top title bar to drag the fence anywhere on your screen. Fences will automatically stay within the boundaries of your desktop."
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,0,0,8"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Resize: Hover over any edge or corner until you see the sizing arrows, then click and drag to stretch the fence."
+                            Text="• Resize: Hover your mouse over any edge or corner until the sizing arrows appear, then click and drag to stretch or shrink the fence."
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,0,0,25"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Roll-up: Double-click the title bar to collapse the fence and save screen space. Simply hover your mouse over the rolled-up bar to temporarily reveal its contents."
+                            Text="• Roll-up: Double-click the title bar to collapse the fence and save screen space. Simply hover your mouse over the rolled-up bar to temporarily reveal its contents. Double-click again to lock it open."
                             TextWrapping="Wrap" />
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Managing Icons" />
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Managing Files &amp; Icons" />
                         <TextBlock
                             Margin="0,0,0,8"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Add Files: Drag and drop any desktop shortcut, file, or folder directly into the fence."
+                            Text="• Add Files: Drag and drop any desktop shortcut, file, or folder directly into the fence to organize it."
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,0,0,8"
@@ -454,32 +436,59 @@
                             Margin="0,0,0,8"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Search: Click the magnifying glass (🔍) in the header to instantly filter and find files by name."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Rename Files: Right-click any icon and select 'Rename File' or double-click the file name text to edit it directly."
-                            TextWrapping="Wrap" />
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Customization" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• The Main Menu: Right-click the title bar (or click the ☰ hamburger icon) to access settings, sorting, and display options."
+                            Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click an icon and select 'Remove from Fence'."
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,0,0,8"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Icon Size: Change the icon scale (Small, Medium, Large) from the 'View' menu."
+                            Text="• Rename Files: Right-click any icon and select 'Rename File', or simply double-click the file's name to edit it inline. Press 'Enter' or click away to save."
                             TextWrapping="Wrap" />
                         <TextBlock
                             Margin="0,0,0,25"
                             FontSize="14"
                             Foreground="#CCCCCC"
-                            Text="• Colors: Use the 'Edit Colors' tab in Settings to perfectly match the fence to your wallpaper in real-time."
+                            Text="• Search: Click the magnifying glass (🔍) in the header to instantly filter your files by name. Click the icon again or press 'Esc' on your keyboard to close the search."
+                            TextWrapping="Wrap" />
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Customization &amp; Colors" />
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• Edit Colors: Right-click the header and select 'Edit Color...' (or go to Settings -&gt; Edit Colors). Here you can adjust the hue, brightness, saturation, and transparency of the fence."
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• The Eyedropper: Click the pen icon (🖋) to turn your cursor into a crosshair. Click anywhere on your screen to instantly match your fence to that exact color!"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• Blend with Wallpaper: Check the 'Blend into wallpaper' box to drop the fence's background opacity to 1%, turning it into a seamless pane of frosted glass."
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Margin="0,0,0,25"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• Icon Size &amp; Sorting: Right-click the header to quickly change the size of your icons or sort them by name, date, size, or file type."
+                            TextWrapping="Wrap" />
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Advanced Power Features" />
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your Windows Desktop and automatically pull in any files that match the extensions you set up in the Settings menu (like .jpg, .png, or .exe)."
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Margin="0,0,0,25"
+                            FontSize="14"
+                            Foreground="#CCCCCC"
+                            Text="• Background Mode: Fluid Fences is designed to run silently. Check the 'General' tab in Settings to hide fences from your Windows Taskbar and set the app to launch automatically when you turn on your computer. You can always access your settings by right-clicking the Fluid icon in your System Tray (near the clock)."
                             TextWrapping="Wrap" />
                     </StackPanel>
                 </ScrollViewer>
@@ -492,8 +501,7 @@
                         <TextBlock
                             Margin="0,0,0,20"
                             Foreground="#AAA"
-                            Text="These settings apply to all of your fences." />
-
+                            Text="These settings apply to the entire application." />
                         <CheckBox
                             x:Name="StartupToggle"
                             Margin="0,0,0,15"
@@ -504,7 +512,6 @@
                             Margin="0,0,0,30"
                             Content="Show Fences in the Windows Taskbar"
                             Style="{StaticResource ToggleSwitchStyle}" />
-
                         <Button
                             Padding="20,10"
                             HorizontalAlignment="Left"
@@ -534,7 +541,6 @@
                     <ScrollViewer
                         Grid.Column="1"
                         Margin="20,0,0,0"
-                        HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,0,15,0">
                             <TextBlock Style="{StaticResource SectionHeader}" Text="Fence Settings" />
@@ -561,11 +567,6 @@
                                 FontSize="16"
                                 Style="{StaticResource SectionHeader}"
                                 Text="Auto-Sort Engine" />
-                            <TextBlock
-                                Margin="0,0,0,5"
-                                Foreground="#AAA"
-                                Text="Select a preset or type custom extensions (e.g. .jpg, .png)"
-                                TextWrapping="Wrap" />
                             <Grid Margin="0,0,0,30">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150" />
@@ -586,21 +587,12 @@
                                 </ComboBox>
                                 <TextBox x:Name="AutoSortInput" Grid.Column="1" />
                             </Grid>
-                            <TextBlock
-                                Margin="0,10,0,15"
-                                FontSize="16"
-                                Style="{StaticResource SectionHeader}"
-                                Text="Fence Features" />
                             <CheckBox
                                 x:Name="EnableSearchToggle"
                                 Margin="0,0,0,20"
                                 Content="Enable In-Fence Search Bar"
                                 Style="{StaticResource ToggleSwitchStyle}" />
-                            <Border
-                                Margin="0,10,0,20"
-                                BorderBrush="#444"
-                                BorderThickness="0,1,0,0" />
-                            <Grid Margin="0,0,0,10">
+                            <Grid>
                                 <Button
                                     x:Name="DeleteFenceBtn"
                                     Padding="15,8"
@@ -620,7 +612,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="   ↳ Edit Colors">
+            <TabItem Header="   ↳ Edit Colors">
                 <Grid Margin="40">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
@@ -636,19 +628,15 @@
                             Foreground="White"
                             SelectionChanged="FenceListBox_SelectionChanged" />
                     </StackPanel>
-
                     <ScrollViewer
                         Grid.Column="1"
                         Margin="20,0,0,0"
-                        HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,0,15,0">
-
                             <TextBlock
                                 x:Name="EditColorTitleText"
                                 Style="{StaticResource SectionHeader}"
                                 Text="Edit Colors" />
-
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -660,35 +648,25 @@
                                     <ComboBoxItem Content="Folders" />
                                 </ComboBox>
                                 <TextBlock
-                                    Grid.Column="1"
-                                    Margin="15,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Cursor="Hand"
-                                    FontSize="12"
-                                    Foreground="#999"
-                                    Text="Copy/paste/reset group style" />
-                                <TextBlock
                                     Grid.Column="2"
                                     VerticalAlignment="Center"
                                     Cursor="Hand"
                                     FontSize="18"
                                     Foreground="White"
+                                    MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown"
                                     RenderTransformOrigin="0.5,0.5"
-                                    Text="🖋"
-                                    ToolTip="Pick a color from screen">
+                                    Text="🖋">
                                     <TextBlock.RenderTransform>
                                         <RotateTransform Angle="135" />
                                     </TextBlock.RenderTransform>
                                 </TextBlock>
                             </Grid>
-
                             <CheckBox
                                 x:Name="BlendWallpaperToggle"
                                 Margin="0,0,0,20"
                                 Click="BlendWallpaperToggle_Click"
                                 Content="Blend into wallpaper"
                                 Foreground="White" />
-
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
@@ -718,7 +696,6 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
@@ -744,7 +721,6 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
@@ -770,7 +746,6 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
@@ -796,144 +771,14 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-
-                            <TextBlock
-                                Margin="0,5,0,25"
-                                Cursor="Hand"
-                                FontSize="12"
-                                Foreground="#888"
-                                Text="More options" />
-
-                            <TextBlock
-                                Margin="0,0,0,10"
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="Edit Icon Tint" />
-
                             <Border
-                                Padding="15"
-                                Background="#252525"
-                                CornerRadius="6">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,20">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Width="200">
-                                            <ComboBoxItem Content="Use Fence background color" IsSelected="True" />
-                                            <ComboBoxItem Content="Custom Color" />
-                                        </ComboBox>
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            VerticalAlignment="Center"
-                                            Cursor="Hand"
-                                            FontSize="18"
-                                            Foreground="#888"
-                                            RenderTransformOrigin="0.5,0.5"
-                                            Text="🖋"
-                                            ToolTip="Pick a color from screen">
-                                            <TextBlock.RenderTransform>
-                                                <RotateTransform Angle="135" />
-                                            </TextBlock.RenderTransform>
-                                        </TextBlock>
-                                    </Grid>
-
-                                    <Grid Margin="0,0,0,15" Opacity="0.5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="90" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Foreground="#CCC"
-                                            Text="Hue:" />
-                                        <Slider
-                                            x:Name="TintHueSlider"
-                                            Grid.Column="1"
-                                            IsEnabled="False"
-                                            Maximum="360"
-                                            Minimum="0"
-                                            Style="{StaticResource WhiteSliderStyle}">
-                                            <Slider.Background>
-                                                <LinearGradientBrush EndPoint="1,0">
-                                                    <GradientStop Offset="0" Color="#550000" />
-                                                    <GradientStop Offset="0.16" Color="#555500" />
-                                                    <GradientStop Offset="0.33" Color="#005500" />
-                                                    <GradientStop Offset="0.5" Color="#005555" />
-                                                    <GradientStop Offset="0.66" Color="#000055" />
-                                                    <GradientStop Offset="0.83" Color="#550055" />
-                                                    <GradientStop Offset="1" Color="#550000" />
-                                                </LinearGradientBrush>
-                                            </Slider.Background>
-                                        </Slider>
-                                    </Grid>
-
-                                    <Grid Margin="0,0,0,15" Opacity="0.5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="90" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Foreground="#CCC"
-                                            Text="Brightness:" />
-                                        <Slider
-                                            x:Name="TintLightnessSlider"
-                                            Grid.Column="1"
-                                            IsEnabled="False"
-                                            Maximum="100"
-                                            Minimum="0"
-                                            Style="{StaticResource WhiteSliderStyle}"
-                                            Value="50">
-                                            <Slider.Background>
-                                                <LinearGradientBrush EndPoint="1,0">
-                                                    <GradientStop Offset="0" Color="#111" />
-                                                    <GradientStop Offset="1" Color="#555" />
-                                                </LinearGradientBrush>
-                                            </Slider.Background>
-                                        </Slider>
-                                    </Grid>
-
-                                    <Grid Margin="0,0,0,0" Opacity="0.5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="90" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Foreground="#CCC"
-                                            Text="Saturation:" />
-                                        <Slider
-                                            x:Name="TintSaturationSlider"
-                                            Grid.Column="1"
-                                            IsEnabled="False"
-                                            Maximum="100"
-                                            Minimum="0"
-                                            Style="{StaticResource WhiteSliderStyle}"
-                                            Value="50">
-                                            <Slider.Background>
-                                                <LinearGradientBrush EndPoint="1,0">
-                                                    <GradientStop Offset="0" Color="#444" />
-                                                    <GradientStop Offset="1" Color="#644" />
-                                                </LinearGradientBrush>
-                                            </Slider.Background>
-                                        </Slider>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <Grid Margin="0,15,0,0">
-                                <Border
-                                    x:Name="ColorPreview"
-                                    Width="40"
-                                    Height="25"
-                                    HorizontalAlignment="Left"
-                                    BorderBrush="#555"
-                                    BorderThickness="1"
-                                    CornerRadius="4" />
-                            </Grid>
+                                x:Name="ColorPreview"
+                                Width="40"
+                                Height="25"
+                                HorizontalAlignment="Left"
+                                BorderBrush="#555"
+                                BorderThickness="1"
+                                CornerRadius="4" />
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -959,7 +804,6 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
-
         </TabControl>
     </Grid>
 </Window>

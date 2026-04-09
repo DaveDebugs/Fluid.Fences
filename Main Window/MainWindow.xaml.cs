@@ -279,6 +279,13 @@ namespace DesktopFences
                 HeaderColLeft.Width = new GridLength(HEADER_SIZE); HeaderColRight.Width = new GridLength(0);
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 3); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 1);
                 HeaderGrid.LayoutTransform = new RotateTransform(-90); HeaderBorder.CornerRadius = new CornerRadius(8, 0, 0, 8);
+
+                if (SearchBox != null && SearchBox.Parent == MainGrid)
+                {
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Left;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Top;
+                    SearchBox.Margin = new Thickness(HEADER_SIZE + 5, 35, 0, 0);
+                }
             }
             else if (_dockState == DockState.Right)
             {
@@ -286,6 +293,13 @@ namespace DesktopFences
                 HeaderColLeft.Width = new GridLength(0); HeaderColRight.Width = new GridLength(HEADER_SIZE);
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 3); Grid.SetColumn(HeaderBorder, 2); Grid.SetColumnSpan(HeaderBorder, 1);
                 HeaderGrid.LayoutTransform = new RotateTransform(90); HeaderBorder.CornerRadius = new CornerRadius(0, 8, 8, 0);
+
+                if (SearchBox != null && SearchBox.Parent == MainGrid)
+                {
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Top;
+                    SearchBox.Margin = new Thickness(0, 35, HEADER_SIZE + 5, 0);
+                }
             }
             else if (_dockState == DockState.Bottom)
             {
@@ -293,6 +307,13 @@ namespace DesktopFences
                 HeaderColLeft.Width = new GridLength(0); HeaderColRight.Width = new GridLength(0);
                 Grid.SetRow(HeaderBorder, 2); Grid.SetRowSpan(HeaderBorder, 1); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 3);
                 HeaderGrid.LayoutTransform = Transform.Identity; HeaderBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
+
+                if (SearchBox != null && SearchBox.Parent == MainGrid)
+                {
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Bottom;
+                    SearchBox.Margin = new Thickness(0, 0, 35, 4);
+                }
             }
             else
             {
@@ -300,6 +321,13 @@ namespace DesktopFences
                 HeaderColLeft.Width = new GridLength(0); HeaderColRight.Width = new GridLength(0);
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 1); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 3);
                 HeaderGrid.LayoutTransform = Transform.Identity; HeaderBorder.CornerRadius = new CornerRadius(8, 8, 0, 0);
+
+                if (SearchBox != null && SearchBox.Parent == MainGrid)
+                {
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Top;
+                    SearchBox.Margin = new Thickness(0, 4, 35, 0);
+                }
             }
         }
 
@@ -332,16 +360,20 @@ namespace DesktopFences
 
                 _wasRolledUpBeforeDrag = _isRolledUp || _isTemporarilyRevealed;
 
+                // FIXED: Removed mathematical shifting, exclusively forcing the known expanded coordinates!
                 if (_wasRolledUpBeforeDrag)
                 {
-                    this.Width = _expandedWidth; this.Height = _expandedHeight;
-                    if (_dockState == DockState.Right) this.Left -= (_expandedWidth - HEADER_SIZE);
-                    if (_dockState == DockState.Bottom) this.Top -= (_expandedHeight - HEADER_SIZE);
+                    this.Width = _expandedWidth;
+                    this.Height = _expandedHeight;
+                    this.Left = _expandedLeft;
+                    this.Top = _expandedTop;
                 }
 
-                _isRolledUp = false; _isTemporarilyRevealed = false;
-                _dockState = DockState.Floating;
-                UpdateDockOrientation();
+                _isRolledUp = false;
+                _isTemporarilyRevealed = false;
+
+                // FIXED: Deleted the premature "_dockState = DockState.Floating;" trigger!
+                // The window will now stay beautifully locked to the side until you actually drag it away.
 
                 _isManualDragging = true;
                 _manualDragStartMouse = new System.Windows.Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
@@ -378,6 +410,11 @@ namespace DesktopFences
 
                 if (Math.Abs(newTop - screenTop) < snapThresh) newTop = screenTop;
                 else if (Math.Abs((newTop + this.Height) - screenBottom) < snapThresh) newTop = screenBottom - this.Height;
+
+                if (newLeft < screenLeft) newLeft = screenLeft;
+                if (newLeft + this.Width > screenRight) newLeft = screenRight - this.Width;
+                if (newTop < screenTop) newTop = screenTop;
+                if (newTop + this.Height > screenBottom) newTop = screenBottom - this.Height;
 
                 this.Left = newLeft; this.Top = newTop;
 
@@ -446,12 +483,27 @@ namespace DesktopFences
         private void StartNativeResize(int direction)
         {
             if (_isRolledUp && !_isTemporarilyRevealed) return;
+
             this.BeginAnimation(Window.HeightProperty, null); this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null);
+
+            bool wasRolledUp = _isRolledUp || _isTemporarilyRevealed;
+
             if (_isRolledUp || _isTemporarilyRevealed) { _isRolledUp = false; _isTemporarilyRevealed = false; }
+
             ReleaseCapture();
             var helper = new WindowInteropHelper(this);
             SendMessage(helper.Handle, WM_SYSCOMMAND, (IntPtr)(SC_SIZE + direction), IntPtr.Zero);
-            DetermineDockState(); UpdateDockOrientation(); _expandedLeft = this.Left; _expandedTop = this.Top; _expandedWidth = this.Width; _expandedHeight = this.Height; SaveFenceState();
+
+            DetermineDockState(); UpdateDockOrientation();
+            _expandedLeft = this.Left; _expandedTop = this.Top; _expandedWidth = this.Width; _expandedHeight = this.Height;
+
+            if (wasRolledUp)
+            {
+                _isRolledUp = true;
+                _isTemporarilyRevealed = true;
+            }
+
+            SaveFenceState();
         }
 
         private void Resize_Left(object sender, MouseButtonEventArgs e) { e.Handled = true; StartNativeResize(1); }
@@ -476,12 +528,45 @@ namespace DesktopFences
         private void SearchIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
-            if (SearchBox.Visibility == Visibility.Collapsed) { SearchBox.Visibility = Visibility.Visible; SearchBox.Focus(); }
-            else { SearchBox.Visibility = Visibility.Collapsed; SearchBox.Text = ""; }
+            if (SearchBox.Visibility == Visibility.Visible)
+            {
+                SearchBox.Text = "";
+                SearchBox.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                SearchBox.Visibility = Visibility.Visible;
+                SearchBox.Focus();
+            }
         }
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) { RefreshIconUI(); }
-        private void SearchBox_LostFocus(object sender, RoutedEventArgs e) { if (string.IsNullOrWhiteSpace(SearchBox.Text)) SearchBox.Visibility = Visibility.Collapsed; }
+
+        private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(SearchBox.Text) && !SearchBox.IsKeyboardFocusWithin)
+            {
+                System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
+                {
+                    Dispatcher.Invoke(() => {
+                        if (!SearchBox.IsFocused && string.IsNullOrWhiteSpace(SearchBox.Text))
+                            SearchBox.Visibility = Visibility.Collapsed;
+                    });
+                });
+            }
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                SearchBox.Text = "";
+                SearchBox.Visibility = Visibility.Collapsed;
+                e.Handled = true;
+                MainGrid.Focus();
+            }
+        }
+
         private void Window_MouseEnter(object sender, MouseEventArgs e) { if (_isRolledUp && !_isTemporarilyRevealed) { AnimateReveal(); _isTemporarilyRevealed = true; } }
         private void Window_MouseLeave(object sender, MouseEventArgs e) { if (_isContextMenuOpen || _isDraggingSelectionBox || SearchBox.IsFocused) return; if (_isRolledUp && _isTemporarilyRevealed) { AnimateRollUp(); _isTemporarilyRevealed = false; } }
         private void Window_DragEnter(object sender, DragEventArgs e) { if (_isRolledUp && !_isTemporarilyRevealed) { AnimateReveal(); _isTemporarilyRevealed = true; } }
@@ -492,10 +577,61 @@ namespace DesktopFences
         private void MenuIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true; _isContextMenuOpen = true;
-            HeaderContextMenu.PlacementTarget = HeaderBorder;
+            HeaderContextMenu.PlacementTarget = sender as UIElement ?? HeaderBorder;
             HeaderContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
             HeaderContextMenu.IsOpen = true;
         }
+
+        private void AutoOrganize()
+        {
+            if (string.IsNullOrWhiteSpace(AutoSortExtensions))
+            {
+                MessageBox.Show("Please set up Auto-Sort extensions in Settings first (e.g. .jpg, .png).", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string[] files = Directory.GetFiles(desktopPath);
+                string[] extensions = AutoSortExtensions.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                bool moved = false;
+                foreach (string file in files)
+                {
+                    string ext = Path.GetExtension(file);
+                    foreach (string target in extensions)
+                    {
+                        if (string.Equals(ext, target, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(ext, "." + target, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!_currentFiles.Contains(file))
+                            {
+                                _currentFiles.Add(file);
+                                moved = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (moved)
+                {
+                    ApplySorting();
+                    SaveFenceState();
+                    MessageBox.Show("Desktop files organized successfully!", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("No new files found on the desktop matching your extensions.", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error organizing files: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void Menu_NewFence_Click(object sender, RoutedEventArgs e) { MainWindow newFence = new(Guid.NewGuid().ToString()); newFence.Left = this.Left + 50; newFence.Top = this.Top + 50; newFence.Show(); }
         private void Menu_DeleteFence_Click(object sender, RoutedEventArgs e) { if (MessageBox.Show("Permanently delete this fence?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); } }
         private void Menu_RollUp_Click(object sender, RoutedEventArgs e) { ToggleRollUp(); }
@@ -503,7 +639,22 @@ namespace DesktopFences
 
         private void Menu_IconSize_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedItem || clickedItem.Tag == null) return; if (double.TryParse(clickedItem.Tag.ToString(), out double newSize)) { _currentIconSize = newSize; RefreshIconUI(); SaveFenceState(); } }
         private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.ShowDialog(); }
-        private void Menu_CopyColor_Click(object sender, RoutedEventArgs e) { string hexColor = $"#{_currentFenceColor.R:X2}{_currentFenceColor.G:X2}{_currentFenceColor.B:X2}"; for (int i = 0; i < 10; i++) { try { Clipboard.SetText(hexColor); return; } catch (System.Runtime.InteropServices.COMException) { System.Threading.Thread.Sleep(10); } } }
+
+        private void Menu_CopyColor_Click(object sender, RoutedEventArgs e)
+        {
+            string hexColor = $"#{_currentFenceColor.R:X2}{_currentFenceColor.G:X2}{_currentFenceColor.B:X2}";
+            try
+            {
+                Clipboard.Clear();
+                Clipboard.SetText(hexColor);
+                MessageBox.Show($"Color {hexColor} successfully copied to clipboard!", "Copied", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not copy to clipboard. Another app may be locking it.\n\nError: {ex.Message}", "Clipboard Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
 
         private void ApplySorting() { if (_saveSortMethod != "None" && _saveSortMethod != "DateAdd") { try { switch (_saveSortMethod) { case "Name": _currentFiles.Sort((a, b) => string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase)); break; case "Size": _currentFiles.Sort((a, b) => GetFileSize(b).CompareTo(GetFileSize(a))); break; case "Type": _currentFiles.Sort((a, b) => string.Compare(Path.GetExtension(a), Path.GetExtension(b), StringComparison.OrdinalIgnoreCase)); break; case "DateMod": _currentFiles.Sort((a, b) => File.GetLastWriteTime(b).CompareTo(File.GetLastWriteTime(a))); break; case "DateCre": _currentFiles.Sort((a, b) => File.GetCreationTime(b).CompareTo(File.GetCreationTime(a))); break; } } catch { } } RefreshIconUI(); }
@@ -671,25 +822,71 @@ namespace DesktopFences
             HwndSource? source = HwndSource.FromHwnd(myWindowHandle); if (source != null) source.AddHook(new HwndSourceHook(WndProc));
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
+            if (MenuRollUpFence != null) MenuRollUpFence.IsCheckable = true;
+
+            MenuItem autoOrganizeItem = new MenuItem { Header = "Auto Organize (Pull from Desktop)" };
+            autoOrganizeItem.Click += (s, args) => AutoOrganize();
+            if (HeaderContextMenu != null)
+            {
+                HeaderContextMenu.Items.Insert(0, autoOrganizeItem);
+                HeaderContextMenu.Items.Insert(1, new Separator());
+            }
+
             HeaderContextMenu.Opened += (s, args) => {
-                _isContextMenuOpen = true; MenuRollUpFence.IsChecked = _isRolledUp;
+                _isContextMenuOpen = true;
+                if (MenuRollUpFence != null) MenuRollUpFence.IsChecked = _isRolledUp;
             };
 
             HeaderContextMenu.Closed += (s, args) => HandleMenuClosed();
             this.PreviewMouseRightButtonDown += (s, args) => _isContextMenuOpen = true;
 
-            // Load Taskbar Preference
-            string globalConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "global_config.json");
-            bool showInTaskbar = true;
-            try
+            if (SearchBox != null && MainGrid != null)
             {
-                if (File.Exists(globalConfigPath))
+                SearchBox.KeyDown += SearchBox_KeyDown;
+
+                DependencyObject parent = LogicalTreeHelper.GetParent(SearchBox);
+                if (parent is Panel panel && panel != MainGrid)
                 {
-                    string json = File.ReadAllText(globalConfigPath);
-                    if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config) showInTaskbar = config.ShowTaskbarIcon;
+                    panel.Children.Remove(SearchBox);
+                    MainGrid.Children.Add(SearchBox);
+
+                    Grid.SetRow(SearchBox, 0);
+                    Grid.SetRowSpan(SearchBox, 10);
+                    Grid.SetColumn(SearchBox, 0);
+                    Grid.SetColumnSpan(SearchBox, 10);
+
+                    SearchBox.Width = 160;
+                    SearchBox.Height = 26;
+                    Panel.SetZIndex(SearchBox, 999);
                 }
             }
-            catch { }
+
+            string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
+            string globalConfigPath = Path.Combine(configFolder, "global_config.json");
+
+            bool showInTaskbar = true;
+
+            if (!File.Exists(globalConfigPath))
+            {
+                Directory.CreateDirectory(configFolder);
+                GlobalConfig newConfig = new() { FirstRunComplete = true, ShowTaskbarIcon = true };
+                File.WriteAllText(globalConfigPath, JsonSerializer.Serialize(newConfig, _jsonOptions));
+
+                SettingsWindow settings = new(this, true);
+                settings.Owner = this; settings.ShowDialog();
+            }
+            else
+            {
+                try
+                {
+                    string json = File.ReadAllText(globalConfigPath);
+                    if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
+                    {
+                        showInTaskbar = config.ShowTaskbarIcon;
+                    }
+                }
+                catch { }
+            }
 
             this.ShowInTaskbar = showInTaskbar;
         }
@@ -746,7 +943,6 @@ namespace DesktopFences
         [System.Text.Json.Serialization.JsonPropertyName("Files")] public List<string> Files { get; set; } = new();
     }
 
-    // NEW: Global Settings Object
     public class GlobalConfig
     {
         [System.Text.Json.Serialization.JsonPropertyName("FirstRunComplete")] public bool FirstRunComplete { get; set; } = true;
