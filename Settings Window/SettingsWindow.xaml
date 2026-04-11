@@ -387,109 +387,35 @@
             </TabItem>
 
             <TabItem Header="How to use">
-                <ScrollViewer
-                    Margin="40,20"
-                    HorizontalScrollBarVisibility="Disabled"
-                    VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Margin="40,20" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="0,0,15,0">
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="26"
-                            FontWeight="Bold"
-                            Foreground="White"
-                            Text="How to Use Fluid Fences" />
+                        <TextBlock Text="How to Use Fluid Fences" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,0,0,25"/>
 
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Basic Controls" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Move a Fence: Click and hold the top title bar to drag the fence anywhere on your screen. Fences will automatically stay within the boundaries of your desktop."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Resize: Hover your mouse over any edge or corner until the sizing arrows appear, then click and drag to stretch or shrink the fence."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Roll-up: Double-click the title bar to collapse the fence and save screen space. Simply hover your mouse over the rolled-up bar to temporarily reveal its contents. Double-click again to lock it open."
-                            TextWrapping="Wrap" />
+                        <TextBlock Text="Window Controls &amp; Physics" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Move a Fence: Click and hold the top title bar to drag the fence. Fences will automatically clamp to the edges of your screen so they never get lost." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Edge Snapping: Drag a fence against the edge of your screen to dock it. Once docked, you can slide it vertically without it detaching. To tear it off, simply pull it horizontally toward the center of your screen." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Roll-up Mode: Double-click the title bar to collapse the fence into a sleek, space-saving bar. Hover your mouse over the rolled-up bar to temporarily reveal your files, and move your mouse away to hide them again. Double-click to lock it open." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Managing Files &amp; Icons" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Add Files: Drag and drop any desktop shortcut, file, or folder directly into the fence to organize it."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Select Multiple: Click and drag an empty area inside the fence to draw a blue selection box around multiple items."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click an icon and select 'Remove from Fence'."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Rename Files: Right-click any icon and select 'Rename File', or simply double-click the file's name to edit it inline. Press 'Enter' or click away to save."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Search: Click the magnifying glass (🔍) in the header to instantly filter your files by name. Click the icon again or press 'Esc' on your keyboard to close the search."
-                            TextWrapping="Wrap" />
+                        <TextBlock Text="Managing Files &amp; Icons" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Add Files: Drag and drop any desktop shortcut, photo, video, or folder directly into the fence." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• High-Res Thumbnails: Fluid Fences automatically extracts razor-sharp 256x256 application icons and generates actual video/photo thumbnails instead of generic white files." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Select Multiple: Click and drag on an empty area inside the fence to draw a blue selection box around multiple items." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Rename Files: Right-click any icon and select 'Rename File', or simply double-click the text label beneath the icon to edit it instantly. Press 'Enter' to save." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click and select 'Remove from Fence'." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Customization &amp; Colors" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Edit Colors: Right-click the header and select 'Edit Color...' (or go to Settings -&gt; Edit Colors). Here you can adjust the hue, brightness, saturation, and transparency of the fence."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• The Eyedropper: Click the pen icon (🖋) to turn your cursor into a crosshair. Click anywhere on your screen to instantly match your fence to that exact color!"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Blend with Wallpaper: Check the 'Blend into wallpaper' box to drop the fence's background opacity to 1%, turning it into a seamless pane of frosted glass."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Icon Size &amp; Sorting: Right-click the header to quickly change the size of your icons or sort them by name, date, size, or file type."
-                            TextWrapping="Wrap" />
+                        <TextBlock Text="Organization &amp; Search" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Instant Search: Click the magnifying glass (🔍) in the fence header to instantly filter your files by name. Click the icon again or press the 'Esc' key to close the search." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your main Windows Desktop and automatically pull in any files that match the extensions you configured in the 'Fences' settings tab (like .jpg, .png, or .exe)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Sorting: Right-click the header to sort your items alphabetically, by size, by file type, or by the date they were created." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Advanced Power Features" />
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your Windows Desktop and automatically pull in any files that match the extensions you set up in the Settings menu (like .jpg, .png, or .exe)."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            Margin="0,0,0,25"
-                            FontSize="14"
-                            Foreground="#CCCCCC"
-                            Text="• Background Mode: Fluid Fences is designed to run silently. Check the 'General' tab in Settings to hide fences from your Windows Taskbar and set the app to launch automatically when you turn on your computer. You can always access your settings by right-clicking the Fluid icon in your System Tray (near the clock)."
-                            TextWrapping="Wrap" />
+                        <TextBlock Text="Customization &amp; Colors" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Edit Colors: Right-click the header and select 'Edit Color...'. Here you can adjust the hue, brightness, saturation, and transparency of individual fences." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• The Eyedropper (🖋): Click the pen icon inside the Color Picker to turn your cursor into a crosshair. Click anywhere on your screen—even inside other apps—to instantly match your fence to that exact color!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• Blend with Wallpaper: Check the 'Blend into wallpaper' box in the Color Picker to drop the background opacity to 1%, utilizing the native Windows Acrylic engine to create a seamless pane of frosted glass." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+
+                        <TextBlock Text="Background Operation" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Silent Mode: Fluid Fences is designed to run silently. By default, fences will not clutter up your Alt+Tab menu or your Windows Taskbar." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="• The System Tray: You can always access these settings, create new fences, or close the application by right-clicking the Fluid Fences icon in your Windows System Tray (down by your clock)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
