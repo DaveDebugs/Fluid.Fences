@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Input;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace DesktopFences
 {
     public partial class ColorPickerWindow : Window
     {
-        // NEW: High-performance Win32 APIs for the Eyedropper screen pixel capture
         [LibraryImport("user32.dll")] internal static partial IntPtr GetDC(IntPtr hwnd);
         [LibraryImport("user32.dll")] internal static partial int ReleaseDC(IntPtr hwnd, IntPtr hDC);
         [LibraryImport("gdi32.dll")] internal static partial uint GetPixel(IntPtr hDC, int x, int y);
@@ -24,7 +22,6 @@ namespace DesktopFences
             Color startColor = initialBrush.Color;
             AlphaSlider.Value = (initialBrush.Opacity * 100.0);
 
-            // Sync the Blend checkmark to the incoming transparency state
             if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
 
             System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
@@ -39,15 +36,14 @@ namespace DesktopFences
             UpdateColorFromSliders();
         }
 
-        // --- NEW EYEDROPPER LOGIC ---
         private void Eyedropper_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Create an invisible overlay covering all monitors to catch the user's click
+            
             Window pickerOverlay = new Window
             {
                 WindowStyle = WindowStyle.None,
                 AllowsTransparency = true,
-                Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), // 1/255 opacity catches clicks but is invisible
+                Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), 
                 Topmost = true,
                 Cursor = Cursors.Cross,
                 ShowInTaskbar = false,
@@ -59,28 +55,28 @@ namespace DesktopFences
 
             pickerOverlay.PreviewMouseLeftButtonDown += (s, args) =>
             {
-                // 1. Get exact screen coordinates of the click
+               
                 var mousePos = System.Windows.Forms.Cursor.Position;
 
-                // 2. Hide the overlay so it doesn't tint our pixel read
+                
                 pickerOverlay.Hide();
 
-                // 3. Force WPF to render the hidden window immediately
+                
                 Application.Current.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
 
-                // 4. Use Win32 to steal the raw pixel directly off the graphics card
+                
                 IntPtr hdc = GetDC(IntPtr.Zero);
                 uint pixel = GetPixel(hdc, mousePos.X, mousePos.Y);
                 ReleaseDC(IntPtr.Zero, hdc);
 
-                // 5. Win32 returns ABGR, so we extract the RGB bytes
+                
                 byte r = (byte)(pixel & 0x000000FF);
                 byte g = (byte)((pixel & 0x0000FF00) >> 8);
                 byte b = (byte)((pixel & 0x00FF0000) >> 16);
 
                 Color pickedColor = Color.FromRgb(r, g, b);
 
-                // 6. Convert to HSL and update our sliders automatically
+                
                 RgbToHsl(pickedColor, out double h, out double sat, out double l);
 
                 _isInitializing = true;
@@ -89,7 +85,7 @@ namespace DesktopFences
                 LightnessSlider.Value = l;
                 _isInitializing = false;
 
-                // Ensure Blend mode is turned off so they can actually see the color they picked
+                
                 if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = false;
                 if (AlphaSlider.Value <= 1) AlphaSlider.Value = 70;
 
@@ -97,7 +93,7 @@ namespace DesktopFences
                 pickerOverlay.Close();
             };
 
-            // Allow user to cancel by pressing Escape
+            
             pickerOverlay.PreviewKeyDown += (s, args) => { if (args.Key == Key.Escape) pickerOverlay.Close(); };
 
             pickerOverlay.Show();
@@ -127,7 +123,7 @@ namespace DesktopFences
         {
             if (_isInitializing) return;
 
-            // Sync Checkmark with Alpha Slider
+            
             if (sender == AlphaSlider && BlendWallpaperToggle != null)
             {
                 BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
@@ -153,11 +149,11 @@ namespace DesktopFences
             Color rgbColor = HslToRgb(h, s, l);
             Color finalColor = Color.FromArgb((byte)(a * 255), rgbColor.R, rgbColor.G, rgbColor.B);
 
-            // Update UI preview
+            
             SelectedBrush = new SolidColorBrush(finalColor) { Opacity = a };
             ColorPreview.Background = SelectedBrush;
 
-            // Dynamically update the slider gradient tracks to match the hue
+            
             Color pureHue = HslToRgb(h, 1.0, 0.5);
             BrightnessEndColor.Color = pureHue;
             SaturationEndColor.Color = pureHue;
