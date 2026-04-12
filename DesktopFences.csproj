@@ -11,11 +11,41 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <ApplicationIcon>FFICONsmall.ico</ApplicationIcon>
+    <BaseOutputPath>P:\Programming Repositories\Compiled\Nuget</BaseOutputPath>
+    <Title>Fluid.Fences</Title>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <AssemblyTitle>FluidFences</AssemblyTitle>
+    <StartupObject>DesktopFences.App</StartupObject>
+    <Copyright>2026</Copyright>
+    <PackageProjectUrl>https://github.com/DaveDebugs</PackageProjectUrl>
+    <PackageIcon>ffdesktopicon.png</PackageIcon>
+    <Description>An opensource desktop organization application.</Description>
+    <RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>fences;desktop;management;organization;icon;hideicons;stardock;clone</PackageTags>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Settings Window\BuyMeACoffeeQR.png" />
     <None Remove="Settings Window\FluidFences16BitLogo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="FFICONsmall.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Compiled\Fluid Fences\ffdesktopicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\Compiled\Fluid Fences\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
