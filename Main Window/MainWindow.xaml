@@ -220,10 +220,7 @@
         Background="#B2000000"
         BorderThickness="0"
         CornerRadius="8">
-        <Grid
-            x:Name="MainGrid"
-            Focusable="True"
-            PreviewMouseLeftButtonDown="MainGrid_PreviewMouseLeftButtonDown">
+        <Grid x:Name="MainGrid" Focusable="True">
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="HeaderRowTop" Height="35" />
                 <RowDefinition Height="*" />
@@ -262,16 +259,21 @@
                                     Click="Menu_IconSize_Click"
                                     Header="Medium (48px)"
                                     Tag="48" />
-                                <MenuItem Header="Large (64px)" Tag="64" Click="Menu_IconSize_Click"/>
+                                <MenuItem
+                                    Click="Menu_IconSize_Click"
+                                    Header="Large (64px)"
+                                    Tag="64" />
                             </MenuItem>
-                            <Separator/>
-                            
+                            <Separator />
 
-                            <MenuItem x:Name="MenuRollUpFence" Header="Roll-up Fence" IsCheckable="True" Click="Menu_RollUp_Click"/>
+                            <MenuItem
+                                x:Name="MenuRollUpFence"
+                                Click="Menu_RollUp_Click"
+                                Header="Roll-up Fence"
+                                IsCheckable="True" />
 
-                            <Separator/>
-                            <MenuItem Header="Copy Color" Click="Menu_CopyColor_Click"/>
-                            <MenuItem Header="Edit Color..." Click="Menu_EditColor_Click"/>
+                            <Separator />
+                            <MenuItem Click="Menu_EditColor_Click" Header="Edit Color..." />
                         </MenuItem>
                         <MenuItem Header="Sort by">
                             <MenuItem

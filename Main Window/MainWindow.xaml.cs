@@ -11,12 +11,14 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Linq;
 
 namespace DesktopFences
 {
     public partial class MainWindow : Window
     {
         #region Native Win32 APIs
+
         internal enum AccentState { ACCENT_DISABLED = 0, ACCENT_ENABLE_GRADIENT = 1, ACCENT_ENABLE_TRANSPARENTGRADIENT = 2, ACCENT_ENABLE_BLURBEHIND = 3, ACCENT_ENABLE_ACRYLICBLURBEHIND = 4, ACCENT_INVALID_STATE = 5 }
         [StructLayout(LayoutKind.Sequential)] internal struct AccentPolicy { public AccentState AccentState; public uint AccentFlags; public uint GradientColor; public uint AnimationId; }
         [StructLayout(LayoutKind.Sequential)] internal struct WindowCompositionAttributeData { public WindowCompositionAttribute Attribute; public IntPtr Data; public int SizeOfData; }
@@ -24,6 +26,14 @@ namespace DesktopFences
         internal enum DWMWINDOWATTRIBUTE { DWMWA_WINDOW_CORNER_PREFERENCE = 33 }
         internal enum DWM_WINDOW_CORNER_PREFERENCE { DWMWCP_DEFAULT = 0, DWMWCP_DONOTROUND = 1, DWMWCP_ROUND = 2, DWMWCP_ROUNDSMALL = 3 }
 
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+        internal static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+        internal static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
         [LibraryImport("dwmapi.dll")] internal static partial int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
         [LibraryImport("user32.dll")] internal static partial int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
         [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -155,7 +165,6 @@ namespace DesktopFences
         #endregion
 
         #region Core Window Mechanics & DWM Blur
-        private void MainGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) { MainGrid.Focus(); }
         private void Window_Deactivated(object sender, EventArgs e) { Keyboard.ClearFocus(); MainGrid.Focus(); }
 
         private void ApplyAcrylicToHwnd(IntPtr hwnd, Color color, double opacity)
@@ -640,13 +649,6 @@ namespace DesktopFences
         private void Menu_IconSize_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedItem || clickedItem.Tag == null) return; if (double.TryParse(clickedItem.Tag.ToString(), out double newSize)) { _currentIconSize = newSize; RefreshIconUI(); SaveFenceState(); } }
         private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.ShowDialog(); }
 
-        private void Menu_CopyColor_Click(object sender, RoutedEventArgs e)
-        {
-            string hexColor = $"#{_currentFenceColor.R:X2}{_currentFenceColor.G:X2}{_currentFenceColor.B:X2}";
-            try { Clipboard.Clear(); Clipboard.SetText(hexColor); MessageBox.Show($"Color {hexColor} successfully copied to clipboard!", "Copied", MessageBoxButton.OK, MessageBoxImage.Information); }
-            catch (Exception ex) { MessageBox.Show($"Could not copy to clipboard.\n\nError: {ex.Message}", "Clipboard Error", MessageBoxButton.OK, MessageBoxImage.Error); }
-        }
-
         private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
         #endregion
 
@@ -705,7 +707,8 @@ namespace DesktopFences
             MenuItem renameItem = new() { Header = "Rename File" };
             MenuItem removeItem = new() { Header = "Remove from Fence" };
 
-            removeItem.Click += (s, args) => {
+            removeItem.Click += (s, args) =>
+            {
                 if (_selectedItems.Count > 1 && _selectedItems.Contains(itemContainer)) { foreach (StackPanel selectedPanel in _selectedItems) { if (selectedPanel.ToolTip is string path) _currentFiles.Remove(path); } } else { _currentFiles.Remove(currentFilePath); }
                 ClearSelection(); ApplySorting(); SaveFenceState();
             };
@@ -736,15 +739,51 @@ namespace DesktopFences
 
             renameItem.Click += (s, args) => TriggerRename(); rightClickMenu.Items.Add(renameItem); rightClickMenu.Items.Add(removeItem); itemContainer.ContextMenu = rightClickMenu; rightClickMenu.Opened += (s, args) => _isContextMenuOpen = true; rightClickMenu.Closed += (s, args) => HandleMenuClosed();
             textBlock.MouseLeftButtonDown += (s, args) => { if (args.ClickCount == 2) return; args.Handled = true; TriggerRename(); };
-
             System.Windows.Point? dragStartPoint = null;
+
             itemContainer.PreviewMouseLeftButtonDown += (s, args) => { dragStartPoint = args.GetPosition(null); bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl); if (isCtrlPressed) { if (_selectedItems.Contains(itemContainer)) { itemContainer.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(itemContainer); } else { itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } } else if (!_selectedItems.Contains(itemContainer)) { ClearSelection(); itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } };
-            itemContainer.PreviewMouseMove += (s, args) => { if (args.LeftButton == MouseButtonState.Pressed && dragStartPoint.HasValue) { System.Windows.Point currentPoint = args.GetPosition(null); if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance) { DataObject dragData = new(DataFormats.FileDrop, new[] { currentFilePath }); dragData.SetData("FenceSourceId", _fenceId); DragDropEffects result = DragDrop.DoDragDrop(itemContainer, dragData, DragDropEffects.Move | DragDropEffects.Copy); if (result == DragDropEffects.Move) { _currentFiles.Remove(currentFilePath); ApplySorting(); SaveFenceState(); } dragStartPoint = null; } } };
-            itemContainer.MouseDown += (s, args) => {
-                if (args.ClickCount == 2 && args.ChangedButton == MouseButton.Left)
+
+            itemContainer.PreviewMouseRightButtonDown += (s, args) =>
+            {
+                if (!_selectedItems.Contains(itemContainer))
                 {
-                    if (File.Exists(currentFilePath) || Directory.Exists(currentFilePath)) { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = currentFilePath, UseShellExecute = true }); } catch (Exception ex) { MessageBox.Show($"Could not open file.\nError: {ex.Message}", "Launch Error"); } }
-                    else { MessageBox.Show("This file or folder no longer exists.", "Shortcut Error", MessageBoxButton.OK, MessageBoxImage.Warning); _currentFiles.Remove(currentFilePath); RefreshIconUI(); SaveFenceState(); }
+                    ClearSelection();
+                    itemContainer.Background = _highlightBrush;
+                    _selectedItems.Add(itemContainer);
+                }
+            };
+
+            itemContainer.PreviewMouseMove += (s, args) =>
+            {
+                if (args.LeftButton == MouseButtonState.Pressed && dragStartPoint.HasValue)
+                {
+                    System.Windows.Point currentPoint = args.GetPosition(null);
+                    if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+
+                        string[] draggedFiles;
+                        if (_selectedItems.Contains(itemContainer) && _selectedItems.Count > 1)
+                        {
+                            draggedFiles = _selectedItems.Select(panel => panel.ToolTip.ToString()!).ToArray();
+                        }
+                        else
+                        {
+                            draggedFiles = new[] { currentFilePath };
+                        }
+
+                        DataObject dragData = new(DataFormats.FileDrop, draggedFiles);
+                        dragData.SetData("FenceSourceId", _fenceId);
+                        DragDropEffects result = DragDrop.DoDragDrop(itemContainer, dragData, DragDropEffects.Move | DragDropEffects.Copy);
+
+                        if (result == DragDropEffects.Move)
+                        {
+                            foreach (string f in draggedFiles) _currentFiles.Remove(f);
+                            ClearSelection();
+                            ApplySorting();
+                            SaveFenceState();
+                        }
+                        dragStartPoint = null;
+                    }
                 }
             };
         }
@@ -861,11 +900,29 @@ namespace DesktopFences
         #region Window Start & End Lifecycle
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+
             LoadFenceState(); ApplyAcrylicBlur(_currentFenceColor, _currentOpacity);
             var helper = new WindowInteropHelper(this);
-            IntPtr myWindowHandle = helper.Handle; SetWindowPos(myWindowHandle, (IntPtr)HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            IntPtr myWindowHandle = helper.Handle; // Tell Windows this is a background Tool Window, which prevents Wallpaper Engine from treating it like a focused game!
+            IntPtr exStyle = GetWindowLongPtr(myWindowHandle, GWL_EXSTYLE);
+            SetWindowLongPtr(myWindowHandle, GWL_EXSTYLE, new IntPtr(exStyle.ToInt64() | WS_EX_TOOLWINDOW));
+
+            SetWindowPos(myWindowHandle, (IntPtr)HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             HwndSource? source = HwndSource.FromHwnd(myWindowHandle); if (source != null) source.AddHook(new HwndSourceHook(WndProc));
-            this.PreviewKeyDown += Window_PreviewKeyDown;
+            this.PreviewKeyDown += Window_PreviewKeyDown; 
+
+
+            IconPanel.MouseRightButtonDown += (s, args) => {
+                if (args.OriginalSource is ScrollViewer || args.OriginalSource is WrapPanel || args.OriginalSource == IconPanel)
+                {
+                    ClearSelection();
+                    _isContextMenuOpen = true;
+                    HeaderContextMenu.PlacementTarget = IconPanel;
+                    HeaderContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
+                    HeaderContextMenu.IsOpen = true;
+                    args.Handled = true;
+                }
+            };
 
             if (MenuRollUpFence != null) MenuRollUpFence.IsCheckable = true;
 
