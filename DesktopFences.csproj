@@ -26,6 +26,12 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>fences;desktop;management;organization;icon;hideicons;stardock;clone</PackageTags>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Company>DaveDebugs</Company>
+    <RootNamespace>Fluid.Fences</RootNamespace>
+    <PackageId>FluidFences</PackageId>
+    <Authors>DaveDebugs</Authors>
+    <Product>FluidFences</Product>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,6 +64,13 @@
     <Resource Include="Settings Window\FluidFences16BitLogo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -130,7 +130,6 @@ namespace DesktopFences
         public void SetFenceColor(Color color, double opacity) { ApplyAcrylicBlur(color, opacity); SaveFenceState(); }
         public void DashboardSaveAndRefresh() { ApplySorting(); SaveFenceState(); }
         public void DashboardDelete() { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); }
-        public void AddFileFromAutoSort(string filePath) { if (!_currentFiles.Contains(filePath)) _currentFiles.Add(filePath); }
 
         public MainWindow()
         {
@@ -151,7 +150,6 @@ namespace DesktopFences
         }
 
         #region Architecture: Diagnostics & Logging
-        // Fix 3: The Silent Failure Logger. Captures hidden errors without crashing the app.
         private void LogError(string context, Exception ex)
         {
             try
@@ -160,7 +158,7 @@ namespace DesktopFences
                 Directory.CreateDirectory(_saveDirectory);
                 File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context}: {ex.Message}\n");
             }
-            catch { /* Fail gracefully if writing to the log fails */ }
+            catch { }
         }
         #endregion
 
@@ -324,7 +322,6 @@ namespace DesktopFences
             }
             else if (minH < thresh && minV < thresh)
             {
-                // Corner Stickiness Hysteresis
                 if (_dockState == DockState.Left || _dockState == DockState.Right)
                     _dockState = dRight < dLeft ? DockState.Right : DockState.Left;
                 else if (_dockState == DockState.Top || _dockState == DockState.Bottom)
@@ -629,13 +626,18 @@ namespace DesktopFences
                     {
                         if (string.Equals(ext, target, StringComparison.OrdinalIgnoreCase) || string.Equals(ext, "." + target, StringComparison.OrdinalIgnoreCase))
                         {
-                            if (!_currentFiles.Contains(file)) { _currentFiles.Add(file); moved = true; }
+                            try
+                            {
+                                string vaultedPath = MoveToVault(file);
+                                if (!_currentFiles.Contains(vaultedPath)) { _currentFiles.Add(vaultedPath); moved = true; }
+                            }
+                            catch { }
                             break;
                         }
                     }
                 }
 
-                if (moved) { ApplySorting(); SaveFenceState(); MessageBox.Show("Desktop files organized successfully!", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information); }
+                if (moved) { ApplySorting(); SaveFenceState(); MessageBox.Show("Desktop files organized successfully into vault!", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information); }
                 else MessageBox.Show("No new files found on the desktop matching your extensions.", "Auto Organize", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex) { MessageBox.Show($"Error organizing files: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
@@ -650,6 +652,50 @@ namespace DesktopFences
         private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.ShowDialog(); }
 
         private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
+        #endregion
+
+        #region File Vault System
+        private string MoveToVault(string originalPath)
+        {
+            string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Storage", _fenceId);
+            Directory.CreateDirectory(storageDir);
+
+            if (Path.GetDirectoryName(originalPath) == storageDir) return originalPath;
+
+            string fileName = Path.GetFileName(originalPath);
+            string newPath = Path.Combine(storageDir, fileName);
+
+            int counter = 1;
+            while (File.Exists(newPath) || Directory.Exists(newPath))
+            {
+                string nameOnly = Path.GetFileNameWithoutExtension(fileName);
+                string ext = Path.GetExtension(fileName);
+                newPath = Path.Combine(storageDir, $"{nameOnly} ({counter}){ext}");
+                counter++;
+            }
+
+            if (Directory.Exists(originalPath)) Directory.Move(originalPath, newPath);
+            else if (File.Exists(originalPath)) File.Move(originalPath, newPath);
+
+            return newPath;
+        }
+
+        private void RemoveFileFromVaultAndList(string filePath)
+        {
+            try
+            {
+                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Storage", _fenceId);
+
+                if (Path.GetDirectoryName(filePath) == storageDir)
+                {
+                    if (Directory.Exists(filePath)) Directory.Delete(filePath, true);
+                    else if (File.Exists(filePath)) File.Delete(filePath);
+                }
+            }
+            catch { }
+
+            _currentFiles.Remove(filePath);
+        }
         #endregion
 
         #region Async UI Rendering & File Icon Engine
@@ -669,7 +715,29 @@ namespace DesktopFences
             }
         }
 
-        private void Window_Drop(object sender, DragEventArgs e) { if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files) { foreach (string file in files) { if (!_currentFiles.Contains(file)) { _currentFiles.Add(file); } } ApplySorting(); SaveFenceState(); string? sourceId = e.Data.GetData("FenceSourceId") as string; if (!string.IsNullOrEmpty(sourceId) && sourceId != _fenceId) e.Effects = DragDropEffects.Move; else e.Effects = DragDropEffects.None; } }
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            {
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        string vaultedPath = MoveToVault(file);
+                        if (!_currentFiles.Contains(vaultedPath)) _currentFiles.Add(vaultedPath);
+                    }
+                    catch
+                    {
+                        if (!_currentFiles.Contains(file)) _currentFiles.Add(file);
+                    }
+                }
+                ApplySorting(); SaveFenceState();
+
+                string? sourceId = e.Data.GetData("FenceSourceId") as string;
+                if (!string.IsNullOrEmpty(sourceId) && sourceId != _fenceId) e.Effects = DragDropEffects.Move;
+                else e.Effects = DragDropEffects.None;
+            }
+        }
 
         private async void AddIconToUI(string file)
         {
@@ -691,7 +759,6 @@ namespace DesktopFences
             itemContainer.Children.Add(textBlock);
             IconPanel.Children.Add(itemContainer);
 
-            // Fetch the heavy icon asynchronously in the background
             try
             {
                 ImageSource? fetchedSource = await System.Threading.Tasks.Task.Run(() => GetHighResIcon(currentFilePath));
@@ -709,7 +776,17 @@ namespace DesktopFences
 
             removeItem.Click += (s, args) =>
             {
-                if (_selectedItems.Count > 1 && _selectedItems.Contains(itemContainer)) { foreach (StackPanel selectedPanel in _selectedItems) { if (selectedPanel.ToolTip is string path) _currentFiles.Remove(path); } } else { _currentFiles.Remove(currentFilePath); }
+                if (_selectedItems.Count > 1 && _selectedItems.Contains(itemContainer))
+                {
+                    foreach (StackPanel selectedPanel in _selectedItems)
+                    {
+                        if (selectedPanel.ToolTip is string path) RemoveFileFromVaultAndList(path);
+                    }
+                }
+                else
+                {
+                    RemoveFileFromVaultAndList(currentFilePath);
+                }
                 ClearSelection(); ApplySorting(); SaveFenceState();
             };
 
@@ -726,7 +803,19 @@ namespace DesktopFences
                     try
                     {
                         string? dir = Path.GetDirectoryName(currentFilePath); string ext = Path.GetExtension(currentFilePath);
-                        if (dir != null) { string newPath = Path.Combine(dir, renameBox.Text + ext); if (currentFilePath != newPath && !File.Exists(newPath)) { File.Move(currentFilePath, newPath); _currentFiles.Remove(currentFilePath); _currentFiles.Add(newPath); ApplySorting(); SaveFenceState(); return; } }
+                        if (dir != null)
+                        {
+                            string newPath = Path.Combine(dir, renameBox.Text + ext);
+                            if (currentFilePath != newPath && !File.Exists(newPath) && !Directory.Exists(newPath))
+                            {
+                                if (Directory.Exists(currentFilePath)) Directory.Move(currentFilePath, newPath);
+                                else File.Move(currentFilePath, newPath);
+
+                                _currentFiles.Remove(currentFilePath);
+                                _currentFiles.Add(newPath);
+                                ApplySorting(); SaveFenceState(); return;
+                            }
+                        }
                     }
                     catch { MessageBox.Show("Could not rename file.", "Error"); }
 
@@ -760,7 +849,6 @@ namespace DesktopFences
                     System.Windows.Point currentPoint = args.GetPosition(null);
                     if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance)
                     {
-
                         string[] draggedFiles;
                         if (_selectedItems.Contains(itemContainer) && _selectedItems.Count > 1)
                         {
@@ -783,6 +871,25 @@ namespace DesktopFences
                             SaveFenceState();
                         }
                         dragStartPoint = null;
+                    }
+                }
+            };
+
+            itemContainer.MouseDown += (s, args) =>
+            {
+                if (args.ClickCount == 2 && args.ChangedButton == MouseButton.Left)
+                {
+                    if (File.Exists(currentFilePath) || Directory.Exists(currentFilePath))
+                    {
+                        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = currentFilePath, UseShellExecute = true }); }
+                        catch (Exception ex) { MessageBox.Show($"Could not open file.\nError: {ex.Message}", "Launch Error"); }
+                    }
+                    else
+                    {
+                        MessageBox.Show("This file or folder no longer exists.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        _currentFiles.Remove(currentFilePath);
+                        RefreshIconUI();
+                        SaveFenceState();
                     }
                 }
             };
@@ -900,17 +1007,15 @@ namespace DesktopFences
         #region Window Start & End Lifecycle
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-
             LoadFenceState(); ApplyAcrylicBlur(_currentFenceColor, _currentOpacity);
             var helper = new WindowInteropHelper(this);
-            IntPtr myWindowHandle = helper.Handle; // Tell Windows this is a background Tool Window, which prevents Wallpaper Engine from treating it like a focused game!
+            IntPtr myWindowHandle = helper.Handle;
             IntPtr exStyle = GetWindowLongPtr(myWindowHandle, GWL_EXSTYLE);
             SetWindowLongPtr(myWindowHandle, GWL_EXSTYLE, new IntPtr(exStyle.ToInt64() | WS_EX_TOOLWINDOW));
 
             SetWindowPos(myWindowHandle, (IntPtr)HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             HwndSource? source = HwndSource.FromHwnd(myWindowHandle); if (source != null) source.AddHook(new HwndSourceHook(WndProc));
-            this.PreviewKeyDown += Window_PreviewKeyDown; 
-
+            this.PreviewKeyDown += Window_PreviewKeyDown;
 
             IconPanel.MouseRightButtonDown += (s, args) => {
                 if (args.OriginalSource is ScrollViewer || args.OriginalSource is WrapPanel || args.OriginalSource == IconPanel)
@@ -1003,7 +1108,7 @@ namespace DesktopFences
             {
                 foreach (StackPanel selectedPanel in _selectedItems)
                 {
-                    if (selectedPanel.ToolTip is string path) _currentFiles.Remove(path);
+                    if (selectedPanel.ToolTip is string path) RemoveFileFromVaultAndList(path);
                 }
                 ClearSelection(); ApplySorting(); SaveFenceState(); e.Handled = true; return;
             }
