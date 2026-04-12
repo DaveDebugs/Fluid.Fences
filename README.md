@@ -59,9 +59,7 @@ Settings: Access global settings like "Start with Windows" through the tray icon
 ❤️ Support the Project
 If you find this tool useful and want to help keep the internet on, consider a donation:
 
-BuyMeACoffee: @Davedebugs
-
-Venmo: @Davedebugs
+Buymeacoffee: @ [Davedebugs](https://buymeacoffee.com/davedebugs)    Or Venmo : [Davedebugs](https://account.venmo.com/u/davedebugs)
 
 📜 License
 This project is licensed under the GNU General Public License v3.0. See the LICENSE file for details.
