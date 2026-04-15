@@ -7,15 +7,20 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace DesktopFences
 {
     public partial class SettingsWindow : Window
     {
-        
         [LibraryImport("user32.dll")] internal static partial IntPtr GetDC(IntPtr hwnd);
         [LibraryImport("user32.dll")] internal static partial int ReleaseDC(IntPtr hwnd, IntPtr hDC);
         [LibraryImport("gdi32.dll")] internal static partial uint GetPixel(IntPtr hDC, int x, int y);
+
+        private const int SPI_GETDESKWALLPAPER = 0x0073;
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SystemParametersInfo(int uiAction, int uiParam, System.Text.StringBuilder pvParam, int fWinIni);
 
         private MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
@@ -56,68 +61,9 @@ namespace DesktopFences
             };
         }
 
-        
-        private void Eyedropper_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            
-            Window pickerOverlay = new Window
-            {
-                WindowStyle = WindowStyle.None,
-                AllowsTransparency = true,
-                Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), 
-                Topmost = true,
-                Cursor = Cursors.Cross,
-                ShowInTaskbar = false,
-                Left = SystemParameters.VirtualScreenLeft,
-                Top = SystemParameters.VirtualScreenTop,
-                Width = SystemParameters.VirtualScreenWidth,
-                Height = SystemParameters.VirtualScreenHeight
-            };
-
-            pickerOverlay.PreviewMouseLeftButtonDown += (s, args) =>
-            {
-                
-                var mousePos = System.Windows.Forms.Cursor.Position;
-
-                
-                pickerOverlay.Hide();
-
-                
-                Application.Current.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
-
-                
-                IntPtr hdc = GetDC(IntPtr.Zero);
-                uint pixel = GetPixel(hdc, mousePos.X, mousePos.Y);
-                ReleaseDC(IntPtr.Zero, hdc);
-
-                
-                byte r = (byte)(pixel & 0x000000FF);
-                byte g = (byte)((pixel & 0x0000FF00) >> 8);
-                byte b = (byte)((pixel & 0x00FF0000) >> 16);
-
-                Color pickedColor = Color.FromRgb(r, g, b);
-
-                
-                RgbToHsl(pickedColor, out double h, out double sat, out double l);
-
-                _isColorInitializing = true;
-                HueSlider.Value = h;
-                SaturationSlider.Value = sat;
-                LightnessSlider.Value = l;
-                _isColorInitializing = false;
-
-                
-                if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = false;
-                if (AlphaSlider.Value <= 1) AlphaSlider.Value = 70;
-
-                UpdateColorPreview();
-                pickerOverlay.Close();
-            };
-
-            
-            pickerOverlay.PreviewKeyDown += (s, args) => { if (args.Key == Key.Escape) pickerOverlay.Close(); };
-
-            pickerOverlay.Show();
+            SaveCurrentFenceSettings();
         }
 
         private static void RgbToHsl(Color rgb, out double h, out double s, out double l)
@@ -138,7 +84,19 @@ namespace DesktopFences
             }
             h *= 360; s *= 100; l *= 100;
         }
-        // ----------------------------
+
+        private static Color HslToRgb(double h, double s, double l)
+        {
+            double r, g, b;
+            if (s == 0) { r = g = b = l; }
+            else
+            {
+                static double Hue2Rgb(double p, double q, double t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6.0) return p + (q - p) * 6 * t; if (t < 1 / 2.0) return q; if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6; return p; }
+                double q = l < 0.5 ? l * (1 + s) : l + s - l * s; double p = 2 * l - q; h /= 360;
+                r = Hue2Rgb(p, q, h + 1 / 3.0); g = Hue2Rgb(p, q, h); b = Hue2Rgb(p, q, h - 1 / 3.0);
+            }
+            return Color.FromRgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+        }
 
         private void LoadGlobalSettings()
         {
@@ -152,6 +110,7 @@ namespace DesktopFences
                     if (System.Text.Json.JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
                     {
                         TaskbarToggle.IsChecked = config.ShowTaskbarIcon;
+                        RestoreFilesToggle.IsChecked = config.RestoreFilesOnDelete;
                     }
                 }
                 catch { }
@@ -170,8 +129,9 @@ namespace DesktopFences
             string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
             string globalConfigPath = Path.Combine(configFolder, "global_config.json");
             bool showTaskbar = TaskbarToggle.IsChecked ?? true;
+            bool restoreFiles = RestoreFilesToggle.IsChecked ?? true;
 
-            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar };
+            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar, RestoreFilesOnDelete = restoreFiles };
             File.WriteAllText(globalConfigPath, System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
 
             foreach (Window window in Application.Current.Windows)
@@ -258,12 +218,22 @@ namespace DesktopFences
         private void UpdateColorSlidersFromFence(MainWindow fence)
         {
             _isColorInitializing = true;
-            EditColorTitleText.Text = $"Edit Colors for: {fence.FenceTitle}";
 
             Color startColor = fence.FenceColor;
             AlphaSlider.Value = fence.FenceOpacity * 100.0;
 
             if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
+            if (AutoMatchToggle != null) AutoMatchToggle.IsChecked = fence.AutoMatchColor;
+
+            bool isAuto = fence.AutoMatchColor;
+            HueSlider.IsEnabled = !isAuto;
+            SaturationSlider.IsEnabled = !isAuto;
+            LightnessSlider.IsEnabled = !isAuto;
+
+            double opacity = isAuto ? 0.4 : 1.0;
+            HueSlider.Opacity = opacity;
+            SaturationSlider.Opacity = opacity;
+            LightnessSlider.Opacity = opacity;
 
             System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
             HueSlider.Value = sysColor.GetHue();
@@ -272,6 +242,39 @@ namespace DesktopFences
 
             UpdateColorPreview();
             _isColorInitializing = false;
+        }
+
+        private void AutoMatchToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isColorInitializing || _currentlySelectedFence == null) return;
+
+            bool isAuto = AutoMatchToggle.IsChecked == true;
+            _currentlySelectedFence.AutoMatchColor = isAuto;
+
+            HueSlider.IsEnabled = !isAuto;
+            SaturationSlider.IsEnabled = !isAuto;
+            LightnessSlider.IsEnabled = !isAuto;
+
+            double opacity = isAuto ? 0.4 : 1.0;
+            HueSlider.Opacity = opacity;
+            SaturationSlider.Opacity = opacity;
+            LightnessSlider.Opacity = opacity;
+
+            if (isAuto)
+            {
+                Color newColor = GetDominantWallpaperColor();
+                RgbToHsl(newColor, out double h, out double sat, out double l);
+
+                _isColorInitializing = true;
+                HueSlider.Value = h;
+                SaturationSlider.Value = sat;
+                LightnessSlider.Value = l;
+                _isColorInitializing = false;
+
+                UpdateColorPreview();
+            }
+
+            _currentlySelectedFence.DashboardSaveAndRefresh();
         }
 
         private void ColorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -320,17 +323,47 @@ namespace DesktopFences
             }
         }
 
-        private static Color HslToRgb(double h, double s, double l)
+        private Color GetDominantWallpaperColor()
         {
-            double r, g, b;
-            if (s == 0) { r = g = b = l; }
-            else
+            try
             {
-                static double Hue2Rgb(double p, double q, double t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6.0) return p + (q - p) * 6 * t; if (t < 1 / 2.0) return q; if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6; return p; }
-                double q = l < 0.5 ? l * (1 + s) : l + s - l * s; double p = 2 * l - q; h /= 360;
-                r = Hue2Rgb(p, q, h + 1 / 3.0); g = Hue2Rgb(p, q, h); b = Hue2Rgb(p, q, h - 1 / 3.0);
+                System.Text.StringBuilder wallpaperPath = new System.Text.StringBuilder(260);
+                SystemParametersInfo(SPI_GETDESKWALLPAPER, 260, wallpaperPath, 0);
+                string path = wallpaperPath.ToString();
+
+                if (!File.Exists(path)) return Colors.Black;
+
+                BitmapImage bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(path, UriKind.Absolute);
+                bmp.DecodePixelWidth = 50;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+
+                int stride = bmp.PixelWidth * 4;
+                byte[] pixels = new byte[bmp.PixelHeight * stride];
+                bmp.CopyPixels(pixels, stride, 0);
+
+                long r = 0, g = 0, b = 0;
+                int pixelCount = 0;
+
+                for (int i = 0; i < pixels.Length; i += 4)
+                {
+                    b += pixels[i];
+                    g += pixels[i + 1];
+                    r += pixels[i + 2];
+                    pixelCount++;
+                }
+
+                if (pixelCount == 0) return Colors.Black;
+
+                return Color.FromRgb((byte)(r / pixelCount), (byte)(g / pixelCount), (byte)(b / pixelCount));
             }
-            return Color.FromRgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+            catch
+            {
+                return Colors.Black;
+            }
         }
 
         private void PresetDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -350,7 +383,16 @@ namespace DesktopFences
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
+            SaveCurrentFenceSettings();
             if (_currentlySelectedFence != null)
+            {
+                MessageBox.Show("Settings applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void SaveCurrentFenceSettings()
+        {
+            if (_currentlySelectedFence != null && !_isLoadingFenceData)
             {
                 _currentlySelectedFence.FenceTitle = TitleInput.Text;
                 _currentlySelectedFence.AutoSortExtensions = AutoSortInput.Text;
@@ -358,15 +400,16 @@ namespace DesktopFences
 
                 if (_currentlySelectedFence.FindName("SearchPanel") is StackPanel searchPanel) { searchPanel.Visibility = _currentlySelectedFence.ShowSearch ? Visibility.Visible : Visibility.Collapsed; }
 
-                string sortSelection = ((ComboBoxItem)SortDropdown.SelectedItem).Content.ToString() ?? "None";
-                _currentlySelectedFence.FenceSortMethod = sortSelection switch { "Date Modified" => "DateMod", "Date Created" => "DateCre", "Date added to Fence" => "DateAdd", "Item Type" => "Type", _ => sortSelection };
+                if (SortDropdown.SelectedItem is ComboBoxItem selectedSort)
+                {
+                    string sortSelection = selectedSort.Content.ToString() ?? "None";
+                    _currentlySelectedFence.FenceSortMethod = sortSelection switch { "Date Modified" => "DateMod", "Date Created" => "DateCre", "Date added to Fence" => "DateAdd", "Item Type" => "Type", _ => sortSelection };
+                }
 
                 _currentlySelectedFence.DashboardSaveAndRefresh();
 
                 if (FenceListBox.SelectedItem is ListBoxItem item1) { item1.Content = TitleInput.Text; }
                 if (ColorFenceListBox.SelectedItem is ListBoxItem item2) { item2.Content = TitleInput.Text; }
-
-                MessageBox.Show("Settings applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 

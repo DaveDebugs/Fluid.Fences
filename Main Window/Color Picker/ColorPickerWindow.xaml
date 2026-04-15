@@ -135,13 +135,16 @@
                 </ComboBox>
 
                 <TextBlock Grid.Column="1" Text="Copy/paste/reset group style" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="#999" FontSize="12" Cursor="Hand"/>
-                <TextBlock Grid.Column="2" Text="🖋" Foreground="White" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown">
+                <TextBlock x:Name="EyedropperIcon" Grid.Column="2" Text="🖋" Foreground="White" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown">
                     <TextBlock.RenderTransform>
                         <RotateTransform Angle="135"/>
                     </TextBlock.RenderTransform></TextBlock>
             </Grid>
 
-            <CheckBox x:Name="BlendWallpaperToggle" Content="Blend into wallpaper" Foreground="White" Margin="0,0,0,20" Click="BlendWallpaperToggle_Click"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <CheckBox x:Name="BlendWallpaperToggle" Content="Blend into wallpaper" Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0" Click="BlendWallpaperToggle_Click"/>
+                <CheckBox x:Name="AutoMatchToggle" Content="Auto-match wallpaper color" Foreground="White" VerticalAlignment="Center" Click="AutoMatchToggle_Click"/>
+            </StackPanel>
 
             <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
@@ -228,7 +231,7 @@
                             <ComboBoxItem Content="Use Fence background color" IsSelected="True"/>
                             <ComboBoxItem Content="Custom Color"/>
                         </ComboBox>
-                        <TextBlock Grid.Column="2" Text="🖋" Foreground="#888" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown">
+                        <TextBlock Grid.Column="2" Text="🖋" Foreground="#888" FontSize="18" VerticalAlignment="Center" Cursor="Hand" ToolTip="Pick a color from screen" RenderTransformOrigin="0.5,0.5">
                             <TextBlock.RenderTransform>
                                 <RotateTransform Angle="135"/>
                             </TextBlock.RenderTransform></TextBlock>

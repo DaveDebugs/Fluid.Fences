@@ -249,6 +249,7 @@
                         MenuItem.SubmenuOpened="Submenu_Opened_ApplyBlur"
                         Opened="ContextMenu_Opened_ApplyBlur">
                         <MenuItem Click="Menu_NewFence_Click" Header="Create New Fence" />
+                        <MenuItem Click="Menu_NewPortal_Click" Header="Create Folder Portal..." />
                         <MenuItem Header="View">
                             <MenuItem Header="Icon Size">
                                 <MenuItem

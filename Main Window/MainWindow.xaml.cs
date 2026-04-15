@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace DesktopFences
 {
@@ -69,7 +70,31 @@ namespace DesktopFences
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool DestroyIcon(IntPtr hIcon);
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct SHFILEOPSTRUCT
+        {
+            public IntPtr hwnd;
+            public uint wFunc;
+            [MarshalAs(UnmanagedType.LPWStr)] public string pFrom;
+            [MarshalAs(UnmanagedType.LPWStr)] public string pTo;
+            public ushort fFlags;
+            public int fAnyOperationsAborted;
+            public IntPtr hNameMappings;
+            [MarshalAs(UnmanagedType.LPWStr)] public string lpszProgressTitle;
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        internal static extern int SHFileOperation(ref SHFILEOPSTRUCT FileOp);
+
         [StructLayout(LayoutKind.Sequential)] public struct WINDOWPOS { public IntPtr hwnd; public IntPtr hwndInsertAfter; public int x; public int y; public int cx; public int cy; public uint flags; }
+
+        private const int SPI_GETDESKWALLPAPER = 0x0073;
+        private const int SPI_SETDESKWALLPAPER = 0x0014;
+        private const int WM_SETTINGCHANGE = 0x001A;
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SystemParametersInfo(int uiAction, int uiParam, System.Text.StringBuilder pvParam, int fWinIni);
         #endregion
 
         private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -108,9 +133,14 @@ namespace DesktopFences
         private bool _isContextMenuOpen = false;
         private bool _isDeleted = false;
 
+        private bool _isPortal = false;
+        private string _portalPath = "";
+        private FileSystemWatcher? _portalWatcher;
+
         private Color _currentFenceColor = Colors.Black;
         private double _currentOpacity = 0.7;
         private double _currentIconSize = 48;
+        private bool _autoMatchColor = false;
 
         private System.Windows.Point _selectionStartPoint;
         private bool _isDraggingSelectionBox = false;
@@ -126,10 +156,85 @@ namespace DesktopFences
         [System.Text.Json.Serialization.JsonIgnore] public bool ShowSearch { get; set; } = true;
         [System.Text.Json.Serialization.JsonIgnore] public Color FenceColor { get => _currentFenceColor; }
         [System.Text.Json.Serialization.JsonIgnore] public double FenceOpacity { get => _currentOpacity; }
+        [System.Text.Json.Serialization.JsonIgnore] public bool AutoMatchColor { get => _autoMatchColor; set => _autoMatchColor = value; }
 
         public void SetFenceColor(Color color, double opacity) { ApplyAcrylicBlur(color, opacity); SaveFenceState(); }
         public void DashboardSaveAndRefresh() { ApplySorting(); SaveFenceState(); }
-        public void DashboardDelete() { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); }
+
+        public void DashboardDelete()
+        {
+            ProcessVaultOnDeletion();
+            _isDeleted = true;
+            if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath);
+            this.Close();
+        }
+
+        private void ProcessVaultOnDeletion()
+        {
+            if (_isPortal) return;
+
+            try
+            {
+                string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
+                string globalConfigPath = Path.Combine(configFolder, "global_config.json");
+                bool restoreFiles = true;
+
+                if (File.Exists(globalConfigPath))
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(globalConfigPath);
+                        if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
+                        {
+                            restoreFiles = config.RestoreFilesOnDelete;
+                        }
+                    }
+                    catch { }
+                }
+
+                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Storage", _fenceId);
+
+                if (Directory.Exists(storageDir))
+                {
+                    if (restoreFiles)
+                    {
+                        if (Directory.GetFileSystemEntries(storageDir).Length > 0)
+                        {
+                            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                            string safeTitle = string.Join("_", TitleText.Text.Split(Path.GetInvalidFileNameChars()));
+                            if (string.IsNullOrWhiteSpace(safeTitle)) safeTitle = "Recovered Fence";
+
+                            string restoreDir = Path.Combine(desktopPath, safeTitle);
+
+                            int counter = 1;
+                            while (Directory.Exists(restoreDir) || File.Exists(restoreDir))
+                            {
+                                restoreDir = Path.Combine(desktopPath, $"{safeTitle} ({counter})");
+                                counter++;
+                            }
+
+                            Directory.CreateDirectory(restoreDir);
+
+                            foreach (string file in Directory.GetFileSystemEntries(storageDir))
+                            {
+                                string dest = Path.Combine(restoreDir, Path.GetFileName(file));
+                                if (File.Exists(file)) File.Move(file, dest);
+                                else if (Directory.Exists(file)) Directory.Move(file, dest);
+                            }
+                        }
+                        Directory.Delete(storageDir, true);
+                    }
+                    else
+                    {
+                        SendToRecycleBin(storageDir);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("ProcessVaultOnDeletion", ex);
+            }
+        }
 
         public MainWindow()
         {
@@ -250,14 +355,26 @@ namespace DesktopFences
                         ShowSearch = data.ShowSearch;
                         SearchPanel.Visibility = ShowSearch ? Visibility.Visible : Visibility.Collapsed;
                         _currentIconSize = data.IconSize > 0 ? data.IconSize : 48;
+                        _autoMatchColor = data.AutoMatchColor;
 
                         try { _currentFenceColor = (Color)ColorConverter.ConvertFromString(data.HexColor); } catch { }
                         _currentOpacity = data.Opacity;
 
+                        _isPortal = data.IsPortal;
+                        _portalPath = data.PortalPath;
+
                         if (_isRolledUp) { if (data.Width <= 40) { this.Width = HEADER_SIZE; this.Height = data.Height; } else { this.Height = HEADER_SIZE; this.Width = data.Width; } }
                         else { this.Height = data.Height; this.Width = data.Width; }
 
-                        _currentFiles.Clear(); foreach (string file in data.Files) { if (File.Exists(file) || Directory.Exists(file)) { _currentFiles.Add(file); } }
+                        if (_isPortal && !string.IsNullOrEmpty(_portalPath))
+                        {
+                            SetupPortalWatcher();
+                        }
+                        else
+                        {
+                            _currentFiles.Clear(); foreach (string file in data.Files) { if (File.Exists(file) || Directory.Exists(file)) { _currentFiles.Add(file); } }
+                        }
+
                         DetermineDockState(); UpdateDockOrientation(); ApplySorting();
                     }
                 }
@@ -290,7 +407,10 @@ namespace DesktopFences
                     AutoSortExtensions = AutoSortExtensions,
                     IconSize = _currentIconSize,
                     ShowSearch = ShowSearch,
-                    Files = _currentFiles
+                    Files = _currentFiles,
+                    IsPortal = _isPortal,
+                    PortalPath = _portalPath,
+                    AutoMatchColor = _autoMatchColor
                 };
                 Directory.CreateDirectory(_saveDirectory);
                 File.WriteAllText(_saveFilePath, JsonSerializer.Serialize(data, _jsonOptions));
@@ -644,17 +764,82 @@ namespace DesktopFences
         }
 
         private void Menu_NewFence_Click(object sender, RoutedEventArgs e) { MainWindow newFence = new(Guid.NewGuid().ToString()); newFence.Left = this.Left + 50; newFence.Top = this.Top + 50; newFence.Show(); }
-        private void Menu_DeleteFence_Click(object sender, RoutedEventArgs e) { if (MessageBox.Show("Permanently delete this fence?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _isDeleted = true; if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); this.Close(); } }
+
+        private void Menu_DeleteFence_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Permanently delete this fence?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                DashboardDelete();
+            }
+        }
+
         private void Menu_RollUp_Click(object sender, RoutedEventArgs e) { ToggleRollUp(); }
         private void Menu_Sort_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedSort || clickedSort.Tag == null) return; _saveSortMethod = clickedSort.Tag.ToString() ?? "None"; ApplySorting(); SaveFenceState(); }
 
         private void Menu_IconSize_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedItem || clickedItem.Tag == null) return; if (double.TryParse(clickedItem.Tag.ToString(), out double newSize)) { _currentIconSize = newSize; RefreshIconUI(); SaveFenceState(); } }
         private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.ShowDialog(); }
+        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this); settings.Owner = this; settings.MainTabControl.SelectedIndex = 4; settings.ShowDialog(); }
 
-        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SolidColorBrush currentBrush = new(_currentFenceColor) { Opacity = _currentOpacity }; ColorPickerWindow picker = new(currentBrush); picker.Owner = this; if (picker.ShowDialog() == true && picker.SelectedBrush != null) { ApplyAcrylicBlur(picker.SelectedBrush.Color, picker.SelectedBrush.Opacity); SaveFenceState(); } }
+        private void Menu_NewPortal_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFolderDialog();
+            dialog.Title = "Select a folder to mirror in the Portal Fence";
+
+            if (dialog.ShowDialog() == true)
+            {
+                MainWindow portalFence = new(Guid.NewGuid().ToString());
+                portalFence.Left = this.Left + 50;
+                portalFence.Top = this.Top + 50;
+                portalFence.MakePortal(dialog.FolderName);
+                portalFence.Show();
+            }
+        }
+
         #endregion
 
-        #region File Vault System
+        #region File Vault & Portal System
+        public void MakePortal(string path)
+        {
+            _isPortal = true;
+            _portalPath = path;
+            TitleText.Text = new DirectoryInfo(path).Name + " (Portal)";
+            SetupPortalWatcher();
+            SaveFenceState();
+        }
+
+        private void SetupPortalWatcher()
+        {
+            if (!Directory.Exists(_portalPath)) return;
+
+            _currentFiles.Clear();
+            _currentFiles.AddRange(Directory.GetFiles(_portalPath));
+            ApplySorting();
+
+            _portalWatcher = new FileSystemWatcher(_portalPath)
+            {
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.DirectoryName,
+                EnableRaisingEvents = true
+            };
+
+            _portalWatcher.Created += Portal_FileChanged;
+            _portalWatcher.Deleted += Portal_FileChanged;
+            _portalWatcher.Renamed += Portal_FileChanged;
+        }
+
+        private void Portal_FileChanged(object sender, FileSystemEventArgs e)
+        {
+            Dispatcher.InvokeAsync(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(100);
+                if (Directory.Exists(_portalPath))
+                {
+                    _currentFiles.Clear();
+                    _currentFiles.AddRange(Directory.GetFiles(_portalPath));
+                    ApplySorting();
+                }
+            }, System.Windows.Threading.DispatcherPriority.Background);
+        }
+
         private string MoveToVault(string originalPath)
         {
             string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Storage", _fenceId);
@@ -680,17 +865,29 @@ namespace DesktopFences
             return newPath;
         }
 
+        private void SendToRecycleBin(string path)
+        {
+            try
+            {
+                if (!File.Exists(path) && !Directory.Exists(path)) return;
+
+                SHFILEOPSTRUCT shf = new SHFILEOPSTRUCT
+                {
+                    hwnd = new WindowInteropHelper(this).Handle,
+                    wFunc = 0x0003,
+                    pFrom = path + '\0' + '\0',
+                    fFlags = 0x0040 | 0x0010 | 0x0004
+                };
+                SHFileOperation(ref shf);
+            }
+            catch (Exception ex) { LogError($"Recycle Bin Error: {path}", ex); }
+        }
+
         private void RemoveFileFromVaultAndList(string filePath)
         {
             try
             {
-                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Storage", _fenceId);
-
-                if (Path.GetDirectoryName(filePath) == storageDir)
-                {
-                    if (Directory.Exists(filePath)) Directory.Delete(filePath, true);
-                    else if (File.Exists(filePath)) File.Delete(filePath);
-                }
+                SendToRecycleBin(filePath);
             }
             catch { }
 
@@ -699,10 +896,10 @@ namespace DesktopFences
         #endregion
 
         #region Async UI Rendering & File Icon Engine
-        private void ApplySorting() { if (_saveSortMethod != "None" && _saveSortMethod != "DateAdd") { try { switch (_saveSortMethod) { case "Name": _currentFiles.Sort((a, b) => string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase)); break; case "Size": _currentFiles.Sort((a, b) => GetFileSize(b).CompareTo(GetFileSize(a))); break; case "Type": _currentFiles.Sort((a, b) => string.Compare(Path.GetExtension(a), Path.GetExtension(b), StringComparison.OrdinalIgnoreCase)); break; case "DateMod": _currentFiles.Sort((a, b) => File.GetLastWriteTime(b).CompareTo(File.GetLastWriteTime(a))); break; case "DateCre": _currentFiles.Sort((a, b) => File.GetCreationTime(b).CompareTo(File.GetCreationTime(a))); break; } } catch { } } RefreshIconUI(); }
+        private void ApplySorting() { if (_saveSortMethod != "None" && _saveSortMethod != "DateAdd" && _saveSortMethod != "Custom") { try { switch (_saveSortMethod) { case "Name": _currentFiles.Sort((a, b) => string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase)); break; case "Size": _currentFiles.Sort((a, b) => GetFileSize(b).CompareTo(GetFileSize(a))); break; case "Type": _currentFiles.Sort((a, b) => string.Compare(Path.GetExtension(a), Path.GetExtension(b), StringComparison.OrdinalIgnoreCase)); break; case "DateMod": _currentFiles.Sort((a, b) => File.GetLastWriteTime(b).CompareTo(File.GetLastWriteTime(a))); break; case "DateCre": _currentFiles.Sort((a, b) => File.GetCreationTime(b).CompareTo(File.GetCreationTime(a))); break; } } catch { } } RefreshIconUI(); }
         private static long GetFileSize(string path) { try { return new FileInfo(path).Length; } catch { return 0; } }
 
-        private void RefreshIconUI()
+        public void RefreshIconUI()
         {
             IconPanel.Children.Clear(); ClearSelection();
             if (_currentFiles.Count == 0) { IconPanel.Children.Add(new TextBlock { Margin = new Thickness(10), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = (SolidColorBrush)new BrushConverter().ConvertFromString("#88FFFFFF")!, Text = "Drop shortcuts here..." }); return; }
@@ -717,23 +914,111 @@ namespace DesktopFences
 
         private void Window_Drop(object sender, DragEventArgs e)
         {
+            if (e.Handled) return;
+
             if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
+                string? sourceId = e.Data.GetData("FenceSourceId") as string;
+                bool isInternal = (sourceId == _fenceId);
+
+                int insertIndex = _currentFiles.Count;
+                Point dropPoint = e.GetPosition(IconPanel);
+
+                for (int i = 0; i < IconPanel.Children.Count; i++)
+                {
+                    if (IconPanel.Children[i] is FrameworkElement child)
+                    {
+                        Point childPos = child.TranslatePoint(new Point(0, 0), IconPanel);
+
+                        if (dropPoint.Y >= childPos.Y && dropPoint.Y <= childPos.Y + child.ActualHeight)
+                        {
+                            if (dropPoint.X < childPos.X + (child.ActualWidth / 2))
+                            {
+                                insertIndex = i;
+                                break;
+                            }
+                        }
+                        else if (dropPoint.Y < childPos.Y)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                string? targetPath = null;
+                if (insertIndex < _currentFiles.Count) targetPath = _currentFiles[insertIndex];
+
+                if (isInternal)
+                {
+                    foreach (string f in files) _currentFiles.Remove(f);
+
+                    int finalIndex = _currentFiles.Count;
+                    if (targetPath != null)
+                    {
+                        finalIndex = _currentFiles.IndexOf(targetPath);
+                        if (finalIndex < 0) finalIndex = _currentFiles.Count;
+                    }
+
+                    foreach (string f in files)
+                    {
+                        _currentFiles.Insert(finalIndex, f);
+                        finalIndex++;
+                    }
+
+                    _saveSortMethod = "Custom";
+                    RefreshIconUI();
+                    SaveFenceState();
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                    return;
+                }
+
+                List<string> processedFiles = new();
                 foreach (string file in files)
                 {
                     try
                     {
-                        string vaultedPath = MoveToVault(file);
-                        if (!_currentFiles.Contains(vaultedPath)) _currentFiles.Add(vaultedPath);
+                        if (!_isPortal)
+                        {
+                            string vaultedPath = MoveToVault(file);
+                            if (!_currentFiles.Contains(vaultedPath)) processedFiles.Add(vaultedPath);
+                        }
+                        else
+                        {
+                            string fileName = Path.GetFileName(file);
+                            string dest = Path.Combine(_portalPath, fileName);
+                            if (file != dest && !File.Exists(dest) && !Directory.Exists(dest))
+                            {
+                                if (Directory.Exists(file)) Directory.Move(file, dest);
+                                else File.Move(file, dest);
+                            }
+                            if (!_currentFiles.Contains(dest)) processedFiles.Add(dest);
+                        }
                     }
                     catch
                     {
-                        if (!_currentFiles.Contains(file)) _currentFiles.Add(file);
+                        if (!_currentFiles.Contains(file)) processedFiles.Add(file);
                     }
                 }
-                ApplySorting(); SaveFenceState();
 
-                string? sourceId = e.Data.GetData("FenceSourceId") as string;
+                int extFinalIndex = _currentFiles.Count;
+                if (targetPath != null)
+                {
+                    extFinalIndex = _currentFiles.IndexOf(targetPath);
+                    if (extFinalIndex < 0) extFinalIndex = _currentFiles.Count;
+                }
+
+                foreach (string pf in processedFiles)
+                {
+                    _currentFiles.Insert(extFinalIndex, pf);
+                    extFinalIndex++;
+                }
+
+                _saveSortMethod = "Custom";
+                ApplySorting();
+                SaveFenceState();
+
                 if (!string.IsNullOrEmpty(sourceId) && sourceId != _fenceId) e.Effects = DragDropEffects.Move;
                 else e.Effects = DragDropEffects.None;
             }
@@ -742,7 +1027,7 @@ namespace DesktopFences
         private async void AddIconToUI(string file)
         {
             string currentFilePath = file; double containerWidth = _currentIconSize + 24;
-            StackPanel itemContainer = new() { Orientation = Orientation.Vertical, Margin = new Thickness(8), Width = containerWidth, ToolTip = currentFilePath, Background = System.Windows.Media.Brushes.Transparent };
+            StackPanel itemContainer = new() { Orientation = Orientation.Vertical, Margin = new Thickness(8), Width = containerWidth, ToolTip = currentFilePath, Background = System.Windows.Media.Brushes.Transparent, AllowDrop = true };
 
             System.Windows.Controls.Image iconImage = new()
             {
@@ -776,9 +1061,15 @@ namespace DesktopFences
 
             removeItem.Click += (s, args) =>
             {
+                if (_isPortal)
+                {
+                    if (MessageBox.Show("This is a Folder Portal.\n\nDeleting items here will send the actual files on your computer to the Recycle Bin. Are you sure you want to delete?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                        return;
+                }
+
                 if (_selectedItems.Count > 1 && _selectedItems.Contains(itemContainer))
                 {
-                    foreach (StackPanel selectedPanel in _selectedItems)
+                    foreach (StackPanel selectedPanel in _selectedItems.ToList())
                     {
                         if (selectedPanel.ToolTip is string path) RemoveFileFromVaultAndList(path);
                     }
@@ -1097,16 +1388,76 @@ namespace DesktopFences
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+
         {
             if (msg == WM_WINDOWPOSCHANGING) { WINDOWPOS windowPos = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS))!; windowPos.hwndInsertAfter = (IntPtr)HWND_BOTTOM; if ((windowPos.flags & SWP_NOMOVE) == 0 && (windowPos.flags & SWP_NOSIZE) != 0) { int snapMargin = 20; var screen = System.Windows.Forms.Screen.FromHandle(hwnd); var workArea = screen.WorkingArea; if (Math.Abs(windowPos.x - workArea.Left) < snapMargin) windowPos.x = workArea.Left; if (Math.Abs(windowPos.y - workArea.Top) < snapMargin) windowPos.y = workArea.Top; if (Math.Abs((windowPos.x + windowPos.cx) - workArea.Right) < snapMargin) windowPos.x = workArea.Right - windowPos.cx; if (Math.Abs((windowPos.y + windowPos.cy) - workArea.Bottom) < snapMargin) windowPos.y = workArea.Bottom - windowPos.cy; } Marshal.StructureToPtr(windowPos, lParam, true); }
+
+            if (msg == WM_SETTINGCHANGE && wParam.ToInt32() == SPI_SETDESKWALLPAPER)
+            {
+                if (_autoMatchColor)
+                {
+                    Color newColor = GetDominantWallpaperColor();
+                    SetFenceColor(newColor, _currentOpacity);
+                }
+            }
+
             return IntPtr.Zero;
+        }
+
+        private Color GetDominantWallpaperColor()
+        {
+            try
+            {
+                System.Text.StringBuilder wallpaperPath = new System.Text.StringBuilder(260);
+                SystemParametersInfo(SPI_GETDESKWALLPAPER, 260, wallpaperPath, 0);
+                string path = wallpaperPath.ToString();
+
+                if (!File.Exists(path)) return Colors.Black;
+
+                BitmapImage bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(path, UriKind.Absolute);
+                bmp.DecodePixelWidth = 50;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+
+                int stride = bmp.PixelWidth * 4;
+                byte[] pixels = new byte[bmp.PixelHeight * stride];
+                bmp.CopyPixels(pixels, stride, 0);
+
+                long r = 0, g = 0, b = 0;
+                int pixelCount = 0;
+
+                for (int i = 0; i < pixels.Length; i += 4)
+                {
+                    b += pixels[i];
+                    g += pixels[i + 1];
+                    r += pixels[i + 2];
+                    pixelCount++;
+                }
+
+                if (pixelCount == 0) return Colors.Black;
+
+                return Color.FromRgb((byte)(r / pixelCount), (byte)(g / pixelCount), (byte)(b / pixelCount));
+            }
+            catch
+            {
+                return Colors.Black;
+            }
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Delete && _selectedItems.Count > 0 && !(e.OriginalSource is TextBox))
             {
-                foreach (StackPanel selectedPanel in _selectedItems)
+                if (_isPortal)
+                {
+                    if (MessageBox.Show("This is a Folder Portal.\n\nDeleting items here will send the actual files on your computer to the Recycle Bin. Are you sure you want to delete?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                        return;
+                }
+
+                foreach (StackPanel selectedPanel in _selectedItems.ToList())
                 {
                     if (selectedPanel.ToolTip is string path) RemoveFileFromVaultAndList(path);
                 }
@@ -1144,12 +1495,16 @@ namespace DesktopFences
         [System.Text.Json.Serialization.JsonPropertyName("IconSize")] public double IconSize { get; set; } = 48;
         [System.Text.Json.Serialization.JsonPropertyName("ShowSearch")] public bool ShowSearch { get; set; } = true;
         [System.Text.Json.Serialization.JsonPropertyName("Files")] public List<string> Files { get; set; } = new();
+        [System.Text.Json.Serialization.JsonPropertyName("IsPortal")] public bool IsPortal { get; set; } = false;
+        [System.Text.Json.Serialization.JsonPropertyName("PortalPath")] public string PortalPath { get; set; } = "";
+        [System.Text.Json.Serialization.JsonPropertyName("AutoMatchColor")] public bool AutoMatchColor { get; set; } = false;
     }
 
     public class GlobalConfig
     {
         [System.Text.Json.Serialization.JsonPropertyName("FirstRunComplete")] public bool FirstRunComplete { get; set; } = true;
         [System.Text.Json.Serialization.JsonPropertyName("ShowTaskbarIcon")] public bool ShowTaskbarIcon { get; set; } = true;
+        [System.Text.Json.Serialization.JsonPropertyName("RestoreFilesOnDelete")] public bool RestoreFilesOnDelete { get; set; } = true;
     }
     #endregion
 }

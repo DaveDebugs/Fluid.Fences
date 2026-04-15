@@ -1,115 +1,123 @@
 ﻿using System;
-using System.IO;
-using System.Threading;
 using System.Windows;
+using System.Drawing;
 using System.Windows.Forms;
 using Application = System.Windows.Application;
+using Microsoft.Win32;
+using System.IO;
 
 namespace DesktopFences
 {
     public partial class App : Application
     {
-        private static Mutex? _mutex = null;
         private NotifyIcon? _trayIcon;
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // 1. SINGLE INSTANCE MUTEX: Prevent multiple versions of the app from running simultaneously
-            const string appName = "FluidFencesSingleInstance_v1";
-            _mutex = new Mutex(true, appName, out bool createdNew);
-
-            if (!createdNew)
-            {
-                Application.Current.Shutdown();
-                return;
-            }
-
-            // 2. BACKGROUND MODE: Keep the app alive in the system tray even if all fences are deleted/closed
-            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             base.OnStartup(e);
-
-            InitializeTrayIcon();
-            LoadSavedFences();
+            CreateTrayIcon();
+            RestoreSavedFences();
         }
 
-        private void InitializeTrayIcon()
+        private void RestoreSavedFences()
         {
-            _trayIcon = new NotifyIcon();
-            
-            _trayIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName);
-            _trayIcon.Visible = true;
-            _trayIcon.Text = "Fluid Fences";
+            string saveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences", "Fences");
 
-            
-            _trayIcon.DoubleClick += (s, args) => { new SettingsWindow(null).Show(); };
-
-            
-            ContextMenuStrip menu = new ContextMenuStrip();
-
-            ToolStripMenuItem newFenceItem = new ToolStripMenuItem("Create New Fence");
-            newFenceItem.Click += (s, args) => { new MainWindow(Guid.NewGuid().ToString()).Show(); };
-
-            ToolStripMenuItem settingsItem = new ToolStripMenuItem("Settings...");
-            settingsItem.Click += (s, args) => { new SettingsWindow(null).Show(); };
-
-            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit Fluid Fences");
-            exitItem.Click += (s, args) =>
-            {
-                _trayIcon.Visible = false;
-                _trayIcon.Dispose();
-                Application.Current.Shutdown();
-            };
-
-            menu.Items.Add(newFenceItem);
-            menu.Items.Add(settingsItem);
-            menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(exitItem);
-
-            _trayIcon.ContextMenuStrip = menu;
-        }
-
-        private void LoadSavedFences()
-        {
-            string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
-            string globalConfigPath = Path.Combine(configFolder, "global_config.json");
-            string saveDirectory = Path.Combine(configFolder, "Fences");
-
-            
-            if (!File.Exists(globalConfigPath))
-            {
-                Directory.CreateDirectory(configFolder);
-                File.WriteAllText(globalConfigPath, "{\"FirstRunComplete\": true, \"ShowTaskbarIcon\": true}");
-
-                
-                MainWindow defaultFence = new MainWindow("designer");
-                defaultFence.Show();
-                new SettingsWindow(defaultFence, true).ShowDialog();
-                return;
-            }
-
-            
             if (Directory.Exists(saveDirectory))
             {
-                string[] files = Directory.GetFiles(saveDirectory, "*.json");
-                if (files.Length > 0)
+                string[] savedFences = Directory.GetFiles(saveDirectory, "*.json");
+
+                if (savedFences.Length > 0)
                 {
-                    foreach (string file in files)
+                    foreach (string file in savedFences)
                     {
-                        new MainWindow(Path.GetFileNameWithoutExtension(file)).Show();
+                        string fenceId = Path.GetFileNameWithoutExtension(file);
+
+                        if (fenceId.Equals("designer", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        MainWindow restoredFence = new(fenceId);
+                        restoredFence.Show();
                     }
                     return;
                 }
             }
 
-            
-            new MainWindow(Guid.NewGuid().ToString()).Show();
+            MainWindow defaultFence = new(Guid.NewGuid().ToString());
+            defaultFence.Show();
+        }
+
+        private void CreateTrayIcon()
+        {
+            var iconUri = new Uri("pack://application:,,,/Assets/FFICONsmall.ico");
+            using var iconStream = Application.GetResourceStream(iconUri)?.Stream;
+
+            if (iconStream == null)
+            {
+                throw new FileNotFoundException("Could not load the embedded icon resource.");
+            }
+
+            _trayIcon = new NotifyIcon
+            {
+                Icon = new Icon(iconStream),
+                Visible = true,
+                Text = "Fluid Fences"
+            };
+
+            var trayMenu = new ContextMenuStrip();
+
+            trayMenu.Items.Add("Create New Fence", null, (s, e) => CreateNewFence());
+            trayMenu.Items.Add("Create Folder Portal...", null, (s, e) => CreateNewPortal());
+            trayMenu.Items.Add("Open Settings", null, (s, e) => OpenSettings());
+            trayMenu.Items.Add(new ToolStripSeparator());
+            trayMenu.Items.Add("Exit Fluid Fences", null, (s, e) => ExitApp());
+
+            _trayIcon.ContextMenuStrip = trayMenu;
+            _trayIcon.DoubleClick += (s, e) => OpenSettings();
+        }
+
+        private void CreateNewFence()
+        {
+            MainWindow newFence = new(Guid.NewGuid().ToString());
+            newFence.Show();
+        }
+
+        private void CreateNewPortal()
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog();
+            dialog.Title = "Select a folder to mirror in the Portal Fence";
+
+            if (dialog.ShowDialog() == true)
+            {
+                MainWindow portalFence = new(Guid.NewGuid().ToString());
+
+                portalFence.Left = SystemParameters.PrimaryScreenWidth / 2 - 125;
+                portalFence.Top = SystemParameters.PrimaryScreenHeight / 2 - 150;
+
+                portalFence.MakePortal(dialog.FolderName);
+                portalFence.Show();
+            }
+        }
+
+        private void OpenSettings()
+        {
+            SettingsWindow settings = new SettingsWindow(null);
+            settings.Show();
+        }
+
+        private void ExitApp()
+        {
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+            }
+            Application.Current.Shutdown();
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
             if (_trayIcon != null)
             {
-                _trayIcon.Visible = false;
                 _trayIcon.Dispose();
             }
             base.OnExit(e);

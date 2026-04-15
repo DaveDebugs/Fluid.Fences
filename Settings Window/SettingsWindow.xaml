@@ -8,7 +8,8 @@
     Background="#1E1E1E"
     FontFamily="Segoe UI Variable, Segoe UI, Arial"
     Foreground="White"
-    WindowStartupLocation="CenterScreen">
+    WindowStartupLocation="CenterScreen"
+    Closing="Window_Closing">
 
     <Window.Resources>
         <Style TargetType="TabControl">
@@ -329,7 +330,7 @@
     </Window.Resources>
 
     <Grid>
-        <TabControl SelectedIndex="0">
+        <TabControl x:Name="MainTabControl" SelectedIndex="0">
 
             <TabItem Header="About">
                 <Grid Margin="40,20">
@@ -391,26 +392,27 @@
                     <StackPanel Margin="0,0,15,0">
                         <TextBlock Text="How to Use Fluid Fences" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,0,0,25"/>
 
-                        <TextBlock Text="Window Controls &amp; Physics" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="Window Controls" Style="{StaticResource SectionHeader}"/>
                         <TextBlock Text="• Move a Fence: Click and hold the top title bar to drag the fence. Fences will automatically clamp to the edges of your screen so they never get lost." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Edge Snapping: Drag a fence against the edge of your screen to dock it. Once docked, you can slide it vertically without it detaching. To tear it off, simply pull it horizontally toward the center of your screen." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Roll-up Mode: Double-click the title bar to collapse the fence into a sleek, space-saving bar. Hover your mouse over the rolled-up bar to temporarily reveal your files, and move your mouse away to hide them again. Double-click to lock it open." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
-                        <TextBlock Text="Managing Files &amp; Icons" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Add Files: Drag and drop any desktop shortcut, photo, video, or folder directly into the fence." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• High-Res Thumbnails: Fluid Fences automatically extracts razor-sharp 256x256 application icons and generates actual video/photo thumbnails instead of generic white files." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+                        <TextBlock Text="Managing Files" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Add Files: Drag and drop any desktop shortcut, photo, video, or folder directly into the fence. The file will be physically moved off your Windows Desktop into a hidden 'File Vault' to keep your screen perfectly clean!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Select Multiple: Click and drag on an empty area inside the fence to draw a blue selection box around multiple items." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Rename Files: Right-click any icon and select 'Rename File', or simply double-click the text label beneath the icon to edit it instantly. Press 'Enter' to save." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click and select 'Remove from Fence'." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+                        <TextBlock Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click and select 'Remove from Fence'. Don't worry, deleted files are safely sent to your Windows Recycle Bin." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
-                        <TextBlock Text="Organization &amp; Search" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="Organization &amp; Custom Drag-and-Drop" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Custom Ordering: Click and drag any icon and drop it exactly where you want it to go. The fence will switch to 'Custom' sorting and remember your exact layout permanently." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Instant Search: Click the magnifying glass (🔍) in the fence header to instantly filter your files by name. Click the icon again or press the 'Esc' key to close the search." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your main Windows Desktop and automatically pull in any files that match the extensions you configured in the 'Fences' settings tab (like .jpg, .png, or .exe)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Sorting: Right-click the header to sort your items alphabetically, by size, by file type, or by the date they were created." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+                        <TextBlock Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your main Windows Desktop and automatically pull in any files that match the extensions you configured in the 'Fences' settings tab (like .jpg, .png, or .exe)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+
+                        <TextBlock Text="Folder Portals" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Live Mirroring: Right-click a fence (or the system tray icon) and select 'Create Folder Portal...'. Choose a folder like your 'Downloads' folder, and the fence will act as a live, scrolling window into that folder. If you download a file from the internet, it will instantly appear in your Portal fence!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
                         <TextBlock Text="Customization &amp; Colors" Style="{StaticResource SectionHeader}"/>
+                        <TextBlock Text="• Auto-Match Wallpaper: Check the 'Auto Match Wallpaper' box in the Edit Colors tab to automatically tint your fences to match your current Windows desktop background!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Edit Colors: Right-click the header and select 'Edit Color...'. Here you can adjust the hue, brightness, saturation, and transparency of individual fences." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• The Eyedropper (🖋): Click the pen icon inside the Color Picker to turn your cursor into a crosshair. Click anywhere on your screen—even inside other apps—to instantly match your fence to that exact color!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
                         <TextBlock Text="• Blend with Wallpaper: Check the 'Blend into wallpaper' box in the Color Picker to drop the background opacity to 1%, utilizing the native Windows Acrylic engine to create a seamless pane of frosted glass." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
 
                         <TextBlock Text="Background Operation" Style="{StaticResource SectionHeader}"/>
@@ -435,8 +437,13 @@
                             Style="{StaticResource ToggleSwitchStyle}" />
                         <CheckBox
                             x:Name="TaskbarToggle"
-                            Margin="0,0,0,30"
+                            Margin="0,0,0,15"
                             Content="Show Fences in the Windows Taskbar"
+                            Style="{StaticResource ToggleSwitchStyle}" />
+                        <CheckBox
+                            x:Name="RestoreFilesToggle"
+                            Margin="0,0,0,30"
+                            Content="When deleting a fence, restore its files to the Desktop"
                             Style="{StaticResource ToggleSwitchStyle}" />
                         <Button
                             Padding="20,10"
@@ -538,7 +545,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="   ↳ Edit Colors">
+            <TabItem Header="  ↳ Edit Colors">
                 <Grid Margin="40">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
@@ -563,36 +570,12 @@
                                 x:Name="EditColorTitleText"
                                 Style="{StaticResource SectionHeader}"
                                 Text="Edit Colors" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox Width="160">
-                                    <ComboBoxItem Content="Programs" IsSelected="True" />
-                                    <ComboBoxItem Content="Folders" />
-                                </ComboBox>
-                                <TextBlock
-                                    Grid.Column="2"
-                                    VerticalAlignment="Center"
-                                    Cursor="Hand"
-                                    FontSize="18"
-                                    Foreground="White"
-                                    MouseLeftButtonDown="Eyedropper_MouseLeftButtonDown"
-                                    RenderTransformOrigin="0.5,0.5"
-                                    Text="🖋">
-                                    <TextBlock.RenderTransform>
-                                        <RotateTransform Angle="135" />
-                                    </TextBlock.RenderTransform>
-                                </TextBlock>
-                            </Grid>
-                            <CheckBox
-                                x:Name="BlendWallpaperToggle"
-                                Margin="0,0,0,20"
-                                Click="BlendWallpaperToggle_Click"
-                                Content="Blend into wallpaper"
-                                Foreground="White" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                                <CheckBox x:Name="BlendWallpaperToggle" Margin="0,0,15,0" Click="BlendWallpaperToggle_Click" Content="Blend into wallpaper" Foreground="White" />
+                                <CheckBox x:Name="AutoMatchToggle" Click="AutoMatchToggle_Click" Content="Auto-match wallpaper color" Foreground="White" />
+                            </StackPanel>
+
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
@@ -672,7 +655,7 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-                            <Grid Margin="0,0,0,15">
+                            <Grid Margin="0,0,0,25">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100" />
                                     <ColumnDefinition Width="*" />
@@ -697,14 +680,16 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-                            <Border
-                                x:Name="ColorPreview"
-                                Width="40"
-                                Height="25"
-                                HorizontalAlignment="Left"
-                                BorderBrush="#555"
-                                BorderThickness="1"
-                                CornerRadius="4" />
+
+                            <Grid Margin="0,15,0,0">
+                                <Border x:Name="ColorPreview" Width="40" Height="25" CornerRadius="4" HorizontalAlignment="Left" BorderBrush="#555" BorderThickness="1"/>
+                                <Button
+                                    Padding="20,10"
+                                    HorizontalAlignment="Right"
+                                    Click="SaveSettings_Click"
+                                    Content="Save Changes"
+                                    Style="{StaticResource PrimaryButton}" />
+                            </Grid>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

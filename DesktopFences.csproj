@@ -1,76 +1,81 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    
-    <ImplicitUsings>disable</ImplicitUsings> 
-    
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <ApplicationIcon>FFICONsmall.ico</ApplicationIcon>
-    <BaseOutputPath>P:\Programming Repositories\Compiled\Nuget</BaseOutputPath>
-    <Title>Fluid.Fences</Title>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <AssemblyTitle>FluidFences</AssemblyTitle>
-    <StartupObject>DesktopFences.App</StartupObject>
-    <Copyright>2026</Copyright>
-    <PackageProjectUrl>https://github.com/DaveDebugs</PackageProjectUrl>
-    <PackageIcon>ffdesktopicon.png</PackageIcon>
-    <Description>An opensource desktop organization application.</Description>
-    <RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>fences;desktop;management;organization;icon;hideicons;stardock;clone</PackageTags>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Company>DaveDebugs</Company>
-    <RootNamespace>Fluid.Fences</RootNamespace>
-    <PackageId>FluidFences</PackageId>
-    <Authors>DaveDebugs</Authors>
-    <Product>FluidFences</Product>
-  </PropertyGroup>
+		<ApplicationIcon>Assets\FFICONsmall.ico</ApplicationIcon>
 
-  <ItemGroup>
-    <None Remove="Settings Window\BuyMeACoffeeQR.png" />
-    <None Remove="Settings Window\FluidFences16BitLogo.png" />
-  </ItemGroup>
+		<BaseOutputPath>P:\Programming Repositories\Compiled\Nuget</BaseOutputPath>
+		<Title>Fluid.Fences</Title>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<AssemblyTitle>FluidFences</AssemblyTitle>
+		<StartupObject>DesktopFences.App</StartupObject>
+		<Copyright>2026</Copyright>
+		<PackageProjectUrl>https://github.com/DaveDebugs</PackageProjectUrl>
+		<PackageIcon>ffdesktopicon.png</PackageIcon>
+		<Description>An opensource desktop organization application.</Description>
+		<RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>fences;desktop;management;organization;icon;hideicons;stardock;clone</PackageTags>
+		<AnalysisLevel>latest-recommended</AnalysisLevel>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Company>DaveDebugs</Company>
+		<RootNamespace>Fluid.Fences</RootNamespace>
+		<PackageId>FluidFences</PackageId>
+		<Authors>DaveDebugs</Authors>
+		<Product>FluidFences</Product>
+		<Version>1.0.2</Version>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="FFICONsmall.ico" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Assets\FFICONsmall.ico" />
+		<None Remove="Settings Window\BuyMeACoffeeQR.png" />
+		<None Remove="Settings Window\FluidFences16BitLogo.png" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\Compiled\Fluid Fences\ffdesktopicon.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\Compiled\Fluid Fences\LICENSE.txt">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\..\Compiled\Fluid Fences\ffdesktopicon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\Compiled\Fluid Fences\LICENSE.txt">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="Assets\BuyMeACoffeeQR.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Settings Window\BuyMeACoffeeQR.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Settings Window\FluidFences16BitLogo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Include="Assets\BuyMeACoffeeQR.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Assets\FFICONsmall.ico">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Settings Window\BuyMeACoffeeQR.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Settings Window\FluidFences16BitLogo.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Update="App.xaml.cs">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Compile>
+	</ItemGroup>
 
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>
