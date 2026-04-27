@@ -9,7 +9,7 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-		<ApplicationIcon>Assets\FFICONsmall.ico</ApplicationIcon>
+		<ApplicationIcon>Assets\FF 256.ico</ApplicationIcon>
 
 		<BaseOutputPath>P:\Programming Repositories\Compiled\Nuget</BaseOutputPath>
 		<Title>Fluid.Fences</Title>
@@ -19,7 +19,7 @@
 		<StartupObject>DesktopFences.App</StartupObject>
 		<Copyright>2026</Copyright>
 		<PackageProjectUrl>https://github.com/DaveDebugs</PackageProjectUrl>
-		<PackageIcon>ffdesktopicon.png</PackageIcon>
+		<PackageIcon>Assets\FF 256.png</PackageIcon>
 		<Description>An opensource desktop organization application.</Description>
 		<RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -31,20 +31,19 @@
 		<PackageId>FluidFences</PackageId>
 		<Authors>DaveDebugs</Authors>
 		<Product>FluidFences</Product>
-		<Version>1.0.2</Version>
+		<Version>1.1.2</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Assets\FFICONsmall.ico" />
+		<None Remove="Assets\FF 256.ico" />
+		<None Remove="Assets\FF 256.png" />
+		<None Remove="Assets\FF 48.ico" />
+		<None Remove="Assets\FF32.ico" />
 		<None Remove="Settings Window\BuyMeACoffeeQR.png" />
 		<None Remove="Settings Window\FluidFences16BitLogo.png" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\..\Compiled\Fluid Fences\ffdesktopicon.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
 		<None Include="..\..\Compiled\Fluid Fences\LICENSE.txt">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
@@ -55,8 +54,19 @@
 		<Resource Include="Assets\BuyMeACoffeeQR.png">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
-		<Resource Include="Assets\FFICONsmall.ico">
+		<Resource Include="Assets\FF 256.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Assets\FF 256.png">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+			<PackagePath>Assets\</PackagePath>
+		</Resource>
+		<Resource Include="Assets\FF 48.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Assets\FF32.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Settings Window\BuyMeACoffeeQR.png">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

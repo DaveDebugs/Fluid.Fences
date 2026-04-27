@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,7 +23,7 @@ namespace DesktopFences
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SystemParametersInfo(int uiAction, int uiParam, System.Text.StringBuilder pvParam, int fWinIni);
 
-        private MainWindow? _callingFence;
+        private readonly MainWindow? _callingFence; // Made readonly
         private MainWindow? _currentlySelectedFence;
         private bool _isLoadingFenceData = false;
         private bool _isColorInitializing = false;
@@ -49,7 +50,7 @@ namespace DesktopFences
             _liveUpdateTimer.Interval = TimeSpan.FromMilliseconds(33);
             _liveUpdateTimer.Tick += (s, e) =>
             {
-                if (_hasPendingColor && _currentlySelectedFence != null)
+                if (_hasPendingColor && _currentlySelectedFence is not null)
                 {
                     _currentlySelectedFence.SetFenceColor(_pendingColor, _pendingOpacity);
                     _hasPendingColor = false;
@@ -107,10 +108,11 @@ namespace DesktopFences
                 try
                 {
                     string json = File.ReadAllText(globalConfigPath);
-                    if (System.Text.Json.JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
+                    if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
                     {
                         TaskbarToggle.IsChecked = config.ShowTaskbarIcon;
                         RestoreFilesToggle.IsChecked = config.RestoreFilesOnDelete;
+                        GhostModeToggle.IsChecked = config.EnableGhostMode;
                     }
                 }
                 catch { }
@@ -119,7 +121,7 @@ namespace DesktopFences
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
-                StartupToggle.IsChecked = key?.GetValue("FluidFences") != null;
+                StartupToggle.IsChecked = key?.GetValue("FluidFences") is not null;
             }
             catch { }
         }
@@ -128,15 +130,27 @@ namespace DesktopFences
         {
             string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
             string globalConfigPath = Path.Combine(configFolder, "global_config.json");
+
             bool showTaskbar = TaskbarToggle.IsChecked ?? true;
             bool restoreFiles = RestoreFilesToggle.IsChecked ?? true;
+            bool ghostMode = GhostModeToggle.IsChecked ?? false;
 
-            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar, RestoreFilesOnDelete = restoreFiles };
-            File.WriteAllText(globalConfigPath, System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            GlobalConfig config = new()
+            {
+                FirstRunComplete = true,
+                ShowTaskbarIcon = showTaskbar,
+                RestoreFilesOnDelete = restoreFiles,
+                EnableGhostMode = ghostMode
+            };
+            File.WriteAllText(globalConfigPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
 
             foreach (Window window in Application.Current.Windows)
             {
-                if (window is MainWindow fence) fence.ShowInTaskbar = showTaskbar;
+                if (window is MainWindow fence)
+                {
+                    fence.ShowInTaskbar = showTaskbar;
+                    fence.UpdateGlobalGhostMode(ghostMode);
+                }
             }
 
             try
@@ -157,6 +171,24 @@ namespace DesktopFences
             MessageBox.Show("Global settings updated!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        private void SaveLayout_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current is App myApp)
+            {
+                myApp.SaveCurrentLayout();
+                MessageBox.Show("Layout snapshot saved successfully!", "Snapshot Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void RestoreLayout_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current is App myApp)
+            {
+                myApp.RestoreLayoutSnapshot();
+                MessageBox.Show("Layout restored!", "Snapshot Restored", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void LoadAllFences()
         {
             FenceListBox.Items.Clear();
@@ -164,7 +196,7 @@ namespace DesktopFences
 
             foreach (Window window in Application.Current.Windows)
             {
-                if (window is MainWindow fence && fence.Visibility == Visibility.Visible)
+                if (window is MainWindow { Visibility: Visibility.Visible } fence)
                 {
                     ListBoxItem item1 = new() { Content = fence.FenceTitle, Tag = fence };
                     ListBoxItem item2 = new() { Content = fence.FenceTitle, Tag = fence };
@@ -172,7 +204,7 @@ namespace DesktopFences
                     FenceListBox.Items.Add(item1);
                     ColorFenceListBox.Items.Add(item2);
 
-                    if (fence == _callingFence || (_callingFence == null && FenceListBox.SelectedItem == null))
+                    if (fence == _callingFence || (_callingFence is null && FenceListBox.SelectedItem is null))
                     {
                         FenceListBox.SelectedItem = item1;
                         ColorFenceListBox.SelectedItem = item2;
@@ -195,6 +227,7 @@ namespace DesktopFences
                 AutoSortInput.Text = fence.AutoSortExtensions;
                 EnableSearchToggle.IsChecked = fence.ShowSearch;
                 PresetDropdown.SelectedIndex = 0;
+                GhostModeDropdown.SelectedIndex = fence.GhostModeOverride;
 
                 foreach (ComboBoxItem item in SortDropdown.Items)
                 {
@@ -222,8 +255,8 @@ namespace DesktopFences
             Color startColor = fence.FenceColor;
             AlphaSlider.Value = fence.FenceOpacity * 100.0;
 
-            if (BlendWallpaperToggle != null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
-            if (AutoMatchToggle != null) AutoMatchToggle.IsChecked = fence.AutoMatchColor;
+            if (BlendWallpaperToggle is not null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
+            if (AutoMatchToggle is not null) AutoMatchToggle.IsChecked = fence.AutoMatchColor;
 
             bool isAuto = fence.AutoMatchColor;
             HueSlider.IsEnabled = !isAuto;
@@ -246,7 +279,7 @@ namespace DesktopFences
 
         private void AutoMatchToggle_Click(object sender, RoutedEventArgs e)
         {
-            if (_isColorInitializing || _currentlySelectedFence == null) return;
+            if (_isColorInitializing || _currentlySelectedFence is null) return;
 
             bool isAuto = AutoMatchToggle.IsChecked == true;
             _currentlySelectedFence.AutoMatchColor = isAuto;
@@ -279,9 +312,9 @@ namespace DesktopFences
 
         private void ColorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (_isColorInitializing || _currentlySelectedFence == null) return;
+            if (_isColorInitializing || _currentlySelectedFence is null) return;
 
-            if (sender == AlphaSlider && BlendWallpaperToggle != null)
+            if (sender == AlphaSlider && BlendWallpaperToggle is not null)
             {
                 BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
             }
@@ -291,7 +324,7 @@ namespace DesktopFences
 
         private void BlendWallpaperToggle_Click(object sender, RoutedEventArgs e)
         {
-            if (_isColorInitializing || _currentlySelectedFence == null) return;
+            if (_isColorInitializing || _currentlySelectedFence is null) return;
 
             if (BlendWallpaperToggle.IsChecked == true) AlphaSlider.Value = 1;
             else AlphaSlider.Value = 70;
@@ -314,7 +347,7 @@ namespace DesktopFences
             SaturationEndColor.Color = pureHue;
             AlphaEndColor.Color = pureHue;
 
-            if (!_isColorInitializing && _currentlySelectedFence != null)
+            if (!_isColorInitializing && _currentlySelectedFence is not null)
             {
                 _pendingColor = finalColor;
                 _pendingOpacity = a;
@@ -327,13 +360,13 @@ namespace DesktopFences
         {
             try
             {
-                System.Text.StringBuilder wallpaperPath = new System.Text.StringBuilder(260);
+                System.Text.StringBuilder wallpaperPath = new(260); // Simplified new expression
                 SystemParametersInfo(SPI_GETDESKWALLPAPER, 260, wallpaperPath, 0);
                 string path = wallpaperPath.ToString();
 
                 if (!File.Exists(path)) return Colors.Black;
 
-                BitmapImage bmp = new BitmapImage();
+                BitmapImage bmp = new(); // Simplified new expression
                 bmp.BeginInit();
                 bmp.UriSource = new Uri(path, UriKind.Absolute);
                 bmp.DecodePixelWidth = 50;
@@ -368,7 +401,7 @@ namespace DesktopFences
 
         private void PresetDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_isLoadingFenceData || PresetDropdown.SelectedItem == null || AutoSortInput == null) return;
+            if (_isLoadingFenceData || PresetDropdown.SelectedItem is null || AutoSortInput is null) return;
             string selection = ((ComboBoxItem)PresetDropdown.SelectedItem).Content.ToString() ?? "";
             switch (selection)
             {
@@ -384,7 +417,7 @@ namespace DesktopFences
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
             SaveCurrentFenceSettings();
-            if (_currentlySelectedFence != null)
+            if (_currentlySelectedFence is not null)
             {
                 MessageBox.Show("Settings applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -392,13 +425,15 @@ namespace DesktopFences
 
         private void SaveCurrentFenceSettings()
         {
-            if (_currentlySelectedFence != null && !_isLoadingFenceData)
+            if (_currentlySelectedFence is not null && !_isLoadingFenceData)
             {
                 _currentlySelectedFence.FenceTitle = TitleInput.Text;
                 _currentlySelectedFence.AutoSortExtensions = AutoSortInput.Text;
-                _currentlySelectedFence.ShowSearch = EnableSearchToggle.IsChecked ?? true;
 
-                if (_currentlySelectedFence.FindName("SearchPanel") is StackPanel searchPanel) { searchPanel.Visibility = _currentlySelectedFence.ShowSearch ? Visibility.Visible : Visibility.Collapsed; }
+                _currentlySelectedFence.ShowSearch = EnableSearchToggle.IsChecked ?? true;
+                _currentlySelectedFence.UpdateSearchVisibility();
+
+                _currentlySelectedFence.GhostModeOverride = GhostModeDropdown.SelectedIndex;
 
                 if (SortDropdown.SelectedItem is ComboBoxItem selectedSort)
                 {
@@ -413,7 +448,7 @@ namespace DesktopFences
             }
         }
 
-        private void DeleteFenceBtn_Click(object sender, RoutedEventArgs e) { if (_currentlySelectedFence != null) { if (MessageBox.Show($"Delete '{_currentlySelectedFence.FenceTitle}'?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _currentlySelectedFence.DashboardDelete(); LoadAllFences(); } } }
+        private void DeleteFenceBtn_Click(object sender, RoutedEventArgs e) { if (_currentlySelectedFence is not null) { if (MessageBox.Show($"Delete '{_currentlySelectedFence.FenceTitle}'?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _currentlySelectedFence.DashboardDelete(); LoadAllFences(); } } }
         private void BuyMeACoffee_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("https://www.paypal.com/qrcodes/venmocs/a0e66d13-f15f-4fbd-ba26-34008d486c61?created=1775532880") { UseShellExecute = true }); } catch { } }
         private void AskAQuestion_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("mailto:davedebugs@outlook.com?subject=Fluid Fences - Question") { UseShellExecute = true }); } catch { } }
         private void SuggestAnIdea_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("mailto:davedebugs@outlook.com?subject=Fluid Fences - Suggestion") { UseShellExecute = true }); } catch { } }
