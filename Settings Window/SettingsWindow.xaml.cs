@@ -23,7 +23,7 @@ namespace DesktopFences
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SystemParametersInfo(int uiAction, int uiParam, System.Text.StringBuilder pvParam, int fWinIni);
 
-        private readonly MainWindow? _callingFence; // Made readonly
+        private readonly MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
         private bool _isLoadingFenceData = false;
         private bool _isColorInitializing = false;
@@ -360,13 +360,13 @@ namespace DesktopFences
         {
             try
             {
-                System.Text.StringBuilder wallpaperPath = new(260); // Simplified new expression
+                System.Text.StringBuilder wallpaperPath = new(260);
                 SystemParametersInfo(SPI_GETDESKWALLPAPER, 260, wallpaperPath, 0);
                 string path = wallpaperPath.ToString();
 
                 if (!File.Exists(path)) return Colors.Black;
 
-                BitmapImage bmp = new(); // Simplified new expression
+                BitmapImage bmp = new();
                 bmp.BeginInit();
                 bmp.UriSource = new Uri(path, UriKind.Absolute);
                 bmp.DecodePixelWidth = 50;

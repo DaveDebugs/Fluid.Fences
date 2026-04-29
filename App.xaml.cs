@@ -14,8 +14,8 @@ namespace DesktopFences
 {
     public partial class App : Application
     {
-        [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-        [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool UnregisterHotKey(IntPtr hWnd, int id);
 
         private const int HOTKEY_ID = 9000;
         private const uint MOD_CONTROL = 0x0002;
@@ -26,22 +26,26 @@ namespace DesktopFences
         private bool _isZenModeActive = false;
         private string _configFolder = "";
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
-            System.Diagnostics.Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
 
             _configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
             Directory.CreateDirectory(_configFolder);
 
             CreateTrayIcon();
-            RestoreSavedFences();
 
             ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
             RegisterHotKey(IntPtr.Zero, HOTKEY_ID, MOD_CONTROL | MOD_ALT, VK_Z);
 
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+
+            await System.Threading.Tasks.Task.Delay(1500);
+
+            RestoreSavedFences();
+
+
+            System.Diagnostics.Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
         }
 
         private void SystemEvents_DisplaySettingsChanged(object? sender, EventArgs e)
@@ -129,7 +133,7 @@ namespace DesktopFences
             catch { }
         }
 
-        private void RestoreSavedFences()
+        private async void RestoreSavedFences()
         {
             string saveDirectory = Path.Combine(_configFolder, "Fences");
 
@@ -145,6 +149,8 @@ namespace DesktopFences
 
                         MainWindow restoredFence = new(fenceId);
                         restoredFence.Show();
+
+                        await System.Threading.Tasks.Task.Delay(75);
                     }
                     return;
                 }
@@ -154,10 +160,9 @@ namespace DesktopFences
             defaultFence.Show();
         }
 
-
         private void CreateTrayIcon()
         {
-            var iconUri = new Uri("pack://application:,,,/Assets/FF32.ico");
+            var iconUri = new Uri("pack://application:,,,/Assets/FF 256.ico");
             using var iconStream = Application.GetResourceStream(iconUri)?.Stream ?? throw new FileNotFoundException("Could not load the embedded icon resource.");
 
             _trayIcon = new NotifyIcon { Icon = new Icon(iconStream), Visible = true, Text = "Fluid Fences" };

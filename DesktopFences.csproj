@@ -31,7 +31,7 @@
 		<PackageId>FluidFences</PackageId>
 		<Authors>DaveDebugs</Authors>
 		<Product>FluidFences</Product>
-		<Version>1.1.2</Version>
+		<Version>1.1.5</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -268,7 +268,7 @@ namespace DesktopFences
                             string safeTitle = string.Join("_", TitleText.Text.Split(Path.GetInvalidFileNameChars()));
                             if (string.IsNullOrWhiteSpace(safeTitle)) safeTitle = "Recovered Fence";
 
-                            string restoreDir = Path.Combine(desktopPath, safeTitle);
+                            string restoreDir = Path.Combine(desktopPath, $"{safeTitle}");
 
                             int counter = 1;
                             while (Directory.Exists(restoreDir) || File.Exists(restoreDir))
@@ -337,7 +337,8 @@ namespace DesktopFences
             Keyboard.ClearFocus();
             FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
 
-            if (string.IsNullOrWhiteSpace(SearchBox.Text)) SearchBox.Visibility = Visibility.Collapsed;
+            SearchBox.Text = "";
+            SearchBox.Visibility = Visibility.Collapsed;
 
             if (_isRolledUp && _isTemporarilyRevealed)
             {
@@ -441,8 +442,8 @@ namespace DesktopFences
                         AutoSortExtensions = data.AutoSortExtensions;
                         ShowSearch = data.ShowSearch;
 
-                        SearchIcon.Visibility = ShowSearch ? Visibility.Visible : Visibility.Collapsed;
-                        SearchBox.Visibility = Visibility.Collapsed;
+                        if (SearchIcon is not null) SearchIcon.Visibility = ShowSearch ? Visibility.Visible : Visibility.Collapsed;
+                        if (SearchBox is not null) SearchBox.Visibility = Visibility.Collapsed;
 
                         _currentIconSize = data.IconSize > 0 ? data.IconSize : 48;
                         _autoMatchColor = data.AutoMatchColor;
@@ -564,9 +565,15 @@ namespace DesktopFences
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 3); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 1);
                 HeaderGrid.LayoutTransform = new RotateTransform(-90); HeaderBorder.CornerRadius = new CornerRadius(8, 0, 0, 8);
 
-                if (SearchBox is not null && SearchBox.Parent == MainGrid)
+                if (SearchBox is not null)
                 {
-                    SearchBox.HorizontalAlignment = HorizontalAlignment.Left; SearchBox.VerticalAlignment = VerticalAlignment.Top; SearchBox.Margin = new Thickness(HEADER_SIZE + 5, 35, 0, 0);
+                    Grid.SetRow(SearchBox, 0); Grid.SetRowSpan(SearchBox, 3);
+                    Grid.SetColumn(SearchBox, 0); Grid.SetColumnSpan(SearchBox, 1);
+                    SearchBox.LayoutTransform = new RotateTransform(-90);
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Center;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Center;
+                    SearchBox.Margin = new Thickness(0);
+                    SearchBox.Width = 140;
                 }
             }
             else if (_dockState == DockState.Right)
@@ -576,9 +583,15 @@ namespace DesktopFences
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 3); Grid.SetColumn(HeaderBorder, 2); Grid.SetColumnSpan(HeaderBorder, 1);
                 HeaderGrid.LayoutTransform = new RotateTransform(90); HeaderBorder.CornerRadius = new CornerRadius(0, 8, 8, 0);
 
-                if (SearchBox is not null && SearchBox.Parent == MainGrid)
+                if (SearchBox is not null)
                 {
-                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right; SearchBox.VerticalAlignment = VerticalAlignment.Top; SearchBox.Margin = new Thickness(0, 35, HEADER_SIZE + 5, 0);
+                    Grid.SetRow(SearchBox, 0); Grid.SetRowSpan(SearchBox, 3);
+                    Grid.SetColumn(SearchBox, 2); Grid.SetColumnSpan(SearchBox, 1);
+                    SearchBox.LayoutTransform = new RotateTransform(90);
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Center;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Center;
+                    SearchBox.Margin = new Thickness(0);
+                    SearchBox.Width = 140;
                 }
             }
             else if (_dockState == DockState.Bottom)
@@ -588,9 +601,15 @@ namespace DesktopFences
                 Grid.SetRow(HeaderBorder, 2); Grid.SetRowSpan(HeaderBorder, 1); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 3);
                 HeaderGrid.LayoutTransform = Transform.Identity; HeaderBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
 
-                if (SearchBox is not null && SearchBox.Parent == MainGrid)
+                if (SearchBox is not null)
                 {
-                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right; SearchBox.VerticalAlignment = VerticalAlignment.Bottom; SearchBox.Margin = new Thickness(0, 0, 35, 4);
+                    Grid.SetRow(SearchBox, 2); Grid.SetRowSpan(SearchBox, 1);
+                    Grid.SetColumn(SearchBox, 0); Grid.SetColumnSpan(SearchBox, 3);
+                    SearchBox.LayoutTransform = Transform.Identity; 
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Bottom;
+                    SearchBox.Margin = new Thickness(0, 0, 35, 4);
+                    SearchBox.Width = 160;
                 }
             }
             else
@@ -600,9 +619,15 @@ namespace DesktopFences
                 Grid.SetRow(HeaderBorder, 0); Grid.SetRowSpan(HeaderBorder, 1); Grid.SetColumn(HeaderBorder, 0); Grid.SetColumnSpan(HeaderBorder, 3);
                 HeaderGrid.LayoutTransform = Transform.Identity; HeaderBorder.CornerRadius = new CornerRadius(8, 8, 0, 0);
 
-                if (SearchBox is not null && SearchBox.Parent == MainGrid)
+                if (SearchBox is not null)
                 {
-                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right; SearchBox.VerticalAlignment = VerticalAlignment.Top; SearchBox.Margin = new Thickness(0, 4, 35, 0);
+                    Grid.SetRow(SearchBox, 0); Grid.SetRowSpan(SearchBox, 1);
+                    Grid.SetColumn(SearchBox, 0); Grid.SetColumnSpan(SearchBox, 3);
+                    SearchBox.LayoutTransform = Transform.Identity;
+                    SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
+                    SearchBox.VerticalAlignment = VerticalAlignment.Top;
+                    SearchBox.Margin = new Thickness(0, 4, 35, 0);
+                    SearchBox.Width = 160;
                 }
             }
         }
@@ -816,15 +841,16 @@ namespace DesktopFences
                 Text = TitleText.Text,
                 Width = 140,
                 Height = 22,
-                Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)),
+                Background = new SolidColorBrush(Color.FromArgb(51, 0, 0, 0)),
                 Foreground = Brushes.White,
-                BorderThickness = new Thickness(0),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(255, 85, 85, 85)),
+                BorderThickness = new Thickness(1),
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextAlignment = TextAlignment.Left,
                 FontFamily = TitleText.FontFamily,
                 FontWeight = FontWeights.SemiBold,
-                Padding = new Thickness(2, 0, 0, 0)
+                Padding = new Thickness(4, 0, 0, 0)
             };
 
             TitleStack.Children.Add(renameBox);
@@ -880,24 +906,21 @@ namespace DesktopFences
 
         private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(SearchBox.Text) && !SearchBox.IsKeyboardFocusWithin)
+            System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
             {
-                System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
-                {
-                    Dispatcher.Invoke(() => {
-                        if (!SearchBox.IsFocused && string.IsNullOrWhiteSpace(SearchBox.Text))
-                        {
-                            SearchBox.Visibility = Visibility.Collapsed;
+                Dispatcher.Invoke(() => {
+                    if (!SearchBox.IsFocused && string.IsNullOrWhiteSpace(SearchBox.Text))
+                    {
+                        SearchBox.Visibility = Visibility.Collapsed;
 
-                            if (!this.IsMouseOver && _isRolledUp && _isTemporarilyRevealed)
-                            {
-                                AnimateRollUp();
-                                _isTemporarilyRevealed = false;
-                            }
+                        if (!this.IsMouseOver && _isRolledUp && _isTemporarilyRevealed)
+                        {
+                            AnimateRollUp();
+                            _isTemporarilyRevealed = false;
                         }
-                    });
+                    }
                 });
-            }
+            });
         }
 
         private void SearchBox_KeyDown(object sender, KeyEventArgs e)
@@ -1340,7 +1363,19 @@ namespace DesktopFences
             void TriggerRename()
             {
                 textBlock.Visibility = Visibility.Collapsed;
-                TextBox renameBox = new() { Text = textBlock.Text, Width = containerWidth, Margin = new Thickness(-5, 0, -5, 0), Background = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Foreground = Brushes.White, BorderThickness = new Thickness(0), TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
+                TextBox renameBox = new()
+                {
+                    Text = textBlock.Text,
+                    Width = containerWidth,
+                    Margin = new Thickness(-5, 0, -5, 0),
+                    Background = new SolidColorBrush(Color.FromArgb(51, 0, 0, 0)),
+                    Foreground = Brushes.White,
+                    BorderBrush = new SolidColorBrush(Color.FromArgb(255, 85, 85, 85)),
+                    BorderThickness = new Thickness(1),
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap,
+                    Padding = new Thickness(2)
+                };
                 itemContainer.Children.Add(renameBox); renameBox.Focus(); renameBox.SelectAll();
 
                 bool isHandlingRename = false;
@@ -1619,19 +1654,6 @@ namespace DesktopFences
             if (SearchBox is not null && MainGrid is not null)
             {
                 SearchBox.KeyDown += SearchBox_KeyDown;
-
-                DependencyObject parent = LogicalTreeHelper.GetParent(SearchBox);
-                if (parent is Panel panel && panel != MainGrid)
-                {
-                    panel.Children.Remove(SearchBox);
-                    MainGrid.Children.Add(SearchBox);
-
-                    Grid.SetRow(SearchBox, 0); Grid.SetRowSpan(SearchBox, 10);
-                    Grid.SetColumn(SearchBox, 0); Grid.SetColumnSpan(SearchBox, 10);
-
-                    SearchBox.Width = 160; SearchBox.Height = 26;
-                    Panel.SetZIndex(SearchBox, 999);
-                }
             }
 
             if (!File.Exists(globalConfigPath))
