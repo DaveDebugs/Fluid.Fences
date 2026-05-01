@@ -126,6 +126,21 @@ namespace DesktopFences
             catch { }
         }
 
+        private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!this.IsLoaded || _isLoadingFenceData || _currentlySelectedFence is null) return;
+
+            if (ThemeComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string themeName)
+            {
+                _currentlySelectedFence.ApplyTheme(themeName, true, true);
+
+                _isLoadingFenceData = true;
+                UpdateColorSlidersFromFence(_currentlySelectedFence);
+                _isLoadingFenceData = false;
+            }
+        }
+
+
         private void SaveGlobalSettings_Click(object sender, RoutedEventArgs e)
         {
             string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
@@ -142,6 +157,7 @@ namespace DesktopFences
                 RestoreFilesOnDelete = restoreFiles,
                 EnableGhostMode = ghostMode
             };
+
             File.WriteAllText(globalConfigPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
 
             foreach (Window window in Application.Current.Windows)
@@ -228,6 +244,19 @@ namespace DesktopFences
                 EnableSearchToggle.IsChecked = fence.ShowSearch;
                 PresetDropdown.SelectedIndex = 0;
                 GhostModeDropdown.SelectedIndex = fence.GhostModeOverride;
+
+                // FIX: Look at the fence we just clicked on, and update the Theme Dropdown to match its clothes
+                if (ThemeComboBox != null)
+                {
+                    foreach (ComboBoxItem item in ThemeComboBox.Items)
+                    {
+                        if (item.Tag.ToString() == fence.CurrentTheme)
+                        {
+                            ThemeComboBox.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
 
                 foreach (ComboBoxItem item in SortDropdown.Items)
                 {

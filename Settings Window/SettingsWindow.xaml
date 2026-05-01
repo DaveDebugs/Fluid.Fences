@@ -535,7 +535,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="  ↳ Edit Colors">
+            <TabItem Header="  ↳ Edit Colors / Themes">
                 <Grid Margin="40">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
@@ -670,7 +670,14 @@
                                     </Slider.Background>
                                 </Slider>
                             </Grid>
-
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Visual Theme:" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,5" FontSize="14"/>
+                                <ComboBox x:Name="ThemeComboBox" Width="220" Height="28" HorizontalAlignment="Left" SelectionChanged="ThemeComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="Default Glass" Tag="DefaultTheme"/>
+                                    <ComboBoxItem Content="16-Bit Retro" Tag="RetroTheme"/>
+                                    <ComboBoxItem Content="Synthwave Neon" Tag="NeonTheme"/>
+                                </ComboBox>
+                            </StackPanel>
                             <Grid Margin="0,15,0,0">
                                 <Border x:Name="ColorPreview" Width="40" Height="25" CornerRadius="4" HorizontalAlignment="Left" BorderBrush="#555" BorderThickness="1"/>
                                 <Button

@@ -44,7 +44,6 @@ namespace DesktopFences
 
             RestoreSavedFences();
 
-
             System.Diagnostics.Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
         }
 

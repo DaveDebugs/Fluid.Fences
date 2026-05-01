@@ -1,19 +1,20 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
-using System.Linq;
-using Microsoft.Win32;
-using System.Text.Json.Serialization;
 
 namespace DesktopFences
 {
@@ -163,6 +164,8 @@ namespace DesktopFences
         [JsonIgnore] public bool AutoMatchColor { get => _autoMatchColor; set => _autoMatchColor = value; }
         [JsonIgnore] public int GhostModeOverride { get => _ghostModeOverride; set => _ghostModeOverride = value; }
 
+        [JsonIgnore] public string CurrentTheme { get; set; } = "DefaultTheme";
+
         public string GetFenceId() { return _fenceId; }
         public bool GetIsRolledUp() { return _isRolledUp; }
 
@@ -186,7 +189,30 @@ namespace DesktopFences
         }
         #endregion
 
-        public void SetFenceColor(Color color, double opacity) { _currentFenceColor = color; _currentOpacity = opacity; ApplyAcrylicBlur(color, opacity); SaveFenceState(); }
+        public void SetFenceColor(Color color, double opacity)
+        {
+            _currentFenceColor = color;
+            _currentOpacity = opacity;
+            ApplyAcrylicBlur(color, opacity);
+
+            SolidColorBrush solidBrush = new(color);
+            SolidColorBrush alphaBrush = new(Color.FromArgb((byte)(opacity * 255), color.R, color.G, color.B));
+            if (CurrentTheme == "RetroTheme")
+            {
+                this.Resources["ThemeHeaderBrush"] = solidBrush;
+            }
+            else if (CurrentTheme == "NeonTheme")
+            {
+                this.Resources["ThemeHeaderBrush"] = alphaBrush;
+            }
+            else
+            {
+                this.Resources["ThemeHeaderBrush"] = alphaBrush;
+            }
+
+            SaveFenceState();
+        }
+
         public void DashboardSaveAndRefresh() { ApplySorting(); SaveFenceState(); AnimateGhostMode(false); }
         public void UpdateGlobalGhostMode(bool isEnabled) { _globalGhostMode = isEnabled; AnimateGhostMode(false); }
 
@@ -318,6 +344,48 @@ namespace DesktopFences
             _saveFilePath = Path.Combine(_saveDirectory, $"{_fenceId}.json");
         }
 
+        public void ApplyTheme(string themeName, bool save = true, bool resetColors = false)
+        {
+            CurrentTheme = themeName;
+            try
+            {
+                Uri themeUri = new($"pack://application:,,,/Themes/{themeName}.xaml");
+                ResourceDictionary newDict = new() { Source = themeUri };
+
+                this.Resources.MergedDictionaries.Clear();
+                this.Resources.MergedDictionaries.Add(newDict);
+
+                if (resetColors)
+                {
+                    _autoMatchColor = false;
+
+                    if (themeName == "RetroTheme")
+                    {
+                        _currentFenceColor = (Color)ColorConverter.ConvertFromString("#FF224488");
+                        _currentOpacity = 1.0;
+                    }
+                    else if (themeName == "NeonTheme")
+                    {
+                        _currentFenceColor = (Color)ColorConverter.ConvertFromString("#FFFF0099");
+                        _currentOpacity = 0.8;
+                    }
+                    else
+                    {
+                        _currentFenceColor = Colors.Black;
+                        _currentOpacity = 0.7;
+                    }
+                }
+
+                SetFenceColor(_currentFenceColor, _currentOpacity);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error applying theme: {ex.Message}");
+            }
+
+            if (save) SaveFenceState();
+        }
+
         #region Architecture: Diagnostics & Logging
         private void LogError(string context, Exception ex)
         {
@@ -376,7 +444,6 @@ namespace DesktopFences
 
         private void ApplyAcrylicBlur(Color color, double opacity)
         {
-            _currentFenceColor = color; _currentOpacity = opacity;
             var windowHelper = new WindowInteropHelper(this);
             if (windowHelper.Handle == IntPtr.Zero) return;
             ApplyAcrylicToHwnd(windowHelper.Handle, color, opacity * GlassOpacity);
@@ -467,6 +534,9 @@ namespace DesktopFences
                             _currentFiles.Clear(); foreach (string file in data.Files) { if (File.Exists(file) || Directory.Exists(file)) { _currentFiles.Add(file); } }
                         }
 
+                        CurrentTheme = data.Theme ?? "DefaultTheme";
+                        ApplyTheme(CurrentTheme, false);
+
                         DetermineDockState(); UpdateDockOrientation(); ApplySorting();
                     }
                 }
@@ -503,7 +573,8 @@ namespace DesktopFences
                     IsPortal = _isPortal,
                     PortalPath = _portalPath,
                     AutoMatchColor = _autoMatchColor,
-                    GhostModeOverride = _ghostModeOverride
+                    GhostModeOverride = _ghostModeOverride,
+                    Theme = CurrentTheme 
                 };
                 Directory.CreateDirectory(_saveDirectory);
                 File.WriteAllText(_saveFilePath, JsonSerializer.Serialize(data, _jsonOptions));
@@ -605,7 +676,7 @@ namespace DesktopFences
                 {
                     Grid.SetRow(SearchBox, 2); Grid.SetRowSpan(SearchBox, 1);
                     Grid.SetColumn(SearchBox, 0); Grid.SetColumnSpan(SearchBox, 3);
-                    SearchBox.LayoutTransform = Transform.Identity; 
+                    SearchBox.LayoutTransform = Transform.Identity;
                     SearchBox.HorizontalAlignment = HorizontalAlignment.Right;
                     SearchBox.VerticalAlignment = VerticalAlignment.Bottom;
                     SearchBox.Margin = new Thickness(0, 0, 35, 4);
@@ -1666,6 +1737,26 @@ namespace DesktopFences
                 settings.ShowDialog();
             }
 
+            MenuItem themesMenu = new() { Header = "Visual Themes" };
+
+            MenuItem themeDefault = new() { Header = "Default Glass" };
+            themeDefault.Click += (s, args) => ApplyTheme("DefaultTheme", true, true);
+
+            MenuItem themeRetro = new() { Header = "16-Bit Retro" };
+            themeRetro.Click += (s, args) => ApplyTheme("RetroTheme", true, true);
+
+            MenuItem themeNeon = new() { Header = "Synthwave Neon" };
+            themeNeon.Click += (s, args) => ApplyTheme("NeonTheme", true, true);
+
+            themesMenu.Items.Add(themeDefault);
+            themesMenu.Items.Add(themeRetro);
+            themesMenu.Items.Add(themeNeon);
+
+            if (HeaderContextMenu is not null)
+            {
+                HeaderContextMenu.Items.Insert(2, themesMenu);
+            }
+
             this.ShowInTaskbar = showInTaskbar;
             if (!this.IsMouseOver) AnimateGhostMode(false);
         }
@@ -1738,6 +1829,8 @@ namespace DesktopFences
         [JsonPropertyName("PortalPath")] public string PortalPath { get; set; } = "";
         [JsonPropertyName("AutoMatchColor")] public bool AutoMatchColor { get; set; } = false;
         [JsonPropertyName("GhostModeOverride")] public int GhostModeOverride { get; set; } = 0;
+
+        [JsonPropertyName("Theme")] public string Theme { get; set; } = "DefaultTheme";
     }
 
     public class GlobalConfig

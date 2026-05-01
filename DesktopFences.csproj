@@ -18,10 +18,10 @@
 		<AssemblyTitle>FluidFences</AssemblyTitle>
 		<StartupObject>DesktopFences.App</StartupObject>
 		<Copyright>2026</Copyright>
-		<PackageProjectUrl>https://github.com/DaveDebugs</PackageProjectUrl>
+			<PackageProjectUrl>https://github.com/DaveDebugs/Fluid.Fences</PackageProjectUrl>
 		<PackageIcon>Assets\FF 256.png</PackageIcon>
 		<Description>An opensource desktop organization application.</Description>
-		<RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences</RepositoryUrl>
+		<RepositoryUrl>https://github.com/DaveDebugs/Fluid.Fences.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>fences;desktop;management;organization;icon;hideicons;stardock;clone</PackageTags>
 		<AnalysisLevel>latest-recommended</AnalysisLevel>
@@ -31,7 +31,7 @@
 		<PackageId>FluidFences</PackageId>
 		<Authors>DaveDebugs</Authors>
 		<Product>FluidFences</Product>
-		<Version>1.1.5</Version>
+		<Version>1.1.51</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
