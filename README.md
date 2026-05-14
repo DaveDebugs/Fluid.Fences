@@ -1,60 +1,57 @@
-Fluid Fences is a high-performance, open-source desktop organization utility built with .NET 8 and WPF. It allows you to create customizable "fences" on your desktop to house shortcuts, files, and folders, keeping your workspace clean and efficient.
+🌊 Fluid Fences - How to Use
+Fluid Fences is a lightweight, high-performance desktop organizer designed to keep your workspace clean. It uses native Windows rendering to provide beautiful acrylic blurring and seamless multi-monitor support without slowing down your PC.
 
-This project was born out of a desire for a desktop organizer that felt truly "smooth" and native to Windows. It served as a primary learning project for coding, utilizing AI as a teaching tool while overcoming the limitations of AI in replicating complex, low-level Windows interactions.
+🚀 Getting Started
+When you launch Fluid Fences, it runs silently in the background. Look for the Fluid Fences icon in your System Tray (down by your clock).
 
-🚀 Key Features
-Native Windows Integration: Uses direct Win32 API hooks to provide a seamless experience, including native Acrylic blur effects and rounded corners.
+Double-click the tray icon to open Global Settings.
 
-Intelligent Docking & Physics: Features a custom physics engine with hysteresis-based "corner stickiness," allowing fences to snap perfectly to screen edges without accidentally flipping orientation.
+Right-click the tray icon to quickly create new Fences or Portals.
 
-Roll-up Mode: Double-click a fence header to collapse it into a space-saving bar. Hover to temporarily reveal contents, or double-click again to lock it open.
+📂 Types of Fences
+1. Standard Fences (The Vault)
+A standard fence acts as a safe visual vault for your files and shortcuts.
 
-High-Performance Icon Engine: A 4-tier asynchronous extraction system ensures the UI never freezes while loading icons:
+To add items: Simply drag and drop files, folders, or shortcuts directly into the fence.
 
-Native Loader: Fast loading for standard image formats.
+Smart Moving: If you drag a file from your Desktop, it safely moves into the Fence's hidden vault. If you drag a file from a different hard drive, Fluid Fences uses native Windows file operations to safely copy/move the file with full progress bars.
 
-Shell API: Extracts thumbnails and video frames.
+2. Folder Portals (Live Mirroring)
+A Folder Portal is a window that looks directly into an existing folder on your computer (like your Downloads or Documents folder).
 
-Binary Extractor: Rips jumbo 256x256 icons directly from .exe and .dll files.
+Live Updates: Any changes made inside a Portal happen instantly on your hard drive, and vice versa.
 
-Legacy Fallback: Reliable 32x32 extraction for unknown file types.
+Note: Deleting an item inside a Folder Portal will send the actual file to your Windows Recycle Bin!
 
-Advanced Customization: * Full HSL/RGB color control with transparency.
+🛠️ Core Controls & Shortcuts
+Move a Fence: Click and drag the top header bar. You can smoothly drag fences across multiple monitors, and they will natively snap to the edges of any screen.
 
-Eyedropper Tool: Pick any color directly from your monitor to match your wallpaper perfectly.
+Resize: Hover over any edge or corner of the fence until your cursor changes, then click and drag.
 
-Wallpaper Engine Compatible: Configured as a "Tool Window" so it doesn't pause animated wallpapers.
+Roll-up Mode: Double-click the header of any fence to instantly "roll it up" into a tiny bar. Hover over it to temporarily reveal your files, or double-click the header again to lock it open.
 
-System Tray Management: Runs silently in the tray to manage multiple fences and global settings.
+Zen Mode: Press Ctrl + Alt + Z anywhere in Windows to instantly hide all of your fences and enjoy a completely clean desktop. Press it again to bring them back.
 
-Auto-Organize: Automatically pull files from your desktop into specific fences based on file extensions.
+Keyboard Nudging: Click a fence to focus it, then hold Ctrl and use the Arrow Keys to perfectly snap the fence to the edges of your monitor.
 
-🛠 Technical Highlights
-Fluid Fences utilizes several advanced concepts that make it a great reference for developers:
+🧹 Organization & Customization
+Auto-Organize Your Desktop
+Right-click any fence header and select Auto Organize. Fluid Fences will scan your actual Windows Desktop and automatically pull in files that match the extensions you defined in your settings (e.g., .jpg, .png), instantly cleaning up your screen.
 
-Single Instance Mutex: Ensures only one instance of the application runs at a time.
+Ghost Mode
+In your Global Settings, enable Ghost Mode. When you move your mouse away, your fences will smoothly fade out of existence, blending perfectly into your wallpaper. When you move your mouse back over them, they instantly fade back in.
 
-Win32 Interop: Extensive use of user32.dll, dwmapi.dll, shell32.dll, and gdi32.dll to achieve functionality outside standard WPF limits.
+Theme & Colors
+Right-click a fence header and select Edit Color...
 
-Asynchronous UI: Heavy file system and Shell operations are offloaded to background threads to keep the user interface responsive.
+Turn on Auto-Match Wallpaper to let Fluid Fences automatically extract the dominant color from your desktop background.
 
-JSON Persistence: All fence states, positions, and customizations are saved via System.Text.Json in the user's AppData folder.
+Check Blend with Wallpaper to strip away the background tint, leaving only beautiful Windows Acrylic glass.
 
-📥 Installation
-Download the latest release from the Releases page.
+⚙️ Under the Hood (Performance)
+Instant Boot: Fluid Fences tells Windows to bypass the standard 10-second startup delay, meaning your fences are ready when your desktop loads.
 
-Run the installer and follow the prompts.
-
-On first run, a "Designer" fence will open to help you get started.
-
-💡 How to Use
-Create New Fence: Right-click the system tray icon or an existing fence header.
-
-Add Files: Drag and drop files directly from Windows Explorer into a fence.
-
-Select Multiple: Click and drag in an empty area of a fence to use the blue selection box.
-
-Settings: Access global settings like "Start with Windows" through the tray icon or fence menu.
+Safe Recovery: If you ever delete a standard Fence, the app will automatically rescue all of your physical files and place them safely in a recovery folder on your Desktop before destroying the shortcuts.
 
 ❤️ Support the Project
 If you find this tool useful and want to help keep the internet on, consider a donation:

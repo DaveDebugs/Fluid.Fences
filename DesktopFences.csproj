@@ -8,6 +8,8 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PublishReadyToRun>true</PublishReadyToRun>
+		<TieredCompilation>true</TieredCompilation>
 
 		<ApplicationIcon>Assets\FF 256.ico</ApplicationIcon>
 
@@ -31,7 +33,7 @@
 		<PackageId>FluidFences</PackageId>
 		<Authors>DaveDebugs</Authors>
 		<Product>FluidFences</Product>
-		<Version>1.1.5</Version>
+		<Version>1.2.5</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

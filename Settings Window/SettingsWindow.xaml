@@ -391,37 +391,21 @@
                 <ScrollViewer Margin="40,20" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="0,0,15,0">
                         <TextBlock Text="How to Use Fluid Fences" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,0,0,25"/>
+                        <TextBlock Foreground="White" TextWrapping="Wrap" FontSize="16" LineHeight="18">
+    <Run FontWeight="Bold" Foreground="#0078D7">THE BASICS</Run><LineBreak/>
+    <Run>• Right-click the Fluid Fences tray icon (near your clock) to create a new empty Fence or a live Folder Portal.</Run><LineBreak/>
+    <Run>• Drag and drop files, folders, or shortcuts directly into a standard Fence to store them in your vault.</Run><LineBreak/><LineBreak/>
 
-                        <TextBlock Text="Window Controls" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Move a Fence: Click and hold the top title bar to drag the fence. Fences will automatically clamp to the edges of your screen so they never get lost." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Edge Snapping: Drag a fence against the edge of your screen to dock it. Once docked, you can slide it vertically without it detaching. To tear it off, simply pull it horizontally toward the center of your screen." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Roll-up Mode: Double-click the title bar to collapse the fence into a sleek, space-saving bar. Hover your mouse over the rolled-up bar to temporarily reveal your files, and move your mouse away to hide them again. Double-click to lock it open." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Zen Mode: Press 'Ctrl + Alt + Z' from anywhere on your PC to instantly hide all your fences for a completely clean desktop. Press the hotkey again to bring them back!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+    <Run FontWeight="Bold" Foreground="#0078D7">CONTROLS &amp; HOTKEYS</Run><LineBreak/>
+    <Run>• Move &amp; Snap: Drag a fence by its header across any monitor. It will natively snap to screen edges.</Run><LineBreak/>
+    <Run>• Resize: Hover over any edge or corner of a fence to resize it.</Run><LineBreak/>
+    <Run>• Roll-up: Double-click a fence header to roll it up into a compact bar. Hover to reveal it, or double-click again to lock it open.</Run><LineBreak/>
+    <Run>• Zen Mode: Press Ctrl+Alt+Z anytime to instantly hide or show all your fences.</Run><LineBreak/><LineBreak/>
 
-                        <TextBlock Text="Managing Files" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Add Files: Drag and drop any desktop shortcut, photo, video, or folder directly into the fence. The file will be physically moved off your Windows Desktop into a hidden 'File Vault' to keep your screen perfectly clean!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Select Multiple: Click and drag on an empty area inside the fence to draw a blue selection box around multiple items." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Remove Files: Highlight the icons you want to remove and press the 'Delete' key on your keyboard, or right-click and select 'Remove from Fence'. Deleted files are safely sent to your Windows Recycle Bin." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Safe Deletion: If you permanently delete an entire fence, don't panic! Fluid Fences will automatically recover all the files stored inside it and place them neatly back onto your Windows Desktop." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
-
-                        <TextBlock Text="Organization &amp; Custom Drag-and-Drop" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Custom Ordering: Click and drag any icon and drop it exactly where you want it to go. The fence will switch to 'Custom' sorting and remember your exact layout permanently." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Instant Search: Click the magnifying glass (🔍) in the fence header to instantly filter your files by name. Click the icon again or press the 'Esc' key to close the search." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Auto-Organize: Right-click the fence header and select 'Auto Organize'. Fluid Fences will scan your main Windows Desktop and automatically pull in any files that match the extensions you configured in the 'Fences' settings tab (like .jpg, .png, or .exe)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
-
-                        <TextBlock Text="Folder Portals" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Live Mirroring: Right-click a fence (or the system tray icon) and select 'Create Folder Portal...'. Choose a folder like your 'Downloads' folder, and the fence will act as a live, scrolling window into that folder. If you download a file from the internet, it will instantly appear in your Portal fence!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
-
-                        <TextBlock Text="Customization &amp; Colors" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Ghost Mode: Enable 'Ghost Mode' to make your fences fade to almost invisible when you aren't using them. You can set this globally in General Settings, or override the behavior per-fence." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Auto-Match Wallpaper: Check the 'Auto Match Wallpaper' box in the Edit Colors tab to automatically tint your fences to match your current Windows desktop background!" Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Edit Colors: Right-click the header and select 'Edit Color...'. Here you can adjust the hue, brightness, saturation, and transparency of individual fences." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Blend with Wallpaper: Check the 'Blend into wallpaper' box in the Color Picker to drop the background opacity to 1%, utilizing the native Windows Acrylic engine to create a seamless pane of frosted glass." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
-
-                        <TextBlock Text="Background Operation &amp; Layouts" Style="{StaticResource SectionHeader}"/>
-                        <TextBlock Text="• Smart Layouts: Fluid Fences automatically tracks the size and position of your fences. It handles multi-monitor changes gracefully, and you can manually save or restore 'Layout Snapshots' in the General settings." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• Silent Mode: Fluid Fences is designed to run silently. By default, fences will not clutter up your Alt+Tab menu or your Windows Taskbar." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
-                        <TextBlock Text="• The System Tray: You can always access these settings, create new fences, or close the application by right-clicking the Fluid Fences icon in your Windows System Tray (down by your clock)." Foreground="#CCCCCC" TextWrapping="Wrap" Margin="0,0,0,25" FontSize="14"/>
+    <Run FontWeight="Bold" Foreground="#0078D7">CUSTOMIZATION</Run><LineBreak/>
+    <Run>• Right-click a fence's header to Auto-Organize your desktop, change file sorting, or adjust icon sizes.</Run><LineBreak/>
+    <Run>• Select 'Edit Color...' to match the fence to your wallpaper, or turn on 'Ghost Mode' in Global Settings to make fences fade away when not in use.</Run>
+                        </TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

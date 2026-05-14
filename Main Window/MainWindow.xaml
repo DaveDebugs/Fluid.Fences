@@ -96,15 +96,27 @@
 
                 <Border.ContextMenu>
                     <ContextMenu x:Name="HeaderContextMenu">
-                        <MenuItem x:Name="MenuNewFence" Click="Menu_NewFence_Click" Header="Create New Fence" />
-                        <MenuItem x:Name="MenuNewPortal" Click="Menu_NewPortal_Click" Header="Create Folder Portal..." />
-                        <Separator />
-                        <MenuItem x:Name="MenuRollUpFence" Click="Menu_RollUp_Click" Header="Roll-up Fence" />
-                        <MenuItem Header="View">
-                            <MenuItem Click="Menu_IconSize_Click" Header="Small Icons" Tag="32" />
-                            <MenuItem Click="Menu_IconSize_Click" Header="Medium Icons" Tag="48" />
-                            <MenuItem Click="Menu_IconSize_Click" Header="Large Icons" Tag="64" />
+
+                        <MenuItem Header="Create New...">
+                            <MenuItem Header="Empty Fence" Click="Menu_NewFence_Click" />
+                            <MenuItem Header="Folder Portal (Mirror PC Folder)" Click="Menu_NewPortal_Click" />
                         </MenuItem>
+
+                        <MenuItem Header="Auto Organize (Pull from Desktop)" Click="Menu_AutoOrganize_Click" />
+                        <Separator />
+
+                        <MenuItem x:Name="MenuRollUpFence" Click="Menu_RollUp_Click" Header="Roll-up Fence" />
+
+                        <MenuItem Header="View">
+                            <MenuItem Header="Icon Size">
+                                <MenuItem Header="Small" Tag="32" Click="Menu_IconSize_Click"/>
+                                <MenuItem Header="Medium" Tag="48" Click="Menu_IconSize_Click"/>
+                                <MenuItem Header="Large" Tag="64" Click="Menu_IconSize_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Reset to Default" Tag="Default" Click="Menu_IconSize_Click"/>
+                            </MenuItem>
+                        </MenuItem>
+
                         <MenuItem Header="Sort by">
                             <MenuItem Click="Menu_Sort_Click" Header="None (Custom)" Tag="None" />
                             <MenuItem Click="Menu_Sort_Click" Header="Name" Tag="Name" />
@@ -113,6 +125,7 @@
                             <MenuItem Click="Menu_Sort_Click" Header="Date Modified" Tag="DateMod" />
                             <MenuItem Click="Menu_Sort_Click" Header="Date Created" Tag="DateCre" />
                         </MenuItem>
+
                         <Separator />
                         <MenuItem x:Name="MenuEditColor" Click="Menu_EditColor_Click" Header="Edit Color..." />
                         <MenuItem x:Name="MenuSettings" Click="Menu_Settings_Click" Header="Settings..." />

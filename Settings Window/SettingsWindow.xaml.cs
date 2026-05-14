@@ -2,50 +2,41 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace DesktopFences
 {
     public partial class SettingsWindow : Window
     {
-        [LibraryImport("user32.dll")] internal static partial IntPtr GetDC(IntPtr hwnd);
-        [LibraryImport("user32.dll")] internal static partial int ReleaseDC(IntPtr hwnd, IntPtr hDC);
-        [LibraryImport("gdi32.dll")] internal static partial uint GetPixel(IntPtr hDC, int x, int y);
-
-        private const int SPI_GETDESKWALLPAPER = 0x0073;
-        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool SystemParametersInfo(int uiAction, int uiParam, System.Text.StringBuilder pvParam, int fWinIni);
-
         private readonly MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
-        private bool _isLoadingFenceData = false;
-        private bool _isColorInitializing = false;
+        private bool _isLoadingFenceData;
+        private bool _isColorInitializing;
+
+        private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
         private readonly System.Windows.Threading.DispatcherTimer _liveUpdateTimer = new();
         private Color _pendingColor;
         private double _pendingOpacity;
-        private bool _hasPendingColor = false;
+        private bool _hasPendingColor;
 
         public SettingsWindow(MainWindow? callingFence, bool isFirstRun = false)
         {
             InitializeComponent();
             _callingFence = callingFence;
+
             PresetDropdown.SelectedIndex = 0;
             LoadAllFences();
 
             if (isFirstRun)
             {
-                AboutDescriptionText.Text = "Thank you for using Fluid Fences! This was a labor of love for keeping messy desktops organized.\n\nNote: Fences will run in the background. Look for the fluid icon in your System Tray (near the clock) to access settings or create new fences!\n\nThis app is open-source, but if you'd like to support it, please consider donating. Thank you!";
+                AboutDescriptionText.Text = "Welcome to Fluid Fences! 🌊\n\nRight-click the tray icon near your clock to build your first Fence or mirror a PC folder using a Portal. Drag, drop, and organize!\n\nPro Tip: Hit Ctrl+Alt+Z to toggle Zen Mode and hide your fences instantly.\n\nIf you love this open-source tool, consider supporting its development. Enjoy your clean desktop!";
             }
 
-            LoadGlobalSettings();
+            _ = LoadGlobalSettingsAsync();
 
             _liveUpdateTimer.Interval = TimeSpan.FromMilliseconds(33);
             _liveUpdateTimer.Tick += (s, e) =>
@@ -62,10 +53,17 @@ namespace DesktopFences
             };
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private static void LogError(string context, Exception ex)
         {
-            SaveCurrentFenceSettings();
+            try
+            {
+                string logPath = Path.Combine(App.ConfigFolder, "error.log");
+                File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Settings_{context}: {ex.Message}\n");
+            }
+            catch { }
         }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) { SaveCurrentFenceSettings(); }
 
         private static void RgbToHsl(Color rgb, out double h, out double s, out double l)
         {
@@ -99,15 +97,14 @@ namespace DesktopFences
             return Color.FromRgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
         }
 
-        private void LoadGlobalSettings()
+        private async System.Threading.Tasks.Task LoadGlobalSettingsAsync()
         {
-            string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
-            string globalConfigPath = Path.Combine(configFolder, "global_config.json");
+            string globalConfigPath = Path.Combine(App.ConfigFolder, "global_config.json");
             if (File.Exists(globalConfigPath))
             {
                 try
                 {
-                    string json = File.ReadAllText(globalConfigPath);
+                    string json = await File.ReadAllTextAsync(globalConfigPath);
                     if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
                     {
                         TaskbarToggle.IsChecked = config.ShowTaskbarIcon;
@@ -115,7 +112,7 @@ namespace DesktopFences
                         GhostModeToggle.IsChecked = config.EnableGhostMode;
                     }
                 }
-                catch { }
+                catch (Exception ex) { LogError("LoadConfig", ex); }
             }
 
             try
@@ -123,77 +120,65 @@ namespace DesktopFences
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
                 StartupToggle.IsChecked = key?.GetValue("FluidFences") is not null;
             }
-            catch { }
+            catch (Exception ex) { LogError("ReadRegistry", ex); }
         }
 
-        private void SaveGlobalSettings_Click(object sender, RoutedEventArgs e)
+        private async void SaveGlobalSettings_Click(object sender, RoutedEventArgs e)
         {
-            string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
-            string globalConfigPath = Path.Combine(configFolder, "global_config.json");
-
+            string globalConfigPath = Path.Combine(App.ConfigFolder, "global_config.json");
             bool showTaskbar = TaskbarToggle.IsChecked ?? true;
             bool restoreFiles = RestoreFilesToggle.IsChecked ?? true;
             bool ghostMode = GhostModeToggle.IsChecked ?? false;
 
-            GlobalConfig config = new()
+            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar, RestoreFilesOnDelete = restoreFiles, EnableGhostMode = ghostMode };
+
+            try
             {
-                FirstRunComplete = true,
-                ShowTaskbarIcon = showTaskbar,
-                RestoreFilesOnDelete = restoreFiles,
-                EnableGhostMode = ghostMode
-            };
-            File.WriteAllText(globalConfigPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
+                await File.WriteAllTextAsync(globalConfigPath, JsonSerializer.Serialize(config, _jsonOptions));
+            }
+            catch (Exception ex)
+            {
+                LogError("SaveConfig", ex);
+                MessageBox.Show("Failed to save configuration to disk.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
 
             foreach (Window window in Application.Current.Windows)
             {
-                if (window is MainWindow fence)
-                {
-                    fence.ShowInTaskbar = showTaskbar;
-                    fence.UpdateGlobalGhostMode(ghostMode);
-                }
+                if (window is MainWindow fence) { fence.ShowInTaskbar = showTaskbar; fence.UpdateGlobalGhostMode(ghostMode); }
             }
 
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                using RegistryKey? serializeKey = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize");
+
                 if (StartupToggle.IsChecked == true)
                 {
-                    string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                    string exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule!.FileName;
                     key?.SetValue("FluidFences", $"\"{exePath}\"");
+                    serializeKey?.SetValue("StartupDelayInMS", 0, RegistryValueKind.DWord);
                 }
                 else
                 {
                     key?.DeleteValue("FluidFences", false);
+                    serializeKey?.DeleteValue("StartupDelayInMS", false);
                 }
             }
-            catch { MessageBox.Show("Could not update Startup settings. You may need to run the app as Administrator.", "Registry Error"); }
+            catch (Exception ex)
+            {
+                LogError("WriteRegistry", ex);
+                MessageBox.Show("Could not update Startup settings. You may need to run the app as Administrator.", "Registry Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
             MessageBox.Show("Global settings updated!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void SaveLayout_Click(object sender, RoutedEventArgs e)
-        {
-            if (Application.Current is App myApp)
-            {
-                myApp.SaveCurrentLayout();
-                MessageBox.Show("Layout snapshot saved successfully!", "Snapshot Saved", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void RestoreLayout_Click(object sender, RoutedEventArgs e)
-        {
-            if (Application.Current is App myApp)
-            {
-                myApp.RestoreLayoutSnapshot();
-                MessageBox.Show("Layout restored!", "Snapshot Restored", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
+        private void SaveLayout_Click(object sender, RoutedEventArgs e) { if (Application.Current is App myApp) { myApp.SaveCurrentLayout(); MessageBox.Show("Layout snapshot saved successfully!", "Snapshot Saved", MessageBoxButton.OK, MessageBoxImage.Information); } }
+        private void RestoreLayout_Click(object sender, RoutedEventArgs e) { if (Application.Current is App myApp) { myApp.RestoreLayoutSnapshot(); MessageBox.Show("Layout restored!", "Snapshot Restored", MessageBoxButton.OK, MessageBoxImage.Information); } }
 
         private void LoadAllFences()
         {
-            FenceListBox.Items.Clear();
-            ColorFenceListBox.Items.Clear();
-
+            FenceListBox.Items.Clear(); ColorFenceListBox.Items.Clear();
             foreach (Window window in Application.Current.Windows)
             {
                 if (window is MainWindow { Visibility: Visibility.Visible } fence)
@@ -201,13 +186,11 @@ namespace DesktopFences
                     ListBoxItem item1 = new() { Content = fence.FenceTitle, Tag = fence };
                     ListBoxItem item2 = new() { Content = fence.FenceTitle, Tag = fence };
 
-                    FenceListBox.Items.Add(item1);
-                    ColorFenceListBox.Items.Add(item2);
+                    FenceListBox.Items.Add(item1); ColorFenceListBox.Items.Add(item2);
 
                     if (fence == _callingFence || (_callingFence is null && FenceListBox.SelectedItem is null))
                     {
-                        FenceListBox.SelectedItem = item1;
-                        ColorFenceListBox.SelectedItem = item2;
+                        FenceListBox.SelectedItem = item1; ColorFenceListBox.SelectedItem = item2;
                     }
                 }
             }
@@ -220,182 +203,81 @@ namespace DesktopFences
                 if (sourceBox == FenceListBox) ColorFenceListBox.SelectedIndex = FenceListBox.SelectedIndex;
                 else FenceListBox.SelectedIndex = ColorFenceListBox.SelectedIndex;
 
-                _currentlySelectedFence = fence;
-                _isLoadingFenceData = true;
-
-                TitleInput.Text = fence.FenceTitle;
-                AutoSortInput.Text = fence.AutoSortExtensions;
-                EnableSearchToggle.IsChecked = fence.ShowSearch;
-                PresetDropdown.SelectedIndex = 0;
+                _currentlySelectedFence = fence; _isLoadingFenceData = true;
+                TitleInput.Text = fence.FenceTitle; AutoSortInput.Text = fence.AutoSortExtensions;
+                EnableSearchToggle.IsChecked = fence.ShowSearch; PresetDropdown.SelectedIndex = 0;
                 GhostModeDropdown.SelectedIndex = fence.GhostModeOverride;
 
                 foreach (ComboBoxItem item in SortDropdown.Items)
                 {
                     string itemText = item.Content.ToString() ?? "";
-                    if (itemText == fence.FenceSortMethod ||
-                       (fence.FenceSortMethod == "DateMod" && itemText == "Date Modified") ||
-                       (fence.FenceSortMethod == "DateCre" && itemText == "Date Created") ||
-                       (fence.FenceSortMethod == "DateAdd" && itemText == "Date added to Fence") ||
-                       (fence.FenceSortMethod == "Type" && itemText == "Item Type"))
+                    if (itemText == fence.FenceSortMethod || (fence.FenceSortMethod == "DateMod" && itemText == "Date Modified") || (fence.FenceSortMethod == "DateCre" && itemText == "Date Created") || (fence.FenceSortMethod == "DateAdd" && itemText == "Date added to Fence") || (fence.FenceSortMethod == "Type" && itemText == "Item Type"))
                     {
-                        SortDropdown.SelectedItem = item;
-                        break;
+                        SortDropdown.SelectedItem = item; break;
                     }
                 }
 
-                UpdateColorSlidersFromFence(fence);
-                _isLoadingFenceData = false;
+                UpdateColorSlidersFromFence(fence); _isLoadingFenceData = false;
             }
         }
 
         private void UpdateColorSlidersFromFence(MainWindow fence)
         {
             _isColorInitializing = true;
-
-            Color startColor = fence.FenceColor;
-            AlphaSlider.Value = fence.FenceOpacity * 100.0;
-
+            Color startColor = fence.FenceColor; AlphaSlider.Value = fence.FenceOpacity * 100.0;
             if (BlendWallpaperToggle is not null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
             if (AutoMatchToggle is not null) AutoMatchToggle.IsChecked = fence.AutoMatchColor;
 
-            bool isAuto = fence.AutoMatchColor;
-            HueSlider.IsEnabled = !isAuto;
-            SaturationSlider.IsEnabled = !isAuto;
-            LightnessSlider.IsEnabled = !isAuto;
-
-            double opacity = isAuto ? 0.4 : 1.0;
-            HueSlider.Opacity = opacity;
-            SaturationSlider.Opacity = opacity;
-            LightnessSlider.Opacity = opacity;
+            bool isAuto = fence.AutoMatchColor; HueSlider.IsEnabled = !isAuto; SaturationSlider.IsEnabled = !isAuto; LightnessSlider.IsEnabled = !isAuto;
+            double opacity = isAuto ? 0.4 : 1.0; HueSlider.Opacity = opacity; SaturationSlider.Opacity = opacity; LightnessSlider.Opacity = opacity;
 
             System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
-            HueSlider.Value = sysColor.GetHue();
-            SaturationSlider.Value = sysColor.GetSaturation() * 100.0;
-            LightnessSlider.Value = sysColor.GetBrightness() * 100.0;
-
-            UpdateColorPreview();
-            _isColorInitializing = false;
+            HueSlider.Value = sysColor.GetHue(); SaturationSlider.Value = sysColor.GetSaturation() * 100.0; LightnessSlider.Value = sysColor.GetBrightness() * 100.0;
+            UpdateColorPreview(); _isColorInitializing = false;
         }
 
         private void AutoMatchToggle_Click(object sender, RoutedEventArgs e)
         {
             if (_isColorInitializing || _currentlySelectedFence is null) return;
-
-            bool isAuto = AutoMatchToggle.IsChecked == true;
-            _currentlySelectedFence.AutoMatchColor = isAuto;
-
-            HueSlider.IsEnabled = !isAuto;
-            SaturationSlider.IsEnabled = !isAuto;
-            LightnessSlider.IsEnabled = !isAuto;
-
-            double opacity = isAuto ? 0.4 : 1.0;
-            HueSlider.Opacity = opacity;
-            SaturationSlider.Opacity = opacity;
-            LightnessSlider.Opacity = opacity;
+            bool isAuto = AutoMatchToggle.IsChecked == true; _currentlySelectedFence.AutoMatchColor = isAuto;
+            HueSlider.IsEnabled = !isAuto; SaturationSlider.IsEnabled = !isAuto; LightnessSlider.IsEnabled = !isAuto;
+            double opacity = isAuto ? 0.4 : 1.0; HueSlider.Opacity = opacity; SaturationSlider.Opacity = opacity; LightnessSlider.Opacity = opacity;
 
             if (isAuto)
             {
-                Color newColor = GetDominantWallpaperColor();
+                Color newColor = ThemeUtility.GetDominantWallpaperColor();
                 RgbToHsl(newColor, out double h, out double sat, out double l);
-
-                _isColorInitializing = true;
-                HueSlider.Value = h;
-                SaturationSlider.Value = sat;
-                LightnessSlider.Value = l;
-                _isColorInitializing = false;
-
+                _isColorInitializing = true; HueSlider.Value = h; SaturationSlider.Value = sat; LightnessSlider.Value = l; _isColorInitializing = false;
                 UpdateColorPreview();
             }
-
             _currentlySelectedFence.DashboardSaveAndRefresh();
         }
 
         private void ColorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_isColorInitializing || _currentlySelectedFence is null) return;
-
-            if (sender == AlphaSlider && BlendWallpaperToggle is not null)
-            {
-                BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
-            }
-
+            if (sender == AlphaSlider && BlendWallpaperToggle is not null) BlendWallpaperToggle.IsChecked = (AlphaSlider.Value <= 1.0);
             UpdateColorPreview();
         }
 
         private void BlendWallpaperToggle_Click(object sender, RoutedEventArgs e)
         {
             if (_isColorInitializing || _currentlySelectedFence is null) return;
-
-            if (BlendWallpaperToggle.IsChecked == true) AlphaSlider.Value = 1;
-            else AlphaSlider.Value = 70;
+            if (BlendWallpaperToggle.IsChecked == true) AlphaSlider.Value = 1; else AlphaSlider.Value = 70;
         }
 
         private void UpdateColorPreview()
         {
-            double h = HueSlider.Value;
-            double s = SaturationSlider.Value / 100.0;
-            double l = LightnessSlider.Value / 100.0;
-            double a = AlphaSlider.Value / 100.0;
-
-            Color rgbColor = HslToRgb(h, s, l);
-            Color finalColor = Color.FromArgb((byte)(a * 255), rgbColor.R, rgbColor.G, rgbColor.B);
-
+            double h = HueSlider.Value; double s = SaturationSlider.Value / 100.0; double l = LightnessSlider.Value / 100.0; double a = AlphaSlider.Value / 100.0;
+            Color rgbColor = HslToRgb(h, s, l); Color finalColor = Color.FromArgb((byte)(a * 255), rgbColor.R, rgbColor.G, rgbColor.B);
             ColorPreview.Background = new SolidColorBrush(finalColor) { Opacity = a };
 
-            Color pureHue = HslToRgb(h, 1.0, 0.5);
-            BrightnessEndColor.Color = pureHue;
-            SaturationEndColor.Color = pureHue;
-            AlphaEndColor.Color = pureHue;
+            Color pureHue = HslToRgb(h, 1.0, 0.5); BrightnessEndColor.Color = pureHue; SaturationEndColor.Color = pureHue; AlphaEndColor.Color = pureHue;
 
             if (!_isColorInitializing && _currentlySelectedFence is not null)
             {
-                _pendingColor = finalColor;
-                _pendingOpacity = a;
-                _hasPendingColor = true;
+                _pendingColor = finalColor; _pendingOpacity = a; _hasPendingColor = true;
                 if (!_liveUpdateTimer.IsEnabled) _liveUpdateTimer.Start();
-            }
-        }
-
-        private Color GetDominantWallpaperColor()
-        {
-            try
-            {
-                System.Text.StringBuilder wallpaperPath = new(260);
-                SystemParametersInfo(SPI_GETDESKWALLPAPER, 260, wallpaperPath, 0);
-                string path = wallpaperPath.ToString();
-
-                if (!File.Exists(path)) return Colors.Black;
-
-                BitmapImage bmp = new();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(path, UriKind.Absolute);
-                bmp.DecodePixelWidth = 50;
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-
-                int stride = bmp.PixelWidth * 4;
-                byte[] pixels = new byte[bmp.PixelHeight * stride];
-                bmp.CopyPixels(pixels, stride, 0);
-
-                long r = 0, g = 0, b = 0;
-                int pixelCount = 0;
-
-                for (int i = 0; i < pixels.Length; i += 4)
-                {
-                    b += pixels[i];
-                    g += pixels[i + 1];
-                    r += pixels[i + 2];
-                    pixelCount++;
-                }
-
-                if (pixelCount == 0) return Colors.Black;
-
-                return Color.FromRgb((byte)(r / pixelCount), (byte)(g / pixelCount), (byte)(b / pixelCount));
-            }
-            catch
-            {
-                return Colors.Black;
             }
         }
 
@@ -417,22 +299,15 @@ namespace DesktopFences
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
             SaveCurrentFenceSettings();
-            if (_currentlySelectedFence is not null)
-            {
-                MessageBox.Show("Settings applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            if (_currentlySelectedFence is not null) MessageBox.Show("Settings applied to " + TitleInput.Text + "!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SaveCurrentFenceSettings()
         {
             if (_currentlySelectedFence is not null && !_isLoadingFenceData)
             {
-                _currentlySelectedFence.FenceTitle = TitleInput.Text;
-                _currentlySelectedFence.AutoSortExtensions = AutoSortInput.Text;
-
-                _currentlySelectedFence.ShowSearch = EnableSearchToggle.IsChecked ?? true;
-                _currentlySelectedFence.UpdateSearchVisibility();
-
+                _currentlySelectedFence.FenceTitle = TitleInput.Text; _currentlySelectedFence.AutoSortExtensions = AutoSortInput.Text;
+                _currentlySelectedFence.ShowSearch = EnableSearchToggle.IsChecked ?? true; _currentlySelectedFence.UpdateSearchVisibility();
                 _currentlySelectedFence.GhostModeOverride = GhostModeDropdown.SelectedIndex;
 
                 if (SortDropdown.SelectedItem is ComboBoxItem selectedSort)

@@ -7,45 +7,64 @@ using Microsoft.Win32;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
 namespace DesktopFences
 {
     public partial class App : Application
     {
-        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-        [LibraryImport("user32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-
         private const int HOTKEY_ID = 9000;
         private const uint MOD_CONTROL = 0x0002;
         private const uint MOD_ALT = 0x0001;
+        private const uint MOD_SHIFT = 0x0004;
         private const uint VK_Z = 0x5A;
 
         private NotifyIcon? _trayIcon;
-        private bool _isZenModeActive = false;
-        private string _configFolder = "";
+        private bool _isZenModeActive;
+
+        private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+
+        public static string ConfigFolder { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopFences");
 
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            _configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
-            Directory.CreateDirectory(_configFolder);
+            string oldFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
+            if (Directory.Exists(oldFolder) && !Directory.Exists(ConfigFolder))
+            {
+                try { Directory.Move(oldFolder, ConfigFolder); } catch { }
+            }
+
+            Directory.CreateDirectory(ConfigFolder);
+            Directory.CreateDirectory(Path.Combine(ConfigFolder, "Fences"));
 
             CreateTrayIcon();
 
             ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
-            RegisterHotKey(IntPtr.Zero, HOTKEY_ID, MOD_CONTROL | MOD_ALT, VK_Z);
+
+            bool hotkeyRegistered = NativeMethods.RegisterHotKey(IntPtr.Zero, HOTKEY_ID, MOD_CONTROL | MOD_ALT, VK_Z);
+            if (!hotkeyRegistered)
+            {
+                bool fallbackRegistered = NativeMethods.RegisterHotKey(IntPtr.Zero, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, VK_Z);
+                if (fallbackRegistered) _trayIcon?.ShowBalloonTip(3000, "Hotkey Changed", "Ctrl+Alt+Z is in use by another app. Zen Mode is using Ctrl+Shift+Z instead.", ToolTipIcon.Info);
+            }
 
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
-            await System.Threading.Tasks.Task.Delay(1500);
-
+            await System.Threading.Tasks.Task.Delay(500);
             RestoreSavedFences();
+        }
 
+        private static void LogError(string context, Exception ex)
 
-            System.Diagnostics.Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+        {
+            try
+            {
+                string logPath = Path.Combine(ConfigFolder, "app_error.log");
+                File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context}: {ex.Message}\n{ex.StackTrace}\n");
+            }
+            catch { }
         }
 
         private void SystemEvents_DisplaySettingsChanged(object? sender, EventArgs e)
@@ -78,11 +97,11 @@ namespace DesktopFences
             }
         }
 
-        public void SaveCurrentLayout()
+        public async void SaveCurrentLayout()
         {
             try
             {
-                string snapshotPath = Path.Combine(_configFolder, "snapshot.json");
+                string snapshotPath = Path.Combine(ConfigFolder, "snapshot.json");
                 List<SnapshotData> snapshots = [];
 
                 foreach (Window window in Current.Windows)
@@ -100,19 +119,20 @@ namespace DesktopFences
                         });
                     }
                 }
-                File.WriteAllText(snapshotPath, JsonSerializer.Serialize(snapshots, new JsonSerializerOptions { WriteIndented = true }));
+
+                await File.WriteAllTextAsync(snapshotPath, JsonSerializer.Serialize(snapshots, _jsonOptions));
             }
-            catch { }
+            catch (Exception ex) { LogError("SaveCurrentLayout", ex); }
         }
 
-        public void RestoreLayoutSnapshot()
+        public async void RestoreLayoutSnapshot()
         {
             try
             {
-                string snapshotPath = Path.Combine(_configFolder, "snapshot.json");
+                string snapshotPath = Path.Combine(ConfigFolder, "snapshot.json");
                 if (!File.Exists(snapshotPath)) return;
 
-                string json = File.ReadAllText(snapshotPath);
+                string json = await File.ReadAllTextAsync(snapshotPath);
                 var snapshots = JsonSerializer.Deserialize<List<SnapshotData>>(json);
 
                 if (snapshots is not null)
@@ -130,31 +150,35 @@ namespace DesktopFences
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { LogError("RestoreLayoutSnapshot", ex); }
         }
 
         private async void RestoreSavedFences()
         {
-            string saveDirectory = Path.Combine(_configFolder, "Fences");
-
-            if (Directory.Exists(saveDirectory))
+            try
             {
-                string[] savedFences = Directory.GetFiles(saveDirectory, "*.json");
-                if (savedFences.Length > 0)
+                string saveDirectory = Path.Combine(ConfigFolder, "Fences");
+
+                if (Directory.Exists(saveDirectory))
                 {
-                    foreach (string file in savedFences)
+                    string[] savedFences = Directory.GetFiles(saveDirectory, "*.json");
+                    if (savedFences.Length > 0)
                     {
-                        string fenceId = Path.GetFileNameWithoutExtension(file);
-                        if (fenceId.Equals("designer", StringComparison.OrdinalIgnoreCase)) continue;
+                        foreach (string file in savedFences)
+                        {
+                            string fenceId = Path.GetFileNameWithoutExtension(file);
+                            if (fenceId.Equals("designer", StringComparison.OrdinalIgnoreCase)) continue;
 
-                        MainWindow restoredFence = new(fenceId);
-                        restoredFence.Show();
+                            MainWindow restoredFence = new(fenceId);
+                            restoredFence.Show();
 
-                        await System.Threading.Tasks.Task.Delay(75);
+                            await System.Threading.Tasks.Task.Delay(75);
+                        }
+                        return;
                     }
-                    return;
                 }
             }
+            catch (Exception ex) { LogError("RestoreSavedFences", ex); }
 
             MainWindow defaultFence = new(Guid.NewGuid().ToString());
             defaultFence.Show();
@@ -168,7 +192,7 @@ namespace DesktopFences
             _trayIcon = new NotifyIcon { Icon = new Icon(iconStream), Visible = true, Text = "Fluid Fences" };
 
             var trayMenu = new ContextMenuStrip();
-            trayMenu.Items.Add("Toggle Zen Mode (Ctrl+Alt+Z)", null, (s, e) => ToggleZenMode());
+            trayMenu.Items.Add("Toggle Zen Mode", null, (s, e) => ToggleZenMode());
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add("Create New Fence", null, (s, e) => CreateNewFence());
             trayMenu.Items.Add("Create Folder Portal...", null, (s, e) => CreateNewPortal());
@@ -212,7 +236,7 @@ namespace DesktopFences
         protected override void OnExit(ExitEventArgs e)
         {
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
-            UnregisterHotKey(IntPtr.Zero, HOTKEY_ID);
+            NativeMethods.UnregisterHotKey(IntPtr.Zero, HOTKEY_ID);
             _trayIcon?.Dispose();
             base.OnExit(e);
         }
