@@ -1,57 +1,98 @@
-🌊 Fluid Fences - How to Use
-Fluid Fences is a lightweight, high-performance desktop organizer designed to keep your workspace clean. It uses native Windows rendering to provide beautiful acrylic blurring and seamless multi-monitor support without slowing down your PC.
+🌊 Fluid Fences
+A lightning-fast, modern, and open-source desktop organization utility for Windows.
 
-🚀 Getting Started
-When you launch Fluid Fences, it runs silently in the background. Look for the Fluid Fences icon in your System Tray (down by your clock).
+Tired of a cluttered desktop? Fluid Fences allows you to effortlessly group your shortcuts, files, and folders into sleek, native-looking translucent windows right on your desktop. Built with C# and WPF, it is highly optimized, lightweight, and deeply integrated with Windows 11 design paradigms.
 
-Double-click the tray icon to open Global Settings.
+✨ Key Features
+🗂️ Advanced Tabbed Workspaces: Don't just make lists—make categories! Create multiple tabs within a single fence.
 
-Right-click the tray icon to quickly create new Fences or Portals.
+💨 Tear-Off & Merge: Drag a tab onto your desktop to instantly spawn a new fence, or drag a fence into another to merge them!
 
-📂 Types of Fences
-1. Standard Fences (The Vault)
-A standard fence acts as a safe visual vault for your files and shortcuts.
+🪞 Folder Portals: Mirror any existing folder on your hard drive directly to your desktop. Changes made in the portal instantly reflect on your PC.
 
-To add items: Simply drag and drop files, folders, or shortcuts directly into the fence.
+🧹 Auto-Organize: Tell Fluid Fences your preferred file extensions (e.g., .jpg, .png), and it will automatically sweep them off your desktop and into your vault.
 
-Smart Moving: If you drag a file from your Desktop, it safely moves into the Fence's hidden vault. If you drag a file from a different hard drive, Fluid Fences uses native Windows file operations to safely copy/move the file with full progress bars.
+🎨 Dynamic Customization: Adjust opacity, tint, and icon sizes, or enable Auto-Match to let your fences automatically blend with your current desktop wallpaper.
 
-2. Folder Portals (Live Mirroring)
-A Folder Portal is a window that looks directly into an existing folder on your computer (like your Downloads or Documents folder).
+🧘 Zen Mode: Need to focus? Press Ctrl + Alt + Z to instantly hide all fences and enjoy a clean desktop. Press it again to bring them back.
 
-Live Updates: Any changes made inside a Portal happen instantly on your hard drive, and vice versa.
+👻 Ghost Mode: Enable this in settings to make your fences almost invisible until you hover your mouse over them.
 
-Note: Deleting an item inside a Folder Portal will send the actual file to your Windows Recycle Bin!
+📜 Roll-up Fences: Double-click the title bar to "roll up" a fence, hiding the icons but keeping the title bar accessible to save space.
 
-🛠️ Core Controls & Shortcuts
-Move a Fence: Click and drag the top header bar. You can smoothly drag fences across multiple monitors, and they will natively snap to the edges of any screen.
+🔄 Auto-Updating: Built-in seamless background updating pulls the latest features directly from GitHub Releases.
 
-Resize: Hover over any edge or corner of the fence until your cursor changes, then click and drag.
+🚀 Installation
+There are two ways to get Fluid Fences:
 
-Roll-up Mode: Double-click the header of any fence to instantly "roll it up" into a tiny bar. Hover over it to temporarily reveal your files, or double-click the header again to lock it open.
+1. Download the Executable (Recommended for Users)
 
-Zen Mode: Press Ctrl + Alt + Z anywhere in Windows to instantly hide all of your fences and enjoy a completely clean desktop. Press it again to bring them back.
+Navigate to the Releases page on this repository.
 
-Keyboard Nudging: Click a fence to focus it, then hold Ctrl and use the Arrow Keys to perfectly snap the fence to the edges of your monitor.
+Download the latest FluidFences.exe.
 
-🧹 Organization & Customization
-Auto-Organize Your Desktop
-Right-click any fence header and select Auto Organize. Fluid Fences will scan your actual Windows Desktop and automatically pull in files that match the extensions you defined in your settings (e.g., .jpg, .png), instantly cleaning up your screen.
+Run the application. It will automatically set up its configuration folders and spawn your first fence!
 
-Ghost Mode
-In your Global Settings, enable Ghost Mode. When you move your mouse away, your fences will smoothly fade out of existence, blending perfectly into your wallpaper. When you move your mouse back over them, they instantly fade back in.
+2. Via NuGet (For Developers)
 
-Theme & Colors
-Right-click a fence header and select Edit Color...
+Bash
 
-Turn on Auto-Match Wallpaper to let Fluid Fences automatically extract the dominant color from your desktop background.
+dotnet add package FluidFences
 
-Check Blend with Wallpaper to strip away the background tint, leaving only beautiful Windows Acrylic glass.
 
-⚙️ Under the Hood (Performance)
-Instant Boot: Fluid Fences tells Windows to bypass the standard 10-second startup delay, meaning your fences are ready when your desktop loads.
 
-Safe Recovery: If you ever delete a standard Fence, the app will automatically rescue all of your physical files and place them safely in a recovery folder on your Desktop before destroying the shortcuts.
+📖 How to Use Fluid Fences
+When you launch the app, a small Fluid Fences icon will appear in your Windows System Tray (near the clock). This is your command center.
+
+Getting Started
+Create a new Fence: Right-click the system tray icon and select "Create New Fence".
+
+Add Files: Simply drag and drop any file, folder, or shortcut from your PC directly into the translucent area of the fence.
+
+Resize and Move: Click and drag the top header to move the fence. Drag the edges or corners to resize it.
+
+Mastering Tabs
+Fluid Fences features a powerful tabbed engine to keep massive amounts of files organized in a small footprint.
+
+Create a Tab: Right-click the header of any fence and select "New Tab Inside This Fence" (or click the + button).
+
+Reorder Tabs: Click and drag a tab left or right to reorder them.
+
+Tear-Off: Click and drag a tab out of the fence and drop it onto the empty desktop to instantly turn it into its own independent window.
+
+Merge Fences: Click and drag the header of one fence and drop it onto another to merge them together.
+
+Managing Your Workspace
+Roll-Up: Double-click the title bar of any fence to snap it shut. Hover over it to temporarily peek inside, or double-click again to lock it open.
+
+Search: Click the magnifying glass in the top right of any fence to instantly filter the icons currently visible.
+
+Sort: Right-click a fence header to quickly sort your files by Name, Size, Item Type, or Date.
+
+Global Settings
+Double-click the System Tray icon to open the Settings Dashboard. From here, you can:
+
+Configure the app to start with Windows.
+
+Change the default behavior for deleted files.
+
+Set up specific file extensions for the "Auto-Organize" feature.
+
+Save a "Snapshot" of your layout so your fences always remember exactly where they belong on your monitors.
+
+🛠️ Built With
+C# / .NET 8
+
+WPF (Windows Presentation Foundation)
+
+Native Win32 & COM Interop (For icon extraction and shell integration)
+
+🤝 Contributing
+Contributions, issues, and feature requests are always welcome!
+If you find a bug or have an idea for a cool new feature, feel free to open an issue or submit a pull request.
+
+📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ❤️ Support the Project
 If you find this tool useful and want to help keep the internet on, consider a donation:

@@ -13,7 +13,7 @@ namespace DesktopFences
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-       
+
         [LibraryImport("user32.dll")]
         internal static partial IntPtr GetDC(IntPtr hwnd);
 

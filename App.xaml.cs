@@ -1,13 +1,15 @@
-﻿using System;
-using System.Windows;
-using System.Drawing;
-using System.Windows.Forms;
-using Application = System.Windows.Application;
+﻿#pragma warning disable CA1001
+
 using Microsoft.Win32;
-using System.IO;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Text.Json;
+using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Interop;
+using Application = System.Windows.Application;
 
 namespace DesktopFences
 {
@@ -26,14 +28,43 @@ namespace DesktopFences
 
         public static string ConfigFolder { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopFences");
 
-        protected override async void OnStartup(StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            string oldFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
-            if (Directory.Exists(oldFolder) && !Directory.Exists(ConfigFolder))
+            try
             {
-                try { Directory.Move(oldFolder, ConfigFolder); } catch { }
+                using RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
+                if (key?.GetValue("FluidFences") != null)
+                {
+                    using RegistryKey? serializeKey = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize");
+                    serializeKey?.SetValue("StartupDelayInMS", 0, RegistryValueKind.DWord);
+                }
+            }
+            catch { }
+
+            string oldFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopFences");
+            if (Directory.Exists(oldFolder))
+            {
+                try
+                {
+                    void MoveDirectory(string source, string target)
+                    {
+                        if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+                        foreach (string file in Directory.GetFiles(source))
+                        {
+                            string destFile = Path.Combine(target, Path.GetFileName(file));
+                            if (!File.Exists(destFile)) File.Move(file, destFile);
+                        }
+                        foreach (string dir in Directory.GetDirectories(source))
+                        {
+                            MoveDirectory(dir, Path.Combine(target, Path.GetFileName(dir)));
+                        }
+                    }
+                    MoveDirectory(oldFolder, ConfigFolder);
+                    try { Directory.Delete(oldFolder, true); } catch { }
+                }
+                catch { }
             }
 
             Directory.CreateDirectory(ConfigFolder);
@@ -52,12 +83,13 @@ namespace DesktopFences
 
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
-            await System.Threading.Tasks.Task.Delay(500);
             RestoreSavedFences();
+
+            Updater.CleanupOldUpdates();
+            _ = Updater.CheckAndApplyUpdateAsync(silentCheck: true);
         }
 
         private static void LogError(string context, Exception ex)
-
         {
             try
             {
@@ -71,7 +103,13 @@ namespace DesktopFences
         {
             System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
             {
-                Dispatcher.Invoke(RestoreLayoutSnapshot);
+                Dispatcher.Invoke(() =>
+                {
+                    foreach (Window window in Current.Windows)
+                    {
+                        if (window is MainWindow fence) fence.ClampToScreen();
+                    }
+                });
             });
         }
 
@@ -115,7 +153,11 @@ namespace DesktopFences
                             Top = fence.Top,
                             Width = fence.Width,
                             Height = fence.Height,
-                            IsRolledUp = fence.GetIsRolledUp()
+                            IsRolledUp = fence.GetIsRolledUp(),
+                            ExpandedLeft = fence.ExpandedLeft,
+                            ExpandedTop = fence.ExpandedTop,
+                            ExpandedWidth = fence.ExpandedWidth,
+                            ExpandedHeight = fence.ExpandedHeight
                         });
                     }
                 }
@@ -143,7 +185,7 @@ namespace DesktopFences
                         {
                             if (window is MainWindow fence && fence.GetFenceId() == snap.FenceId)
                             {
-                                fence.RestoreSnapshot(snap.Left, snap.Top, snap.Width, snap.Height, snap.IsRolledUp);
+                                fence.RestoreSnapshot(snap);
                                 break;
                             }
                         }
@@ -172,7 +214,7 @@ namespace DesktopFences
                             MainWindow restoredFence = new(fenceId);
                             restoredFence.Show();
 
-                            await System.Threading.Tasks.Task.Delay(75);
+                            await System.Threading.Tasks.Task.Delay(50);
                         }
                         return;
                     }
@@ -180,7 +222,14 @@ namespace DesktopFences
             }
             catch (Exception ex) { LogError("RestoreSavedFences", ex); }
 
-            MainWindow defaultFence = new(Guid.NewGuid().ToString());
+            MainWindow defaultFence = new(Guid.NewGuid().ToString())
+            {
+                Left = SystemParameters.PrimaryScreenWidth - 350,
+                Top = 100,
+                Width = 250,
+                Height = 300
+            };
+            defaultFence.FenceTitle = "My First Fence";
             defaultFence.Show();
         }
 
@@ -196,6 +245,7 @@ namespace DesktopFences
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add("Create New Fence", null, (s, e) => CreateNewFence());
             trayMenu.Items.Add("Create Folder Portal...", null, (s, e) => CreateNewPortal());
+            trayMenu.Items.Add("Check for Updates", null, (s, e) => _ = Updater.CheckAndApplyUpdateAsync(silentCheck: false));
             trayMenu.Items.Add("Open Settings", null, (s, e) => OpenSettings());
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add("Exit Fluid Fences", null, (s, e) => ExitApp());

@@ -154,7 +154,7 @@ namespace DesktopFences
 
                 if (StartupToggle.IsChecked == true)
                 {
-                    string exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule!.FileName;
+                    string exePath = Environment.ProcessPath!;
                     key?.SetValue("FluidFences", $"\"{exePath}\"");
                     serializeKey?.SetValue("StartupDelayInMS", 0, RegistryValueKind.DWord);
                 }

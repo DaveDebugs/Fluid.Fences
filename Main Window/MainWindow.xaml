@@ -5,34 +5,38 @@
     Title="Fluid Fence"
     Width="250"
     Height="300"
+    AllowDrop="True"
     AllowsTransparency="True"
     Background="Transparent"
-    FontFamily="Segoe UI Variable, Segoe UI, Arial"
-    Loaded="Window_Loaded"
-    ShowInTaskbar="False"
-    Topmost="False"
-    WindowStyle="None"
-    AllowDrop="True"
-    Drop="Window_Drop"
+    Deactivated="Window_Deactivated"
     DragEnter="Window_DragEnter"
     DragLeave="Window_DragLeave"
     DragOver="Window_DragOver"
+    Drop="Window_Drop"
+    FontFamily="Segoe UI Variable, Segoe UI, Arial"
+    Loaded="Window_Loaded"
     MouseEnter="Window_MouseEnter"
     MouseLeave="Window_MouseLeave"
-    Deactivated="Window_Deactivated">
+    ShowInTaskbar="False"
+    Topmost="False"
+    WindowStyle="None">
 
     <Window.Resources>
         <Style x:Key="FenceScrollThumb" TargetType="Thumb">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
-                        <Border x:Name="ThumbBorder" Background="#44FFFFFF" CornerRadius="4" Margin="2,0,2,0"/>
+                        <Border
+                            x:Name="ThumbBorder"
+                            Margin="2,0,2,0"
+                            Background="#44FFFFFF"
+                            CornerRadius="4" />
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#88FFFFFF"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#88FFFFFF" />
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#BBFFFFFF"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#BBFFFFFF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -50,16 +54,194 @@
                         <Grid Background="Transparent">
                             <Track x:Name="PART_Track" IsDirectionReversed="true">
                                 <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" Focusable="False" />
+                                    <RepeatButton
+                                        Command="{x:Static ScrollBar.PageUpCommand}"
+                                        Focusable="False"
+                                        Opacity="0" />
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
                                     <Thumb Style="{StaticResource FenceScrollThumb}" />
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" Focusable="False" />
+                                    <RepeatButton
+                                        Command="{x:Static ScrollBar.PageDownCommand}"
+                                        Focusable="False"
+                                        Opacity="0" />
                                 </Track.IncreaseRepeatButton>
                             </Track>
                         </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TabListBoxItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#BBBBBB" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#22FFFFFF" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#44FFFFFF" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="#CC1A1A1A" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#44FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="HasDropShadow" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                            <StackPanel
+                                Margin="{TemplateBinding Padding}"
+                                IsItemsHost="True"
+                                KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="10,6,15,6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border
+                            x:Name="Bd"
+                            Margin="4,1"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="15" />
+                                </Grid.ColumnDefinitions>
+
+                                <Path
+                                    x:Name="CheckMark"
+                                    Grid.Column="0"
+                                    Margin="8,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Data="M 2.5 5 L 4.5 7 L 9.5 1.5 L 10.5 2.5 L 4.5 9 L 1.5 6 Z"
+                                    Fill="White"
+                                    Visibility="Collapsed" />
+
+                                <ContentPresenter
+                                    Grid.Column="1"
+                                    Margin="{TemplateBinding Padding}"
+                                    VerticalAlignment="Center"
+                                    ContentSource="Header"
+                                    RecognizesAccessKey="True" />
+
+                                <Path
+                                    x:Name="RightArrow"
+                                    Grid.Column="2"
+                                    Margin="0,0,6,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Data="M 0 0 L 4 4 L 0 8 Z"
+                                    Fill="#BBBBBB"
+                                    Visibility="Collapsed" />
+
+                                <Popup
+                                    x:Name="PART_Popup"
+                                    AllowsTransparency="True"
+                                    Focusable="False"
+                                    HorizontalOffset="-4"
+                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Placement="Right"
+                                    PopupAnimation="Fade"
+                                    VerticalOffset="-4">
+                                    <Border
+                                        Margin="0,0,8,8"
+                                        Background="#E61A1A1A"
+                                        BorderBrush="#44FFFFFF"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                        <Border.Effect>
+                                            <DropShadowEffect
+                                                BlurRadius="5"
+                                                Direction="315"
+                                                Opacity="0.5"
+                                                ShadowDepth="2"
+                                                Color="Black" />
+                                        </Border.Effect>
+                                        <ScrollViewer CanContentScroll="True">
+                                            <StackPanel
+                                                Margin="2"
+                                                IsItemsHost="True"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#33FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#888888" />
+                                <Setter TargetName="CheckMark" Property="Fill" Value="#888888" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="RightArrow" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Separator">
+            <Setter Property="Background" Value="#33FFFFFF" />
+            <Setter Property="Margin" Value="4,4" />
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Rectangle
+                            Height="{TemplateBinding Height}"
+                            Margin="{TemplateBinding Margin}"
+                            Fill="{TemplateBinding Background}" />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -96,41 +278,85 @@
 
                 <Border.ContextMenu>
                     <ContextMenu x:Name="HeaderContextMenu">
-
                         <MenuItem Header="Create New...">
-                            <MenuItem Header="Empty Fence" Click="Menu_NewFence_Click" />
-                            <MenuItem Header="Folder Portal (Mirror PC Folder)" Click="Menu_NewPortal_Click" />
+                            <MenuItem Click="Menu_NewFence_Click" Header="Empty Fence" />
+                            <MenuItem Click="Menu_NewPortal_Click" Header="Folder Portal (Mirror PC Folder)" />
+                            <Separator />
+                            <MenuItem Click="Menu_NewTab_Click" Header="New Tab Inside This Fence" />
                         </MenuItem>
 
-                        <MenuItem Header="Auto Organize (Pull from Desktop)" Click="Menu_AutoOrganize_Click" />
+                        <MenuItem Click="Menu_AutoOrganize_Click" Header="Auto Organize (Pull from Desktop)" />
                         <Separator />
 
-                        <MenuItem x:Name="MenuRollUpFence" Click="Menu_RollUp_Click" Header="Roll-up Fence" />
+                        <MenuItem
+                            x:Name="MenuRollUpFence"
+                            Click="Menu_RollUp_Click"
+                            Header="Roll-up Fence" />
 
                         <MenuItem Header="View">
                             <MenuItem Header="Icon Size">
-                                <MenuItem Header="Small" Tag="32" Click="Menu_IconSize_Click"/>
-                                <MenuItem Header="Medium" Tag="48" Click="Menu_IconSize_Click"/>
-                                <MenuItem Header="Large" Tag="64" Click="Menu_IconSize_Click"/>
-                                <Separator/>
-                                <MenuItem Header="Reset to Default" Tag="Default" Click="Menu_IconSize_Click"/>
+                                <MenuItem
+                                    Click="Menu_IconSize_Click"
+                                    Header="Small"
+                                    Tag="32" />
+                                <MenuItem
+                                    Click="Menu_IconSize_Click"
+                                    Header="Medium"
+                                    Tag="48" />
+                                <MenuItem
+                                    Click="Menu_IconSize_Click"
+                                    Header="Large"
+                                    Tag="64" />
+                                <Separator />
+                                <MenuItem
+                                    Click="Menu_IconSize_Click"
+                                    Header="Reset to Default"
+                                    Tag="Default" />
                             </MenuItem>
                         </MenuItem>
 
                         <MenuItem Header="Sort by">
-                            <MenuItem Click="Menu_Sort_Click" Header="None (Custom)" Tag="None" />
-                            <MenuItem Click="Menu_Sort_Click" Header="Name" Tag="Name" />
-                            <MenuItem Click="Menu_Sort_Click" Header="Size" Tag="Size" />
-                            <MenuItem Click="Menu_Sort_Click" Header="Item Type" Tag="Type" />
-                            <MenuItem Click="Menu_Sort_Click" Header="Date Modified" Tag="DateMod" />
-                            <MenuItem Click="Menu_Sort_Click" Header="Date Created" Tag="DateCre" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="None (Custom)"
+                                Tag="None" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="Name"
+                                Tag="Name" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="Size"
+                                Tag="Size" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="Item Type"
+                                Tag="Type" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="Date Modified"
+                                Tag="DateMod" />
+                            <MenuItem
+                                Click="Menu_Sort_Click"
+                                Header="Date Created"
+                                Tag="DateCre" />
                         </MenuItem>
 
                         <Separator />
-                        <MenuItem x:Name="MenuEditColor" Click="Menu_EditColor_Click" Header="Edit Color..." />
-                        <MenuItem x:Name="MenuSettings" Click="Menu_Settings_Click" Header="Settings..." />
+                        <MenuItem
+                            x:Name="MenuEditColor"
+                            Click="Menu_EditColor_Click"
+                            Header="Edit Color..." />
+                        <MenuItem
+                            x:Name="MenuSettings"
+                            Click="Menu_Settings_Click"
+                            Header="Settings..." />
                         <Separator />
-                        <MenuItem x:Name="MenuDeleteFence" Click="Menu_DeleteFence_Click" Header="Delete Fence" Foreground="#FF4444" />
+                        <MenuItem
+                            x:Name="MenuDeleteFence"
+                            Click="Menu_DeleteFence_Click"
+                            Foreground="#FF4444"
+                            Header="Delete Fence" />
                     </ContextMenu>
                 </Border.ContextMenu>
 
@@ -145,8 +371,8 @@
                             x:Name="TitleText"
                             FontWeight="SemiBold"
                             Foreground="White"
-                            Text="Fluid Fence"
-                            MouseLeftButtonDown="TitleText_MouseLeftButtonDown" />
+                            MouseLeftButtonDown="TitleText_MouseLeftButtonDown"
+                            Text="Fluid Fence" />
                     </StackPanel>
 
                     <StackPanel
@@ -156,10 +382,10 @@
 
                         <Border
                             x:Name="SearchIcon"
+                            Margin="0,0,2,0"
+                            Padding="12,10"
                             Background="Transparent"
                             Cursor="Hand"
-                            Padding="12,10"
-                            Margin="0,0,2,0"
                             MouseLeftButtonDown="SearchIcon_MouseLeftButtonDown">
                             <Path
                                 Width="14"
@@ -171,10 +397,10 @@
 
                         <Border
                             x:Name="MenuIcon"
+                            Margin="0,0,4,0"
+                            Padding="12,10"
                             Background="Transparent"
                             Cursor="Hand"
-                            Padding="12,10"
-                            Margin="0,0,4,0"
                             MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown">
                             <Path
                                 Width="16"
@@ -195,51 +421,207 @@
                 Width="160"
                 Height="26"
                 Margin="0,4,35,0"
+                Padding="5,2"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
+                Panel.ZIndex="999"
                 Background="#33000000"
                 BorderBrush="#555"
                 BorderThickness="1"
                 Foreground="White"
-                Padding="5,2"
-                Visibility="Collapsed"
-                Panel.ZIndex="999"
+                LostFocus="SearchBox_LostFocus"
                 TextChanged="SearchBox_TextChanged"
-                LostFocus="SearchBox_LostFocus" />
+                Visibility="Collapsed" />
 
-            <ScrollViewer
+            <Grid
                 Grid.Row="1"
                 Grid.Column="1"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
-                <Grid>
-                    <Canvas x:Name="SelectionCanvas">
-                        <Border
-                            x:Name="SelectionBox"
-                            Background="#330078D7"
-                            BorderBrush="#0078D7"
-                            BorderThickness="1"
-                            Visibility="Collapsed" />
-                    </Canvas>
-                    <WrapPanel
-                        x:Name="IconPanel"
-                        Margin="5"
+                Margin="0,5,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid
+                    x:Name="TabBarContainer"
+                    Grid.Row="0"
+                    Margin="10,0,10,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer
+                        VerticalAlignment="Center"
+                        HorizontalScrollBarVisibility="Hidden"
+                        VerticalScrollBarVisibility="Disabled">
+                        <ListBox
+                            x:Name="TabBar"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ItemContainerStyle="{StaticResource TabListBoxItem}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                    </ScrollViewer>
+
+                    <Button
+                        x:Name="AddTabBtn"
+                        Grid.Column="1"
+                        Width="22"
+                        Height="22"
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
                         Background="Transparent"
-                        MouseLeftButtonDown="IconPanel_MouseLeftButtonDown"
-                        MouseLeftButtonUp="IconPanel_MouseLeftButtonUp"
-                        MouseMove="IconPanel_MouseMove" />
+                        BorderThickness="0"
+                        Click="AddTabBtn_Click"
+                        Content="+"
+                        Cursor="Hand"
+                        FontSize="16"
+                        Foreground="#BBBBBB">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter
+                                        Margin="0,-2,0,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#22FFFFFF" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </Grid>
-            </ScrollViewer>
 
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="4" HorizontalAlignment="Left" Cursor="SizeWE" Fill="Transparent" MouseLeftButtonDown="Resize_Left" Panel.ZIndex="1000"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="4" HorizontalAlignment="Right" Cursor="SizeWE" Fill="Transparent" MouseLeftButtonDown="Resize_Right" Panel.ZIndex="1000"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Height="4" VerticalAlignment="Top" Cursor="SizeNS" Fill="Transparent" MouseLeftButtonDown="Resize_Top" Panel.ZIndex="1000"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Height="4" VerticalAlignment="Bottom" Cursor="SizeNS" Fill="Transparent" MouseLeftButtonDown="Resize_Bottom" Panel.ZIndex="1000"/>
+                <ScrollViewer
+                    Grid.Row="1"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Canvas x:Name="SelectionCanvas">
+                            <Border
+                                x:Name="SelectionBox"
+                                Background="#330078D7"
+                                BorderBrush="#0078D7"
+                                BorderThickness="1"
+                                Visibility="Collapsed" />
+                        </Canvas>
+                        <WrapPanel
+                            x:Name="IconPanel"
+                            Margin="5"
+                            Background="Transparent"
+                            MouseLeftButtonDown="IconPanel_MouseLeftButtonDown"
+                            MouseLeftButtonUp="IconPanel_MouseLeftButtonUp"
+                            MouseMove="IconPanel_MouseMove" />
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
 
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="6" Height="6" HorizontalAlignment="Left" VerticalAlignment="Top" Cursor="SizeNWSE" Fill="Transparent" MouseLeftButtonDown="Resize_TopLeft" Panel.ZIndex="1001"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="SizeNESW" Fill="Transparent" MouseLeftButtonDown="Resize_TopRight" Panel.ZIndex="1001"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="6" Height="6" HorizontalAlignment="Left" VerticalAlignment="Bottom" Cursor="SizeNESW" Fill="Transparent" MouseLeftButtonDown="Resize_BottomLeft" Panel.ZIndex="1001"/>
-            <Rectangle Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Bottom" Cursor="SizeNWSE" Fill="Transparent" MouseLeftButtonDown="Resize_BottomRight" Panel.ZIndex="1001"/>
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="4"
+                HorizontalAlignment="Left"
+                Panel.ZIndex="1000"
+                Cursor="SizeWE"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_Left" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="4"
+                HorizontalAlignment="Right"
+                Panel.ZIndex="1000"
+                Cursor="SizeWE"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_Right" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Height="4"
+                VerticalAlignment="Top"
+                Panel.ZIndex="1000"
+                Cursor="SizeNS"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_Top" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Height="4"
+                VerticalAlignment="Bottom"
+                Panel.ZIndex="1000"
+                Cursor="SizeNS"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_Bottom" />
+
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="6"
+                Height="6"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Panel.ZIndex="1001"
+                Cursor="SizeNWSE"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_TopLeft" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="6"
+                Height="6"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Panel.ZIndex="1001"
+                Cursor="SizeNESW"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_TopRight" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="6"
+                Height="6"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom"
+                Panel.ZIndex="1001"
+                Cursor="SizeNESW"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_BottomLeft" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.RowSpan="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Width="6"
+                Height="6"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Panel.ZIndex="1001"
+                Cursor="SizeNWSE"
+                Fill="Transparent"
+                MouseLeftButtonDown="Resize_BottomRight" />
         </Grid>
     </Border>
 </Window>
