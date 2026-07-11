@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
@@ -51,11 +51,33 @@ namespace DesktopFences
         internal const uint SWP_NOACTIVATE = 0x0010;
         internal const int WM_WINDOWPOSCHANGING = 0x0046;
 
+        public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
+        {
+            if (IntPtr.Size == 8)
+                return GetWindowLongPtr64(hWnd, nIndex);
+            else
+                return GetWindowLong32(hWnd, nIndex);
+        }
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+        private static extern IntPtr GetWindowLong32(IntPtr hWnd, int nIndex);
+
         [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-        internal static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+        {
+            if (IntPtr.Size == 8)
+                return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+            else
+                return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+        }
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
+        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
 
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-        internal static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -109,8 +131,8 @@ namespace DesktopFences
         {
             public IntPtr hwnd;
             public uint wFunc;
-            [MarshalAs(UnmanagedType.LPWStr)] public string pFrom;
-            [MarshalAs(UnmanagedType.LPWStr)] public string pTo;
+            public IntPtr pFrom;
+            public IntPtr pTo;
             public ushort fFlags;
             public int fAnyOperationsAborted;
             public IntPtr hNameMappings;
@@ -119,6 +141,40 @@ namespace DesktopFences
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
         internal static extern int SHFileOperation(ref SHFILEOPSTRUCT FileOp);
+
+        internal static int PerformFileOperation(IntPtr hwnd, uint wFunc, string pFrom, string pTo, ushort fFlags)
+        {
+            IntPtr pFromPtr = IntPtr.Zero;
+            IntPtr pToPtr = IntPtr.Zero;
+            try
+            {
+                if (pFrom != null)
+                {
+                    string fromStr = pFrom.EndsWith("\0\0") ? pFrom : pFrom + "\0\0";
+                    pFromPtr = Marshal.StringToHGlobalUni(fromStr);
+                }
+                if (pTo != null)
+                {
+                    string toStr = pTo.EndsWith("\0\0") ? pTo : pTo + "\0\0";
+                    pToPtr = Marshal.StringToHGlobalUni(toStr);
+                }
+
+                SHFILEOPSTRUCT shf = new SHFILEOPSTRUCT
+                {
+                    hwnd = hwnd,
+                    wFunc = wFunc,
+                    pFrom = pFromPtr,
+                    pTo = pToPtr,
+                    fFlags = fFlags
+                };
+                return SHFileOperation(ref shf);
+            }
+            finally
+            {
+                if (pFromPtr != IntPtr.Zero) Marshal.FreeHGlobal(pFromPtr);
+                if (pToPtr != IntPtr.Zero) Marshal.FreeHGlobal(pToPtr);
+            }
+        }
 
         internal const int SPI_GETDESKWALLPAPER = 0x0073;
         internal const int SPI_SETDESKWALLPAPER = 0x0014;

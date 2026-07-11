@@ -1,4 +1,4 @@
-﻿#pragma warning disable CA1001
+#pragma warning disable CA1001
 
 using Microsoft.Win32;
 using System;
@@ -54,11 +54,11 @@ namespace DesktopFences
                         foreach (string file in Directory.GetFiles(source))
                         {
                             string destFile = Path.Combine(target, Path.GetFileName(file));
-                            if (!File.Exists(destFile)) File.Move(file, destFile);
+                            try { if (!File.Exists(destFile)) File.Move(file, destFile); } catch (Exception ex) { LogError("MoveDirectory File", ex); }
                         }
                         foreach (string dir in Directory.GetDirectories(source))
                         {
-                            MoveDirectory(dir, Path.Combine(target, Path.GetFileName(dir)));
+                            try { MoveDirectory(dir, Path.Combine(target, Path.GetFileName(dir))); } catch (Exception ex) { LogError("MoveDirectory Dir", ex); }
                         }
                     }
                     MoveDirectory(oldFolder, ConfigFolder);
@@ -89,25 +89,29 @@ namespace DesktopFences
             _ = Updater.CheckAndApplyUpdateAsync(silentCheck: true);
         }
 
+        private static readonly object _logLock = new();
         private static void LogError(string context, Exception ex)
         {
             try
             {
-                string logPath = Path.Combine(ConfigFolder, "app_error.log");
-                File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context}: {ex.Message}\n{ex.StackTrace}\n");
+                lock (_logLock)
+                {
+                    string logPath = Path.Combine(ConfigFolder, "app_error.log");
+                    File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context}: {ex.Message}\n{ex.StackTrace}\n");
+                }
             }
             catch { }
         }
 
         private void SystemEvents_DisplaySettingsChanged(object? sender, EventArgs e)
         {
-            System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
+            _ = System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
             {
-                Dispatcher.Invoke(() =>
+                Dispatcher.InvokeAsync(() =>
                 {
                     foreach (Window window in Current.Windows)
                     {
-                        if (window is MainWindow fence) fence.ClampToScreen();
+                        if (window is MainWindow { IsLoaded: true } fence) fence.ClampToScreen();
                     }
                 });
             });
@@ -162,7 +166,9 @@ namespace DesktopFences
                     }
                 }
 
-                await File.WriteAllTextAsync(snapshotPath, JsonSerializer.Serialize(snapshots, _jsonOptions));
+                string tempPath = snapshotPath + ".tmp";
+                await File.WriteAllTextAsync(tempPath, JsonSerializer.Serialize(snapshots, _jsonOptions));
+                File.Move(tempPath, snapshotPath, overwrite: true);
             }
             catch (Exception ex) { LogError("SaveCurrentLayout", ex); }
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +14,7 @@ namespace DesktopFences
 {
     public static class Updater
     {
-        public static readonly string CurrentVersion = "1.3.0";
+        public static readonly string CurrentVersion = "1.3.5";
         private const string GitHubApiUrl = "https://api.github.com/repos/DaveDebugs/Fluid.Fences/releases/latest";
 
         public class GitHubRelease
@@ -83,7 +83,7 @@ namespace DesktopFences
                 using HttpClient client = new();
 
                 string expectedHashRaw = await client.GetStringAsync(checksumUrl);
-                string expectedHash = expectedHashRaw.Trim().ToUpperInvariant();
+                string expectedHash = expectedHashRaw.Trim().ToUpperInvariant().Split(' ', '\t')[0];
 
                 var response = await client.GetAsync(exeUrl);
                 response.EnsureSuccessStatusCode();
@@ -94,7 +94,7 @@ namespace DesktopFences
 
                 string actualHash = CalculateSHA256(tempDownloadPath);
 
-                if (!expectedHash.Contains(actualHash))
+                if (!expectedHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(tempDownloadPath);
                     MessageBox.Show("Security Alert: The downloaded update file has been corrupted or tampered with. The installation has been securely aborted.", "Verification Failed", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -103,7 +103,16 @@ namespace DesktopFences
 
                 if (File.Exists(backupPath)) File.Delete(backupPath);
                 File.Move(exePath, backupPath);
-                File.Move(tempDownloadPath, exePath);
+                try
+                {
+                    File.Move(tempDownloadPath, exePath);
+                }
+                catch
+                {
+                    if (File.Exists(exePath)) File.Delete(exePath);
+                    File.Move(backupPath, exePath);
+                    throw;
+                }
 
                 Process.Start(new ProcessStartInfo(exePath) { UseShellExecute = true });
                 Application.Current.Shutdown();

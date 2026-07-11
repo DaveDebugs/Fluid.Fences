@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -60,7 +60,12 @@ namespace DesktopFences
         private bool _isTemporarilyRevealed;
         private string _saveSortMethod = "None";
         private bool _isContextMenuOpen;
+        private WindowInteropHelper _interopHelper = null!;
         private bool _isDeleted;
+        private bool _loadFailed;
+        private bool _isClosing;
+        private long _portalRefreshGeneration;
+        private System.Windows.Threading.DispatcherTimer? _portalRetryTimer;
 
         private bool _isPortal;
         private string _portalPath = "";
@@ -429,7 +434,7 @@ namespace DesktopFences
                         DetermineDockState(); UpdateDockOrientation();
                     }
                 }
-                catch (Exception ex) { LogError("LoadFenceStateAsync", ex); }
+                catch (Exception ex) { LogError("LoadFenceStateAsync", ex); _loadFailed = true; }
             }
             else if (_tabs.Count == 0)
             {
@@ -442,7 +447,7 @@ namespace DesktopFences
 
         private async Task PerformDiskWriteAsync()
         {
-            if (_isDeleted || TitleText is null) return;
+            if (_isDeleted || _loadFailed || TitleText is null) return;
             try
             {
                 SaveCurrentTabState();
@@ -823,11 +828,11 @@ namespace DesktopFences
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) { ApplySorting(); }
         private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
+            _ = System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
             {
-                Dispatcher.Invoke(() =>
+                Dispatcher.InvokeAsync(() =>
                 {
-                    if (!SearchBox.IsFocused && string.IsNullOrWhiteSpace(SearchBox.Text)) { SearchBox.Visibility = Visibility.Collapsed; if (!this.IsMouseOver && _isRolledUp && _isTemporarilyRevealed) { AnimateRollUp(); _isTemporarilyRevealed = false; } }
+                    if (this.IsLoaded && !SearchBox.IsFocused && string.IsNullOrWhiteSpace(SearchBox.Text)) { SearchBox.Visibility = Visibility.Collapsed; if (!this.IsMouseOver && _isRolledUp && _isTemporarilyRevealed) { AnimateRollUp(); _isTemporarilyRevealed = false; } }
                 });
             });
         }
@@ -899,17 +904,19 @@ namespace DesktopFences
                     {
                         try { _portalWatcher?.Dispose(); } catch { }
                         _portalWatcher = null;
-                        DispatcherTimer retryTimer = new();
-                        retryTimer.Interval = TimeSpan.FromSeconds(5);
-                        retryTimer.Tick += (senderTimer, args) =>
+                        if (_portalRetryTimer != null) { _portalRetryTimer.Stop(); _portalRetryTimer = null; }
+                        _portalRetryTimer = new System.Windows.Threading.DispatcherTimer();
+                        _portalRetryTimer.Interval = TimeSpan.FromSeconds(5);
+                        _portalRetryTimer.Tick += (senderTimer, args) =>
                         {
                             if (Directory.Exists(_portalPath))
                             {
-                                retryTimer.Stop();
+                                _portalRetryTimer.Stop();
+                                _portalRetryTimer = null;
                                 SetupPortalWatcher();
                             }
                         };
-                        retryTimer.Start();
+                        _portalRetryTimer.Start();
                     });
                 };
             }
@@ -921,9 +928,11 @@ namespace DesktopFences
         private async void RefreshPortalUI()
         {
             if (!Directory.Exists(_portalPath)) return;
+            long currentGen = System.Threading.Interlocked.Increment(ref _portalRefreshGeneration);
             try
             {
                 string[] newFiles = await Task.Run(() => Directory.GetFiles(_portalPath));
+                if (currentGen != System.Threading.Interlocked.Read(ref _portalRefreshGeneration)) return;
 
                 var currentSet = new HashSet<string>(_currentFiles, StringComparer.OrdinalIgnoreCase);
                 var newSet = new HashSet<string>(newFiles, StringComparer.OrdinalIgnoreCase);
@@ -1344,15 +1353,7 @@ namespace DesktopFences
                 }
                 else
                 {
-                    NativeMethods.SHFILEOPSTRUCT shf = new()
-                    {
-                        hwnd = new WindowInteropHelper(this).Handle,
-                        wFunc = 0x0001,
-                        pFrom = originalPath + '\0' + '\0',
-                        pTo = newPath + '\0' + '\0',
-                        fFlags = 0x0000
-                    };
-                    int res = NativeMethods.SHFileOperation(ref shf);
+                    int res = NativeMethods.PerformFileOperation(new WindowInteropHelper(this).Handle, 0x0001, originalPath, newPath, 0x0000);
                     if (res != 0) return originalPath;
                 }
             }
@@ -1367,7 +1368,7 @@ namespace DesktopFences
 
         private void SendToRecycleBin(string path)
         {
-            try { if (!File.Exists(path) && !Directory.Exists(path)) return; NativeMethods.SHFILEOPSTRUCT shf = new() { hwnd = new WindowInteropHelper(this).Handle, wFunc = 0x0003, pFrom = path + '\0' + '\0', fFlags = 0x0040 | 0x0010 | 0x0004 }; _ =NativeMethods.SHFileOperation(ref shf); } catch (Exception ex) { LogError($"Recycle Bin Error: {path}", ex); }
+            try { if (!File.Exists(path) && !Directory.Exists(path)) return; _ = NativeMethods.PerformFileOperation(new WindowInteropHelper(this).Handle, 0x0003, path, null, 0x0040 | 0x0010 | 0x0004); } catch (Exception ex) { LogError($"Recycle Bin Error: {path}", ex); }
         }
 
         private void RemoveFileFromVaultAndList(string filePath)
@@ -1622,10 +1623,17 @@ namespace DesktopFences
                             int res = NativeMethods.SHDefExtractIcon(iconFile, iconIndex, 0, out IntPtr hIconL, out IntPtr hIconS, sizeRequest);
                             if (res == 0 && hIconL != IntPtr.Zero)
                             {
-                                ImageSource imgSrc = Imaging.CreateBitmapSourceFromHIcon(hIconL, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                                imgSrc.Freeze();
-                                NativeMethods.DestroyIcon(hIconL);
-                                if (hIconS != IntPtr.Zero) NativeMethods.DestroyIcon(hIconS);
+                                ImageSource imgSrc;
+                                try
+                                {
+                                    imgSrc = Imaging.CreateBitmapSourceFromHIcon(hIconL, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                                    imgSrc.Freeze();
+                                }
+                                finally
+                                {
+                                    NativeMethods.DestroyIcon(hIconL);
+                                    if (hIconS != IntPtr.Zero) NativeMethods.DestroyIcon(hIconS);
+                                }
                                 return imgSrc;
                             }
                         }
@@ -1677,8 +1685,8 @@ namespace DesktopFences
             }
             catch (Exception ex) { LogError($"Shell API Factory Failed: {filePath}", ex); }
 
-            if (ext.Equals(".exe", StringComparison.OrdinalIgnoreCase) || ext.Equals(".ico", StringComparison.OrdinalIgnoreCase) || ext.Equals(".dll", StringComparison.OrdinalIgnoreCase)) { try { uint sizeRequest = (uint)((16 << 16) | 256); int res = NativeMethods.SHDefExtractIcon(filePath, 0, 0, out IntPtr hIconLarge, out IntPtr hIconSmall, sizeRequest); if (res == 0 && hIconLarge != IntPtr.Zero) { ImageSource imgSrc = Imaging.CreateBitmapSourceFromHIcon(hIconLarge, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); imgSrc.Freeze(); NativeMethods.DestroyIcon(hIconLarge); if (hIconSmall != IntPtr.Zero) NativeMethods.DestroyIcon(hIconSmall); return imgSrc; } } catch (Exception ex) { LogError($"Binary Extraction Failed: {filePath}", ex); } }
-            try { NativeMethods.SHFILEINFO shinfo = new(); IntPtr result = NativeMethods.SHGetFileInfo(filePath, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), 0x000000100 | 0x000000000); if (result != IntPtr.Zero && shinfo.hIcon != IntPtr.Zero) { ImageSource imgSrc = Imaging.CreateBitmapSourceFromHIcon(shinfo.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); imgSrc.Freeze(); NativeMethods.DestroyIcon(shinfo.hIcon); return imgSrc; } } catch (Exception ex) { LogError($"Win32 Fallback Failed: {filePath}", ex); }
+            if (ext.Equals(".exe", StringComparison.OrdinalIgnoreCase) || ext.Equals(".ico", StringComparison.OrdinalIgnoreCase) || ext.Equals(".dll", StringComparison.OrdinalIgnoreCase)) { try { uint sizeRequest = (uint)((16 << 16) | 256); int res = NativeMethods.SHDefExtractIcon(filePath, 0, 0, out IntPtr hIconLarge, out IntPtr hIconSmall, sizeRequest); if (res == 0 && hIconLarge != IntPtr.Zero) { ImageSource imgSrc; try { imgSrc = Imaging.CreateBitmapSourceFromHIcon(hIconLarge, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); imgSrc.Freeze(); } finally { NativeMethods.DestroyIcon(hIconLarge); if (hIconSmall != IntPtr.Zero) NativeMethods.DestroyIcon(hIconSmall); } return imgSrc; } } catch (Exception ex) { LogError($"Binary Extraction Failed: {filePath}", ex); } }
+            try { NativeMethods.SHFILEINFO shinfo = new(); IntPtr result = NativeMethods.SHGetFileInfo(filePath, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), 0x000000100 | 0x000000000); if (result != IntPtr.Zero && shinfo.hIcon != IntPtr.Zero) { ImageSource imgSrc; try { imgSrc = Imaging.CreateBitmapSourceFromHIcon(shinfo.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); imgSrc.Freeze(); } finally { NativeMethods.DestroyIcon(shinfo.hIcon); } return imgSrc; } } catch (Exception ex) { LogError($"Win32 Fallback Failed: {filePath}", ex); }
             return null;
         }
 
@@ -1747,10 +1755,21 @@ namespace DesktopFences
         protected override async void OnClosed(EventArgs e)
         {
             try { _iconSemaphore.Dispose(); } catch { }
+            if (HwndSource.FromHwnd(new WindowInteropHelper(this).Handle) is HwndSource source)
+                source.RemoveHook(new HwndSourceHook(WndProc));
+            _portalWatcher?.Dispose();
+            if (_portalRetryTimer != null) { _portalRetryTimer.Stop(); _portalRetryTimer = null; }
             base.OnClosed(e);
         }
 
-        protected override async void OnClosing(System.ComponentModel.CancelEventArgs e) { if (!_isDeleted) await PerformDiskWriteAsync(); base.OnClosing(e); }
+        protected override async void OnClosing(System.ComponentModel.CancelEventArgs e) 
+        { 
+            if (_isClosing) { base.OnClosing(e); return; }
+            e.Cancel = true;
+            _isClosing = true;
+            if (!_isDeleted && !_loadFailed) await PerformDiskWriteAsync(); 
+            this.Close();
+        }
         private void ClearSelection() { foreach (var item in _selectedItems) item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Clear(); }
         private void IconPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { Keyboard.ClearFocus(); FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null); if (e.OriginalSource is ScrollViewer || e.OriginalSource is WrapPanel) { ClearSelection(); _selectionStartPoint = e.GetPosition(SelectionCanvas); _isDraggingSelectionBox = true; SelectionBox.Visibility = Visibility.Visible; SelectionBox.Width = 0; SelectionBox.Height = 0; Canvas.SetLeft(SelectionBox, _selectionStartPoint.X); Canvas.SetTop(SelectionBox, _selectionStartPoint.Y); IconPanel.CaptureMouse(); } }
         private void IconPanel_MouseMove(object sender, MouseEventArgs e) { if (_isDraggingSelectionBox) { System.Windows.Point currentPoint = e.GetPosition(SelectionCanvas); double x = Math.Min(currentPoint.X, _selectionStartPoint.X); double y = Math.Min(currentPoint.Y, _selectionStartPoint.Y); double width = Math.Abs(currentPoint.X - _selectionStartPoint.X); double height = Math.Abs(currentPoint.Y - _selectionStartPoint.Y); Canvas.SetLeft(SelectionBox, x); Canvas.SetTop(SelectionBox, y); SelectionBox.Width = width; SelectionBox.Height = height; Rect selectionRect = new(x, y, width, height); foreach (UIElement child in IconPanel.Children) { if (child is StackPanel item) { System.Windows.Point itemPos = item.TranslatePoint(new System.Windows.Point(0, 0), SelectionCanvas); Rect itemRect = new(itemPos, new Size(item.ActualWidth, item.ActualHeight)); if (selectionRect.IntersectsWith(itemRect)) { if (!_selectedItems.Contains(item)) { item.Background = _highlightBrush; _selectedItems.Add(item); } } else if (_selectedItems.Contains(item)) { item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(item); } } } } }
@@ -1759,6 +1778,7 @@ namespace DesktopFences
         {
             _iconSemaphore?.Dispose();
             _portalWatcher?.Dispose();
+            if (_portalRetryTimer != null) { _portalRetryTimer.Stop(); _portalRetryTimer = null; }
             GC.SuppressFinalize(this);
         }
     }
