@@ -14,7 +14,7 @@ namespace DesktopFences
 {
     public static class Updater
     {
-        public static readonly string CurrentVersion = "1.3.5";
+        public static readonly string CurrentVersion = "1.3.6";
         private const string GitHubApiUrl = "https://api.github.com/repos/DaveDebugs/Fluid.Fences/releases/latest";
 
         public class GitHubRelease
@@ -75,8 +75,9 @@ namespace DesktopFences
         private static async Task ApplySecureUpdateAsync(string exeUrl, string checksumUrl)
         {
             string exePath = Environment.ProcessPath!;
-            string tempDownloadPath = exePath + ".new";
+            string tempDownloadPath = Path.Combine(Path.GetTempPath(), $"FluidFences_Update_{Guid.NewGuid():N}.exe");
             string backupPath = exePath + ".old";
+            string batchScriptPath = Path.Combine(Path.GetTempPath(), $"FluidFences_Update_{Guid.NewGuid():N}.bat");
 
             try
             {
@@ -101,25 +102,40 @@ namespace DesktopFences
                     return;
                 }
 
-                if (File.Exists(backupPath)) File.Delete(backupPath);
-                File.Move(exePath, backupPath);
+                string batchContent = $@"@echo off
+timeout /t 2 /nobreak > NUL
+if exist ""{backupPath}"" del ""{backupPath}""
+rename ""{exePath}"" ""{Path.GetFileName(backupPath)}""
+copy /y ""{tempDownloadPath}"" ""{exePath}""
+start """" ""{exePath}""
+del ""{tempDownloadPath}""
+(goto) 2>nul & del ""%~f0""
+";
+                File.WriteAllText(batchScriptPath, batchContent);
+
+                ProcessStartInfo psi = new ProcessStartInfo(batchScriptPath)
+                {
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+
                 try
                 {
-                    File.Move(tempDownloadPath, exePath);
+                    Process.Start(psi);
+                    Application.Current.Shutdown();
                 }
-                catch
+                catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
                 {
-                    if (File.Exists(exePath)) File.Delete(exePath);
-                    File.Move(backupPath, exePath);
-                    throw;
+                    File.Delete(tempDownloadPath);
+                    File.Delete(batchScriptPath);
+                    MessageBox.Show("Update was cancelled because Administrator permissions were not granted.", "Update Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-
-                Process.Start(new ProcessStartInfo(exePath) { UseShellExecute = true });
-                Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                if (File.Exists(tempDownloadPath)) File.Delete(tempDownloadPath);
+                try { if (File.Exists(tempDownloadPath)) File.Delete(tempDownloadPath); } catch { }
+                try { if (File.Exists(batchScriptPath)) File.Delete(batchScriptPath); } catch { }
                 MessageBox.Show($"Failed to apply update: {ex.Message}", "Update Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
