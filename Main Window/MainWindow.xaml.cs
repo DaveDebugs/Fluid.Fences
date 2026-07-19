@@ -77,6 +77,7 @@ namespace DesktopFences
 
         private bool _globalGhostMode;
         private int _ghostModeOverride;
+        private Core.ThemeSettings _currentTheme = new();
 
         private System.Windows.Point _selectionStartPoint;
         private bool _isDraggingSelectionBox;
@@ -565,7 +566,15 @@ namespace DesktopFences
 
         private void AnimateRollUp()
         {
-            double d = 250; QuarticEase ease = new() { EasingMode = EasingMode.EaseInOut };
+            if (BackgroundMedia.Visibility == Visibility.Visible) BackgroundMedia.Pause();
+            double d = 250; 
+            IEasingFunction ease = _currentTheme.RollUpAnimation switch
+            {
+                Core.AnimationStyle.Bounce => new BounceEase() { Bounces = 2, Bounciness = 2, EasingMode = EasingMode.EaseOut },
+                Core.AnimationStyle.Linear => null,
+                _ => new QuarticEase() { EasingMode = EasingMode.EaseInOut }
+            };
+
             if (_dockState == DockState.Left) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Right) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.LeftProperty, new DoubleAnimation { To = _expandedLeft + (_expandedWidth - HEADER_SIZE), Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Bottom) { this.BeginAnimation(Window.HeightProperty, new DoubleAnimation { To = HEADER_SIZE, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.TopProperty, new DoubleAnimation { To = _expandedTop + (_expandedHeight - HEADER_SIZE), Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
@@ -574,11 +583,49 @@ namespace DesktopFences
 
         private void AnimateReveal()
         {
-            double d = 250; QuarticEase ease = new() { EasingMode = EasingMode.EaseInOut };
+            if (BackgroundMedia.Visibility == Visibility.Visible) BackgroundMedia.Play();
+            double d = 250; 
+            IEasingFunction ease = _currentTheme.RollUpAnimation switch
+            {
+                Core.AnimationStyle.Bounce => new BounceEase() { Bounces = 2, Bounciness = 2, EasingMode = EasingMode.EaseOut },
+                Core.AnimationStyle.Linear => null,
+                _ => new QuarticEase() { EasingMode = EasingMode.EaseInOut }
+            };
+
             if (_dockState == DockState.Left) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = _expandedWidth, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Right) { this.BeginAnimation(Window.WidthProperty, new DoubleAnimation { To = _expandedWidth, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.LeftProperty, new DoubleAnimation { To = _expandedLeft, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else if (_dockState == DockState.Bottom) { this.BeginAnimation(Window.HeightProperty, new DoubleAnimation { To = _expandedHeight, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); this.BeginAnimation(Window.TopProperty, new DoubleAnimation { To = _expandedTop, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
             else { this.BeginAnimation(Window.HeightProperty, new DoubleAnimation { To = _expandedHeight, Duration = TimeSpan.FromMilliseconds(d), EasingFunction = ease }); }
+        }
+
+        public void ApplyTheme(Core.ThemeSettings theme)
+        {
+            _currentTheme = theme;
+            
+            try
+            {
+                Core.ThemeManager.ApplyTheme(theme);
+                
+                if (!string.IsNullOrWhiteSpace(theme.BackgroundMediaPath) && System.IO.File.Exists(theme.BackgroundMediaPath))
+                {
+                    BackgroundMedia.Source = new Uri(theme.BackgroundMediaPath);
+                    BackgroundMedia.Opacity = theme.MediaOpacity;
+                    BackgroundMedia.Visibility = Visibility.Visible;
+                    if (!_isRolledUp) BackgroundMedia.Play();
+                }
+                else
+                {
+                    BackgroundMedia.Visibility = Visibility.Hidden;
+                    BackgroundMedia.Stop();
+                }
+            }
+            catch { }
+        }
+
+        private void BackgroundMedia_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            BackgroundMedia.Position = TimeSpan.Zero;
+            BackgroundMedia.Play();
         }
 
         public void SetMergeHighlight(bool isHighlighted)
@@ -871,8 +918,7 @@ namespace DesktopFences
         private void Menu_Sort_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedSort || clickedSort.Tag is null) return; _saveSortMethod = clickedSort.Tag.ToString() ?? "None"; ApplySorting(); SaveFenceState(); }
         private void Menu_IconSize_Click(object sender, RoutedEventArgs e) { if (sender is not MenuItem clickedItem || clickedItem.Tag is null) return; string tagStr = clickedItem.Tag.ToString() ?? ""; if (tagStr == "Default") { CurrentIconSize = 48; } else if (double.TryParse(tagStr, out double newSize)) { CurrentIconSize = newSize; } ApplySorting(); SaveFenceState(); }
         private void Menu_Settings_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this) { Owner = this }; settings.ShowDialog(); }
-        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this) { Owner = this }; settings.MainTabControl.SelectedIndex = 4; settings.ShowDialog(); }
-
+        private void Menu_EditColor_Click(object sender, RoutedEventArgs e) { SettingsWindow settings = new(this) { Owner = this }; settings.SwitchToTab("ThemeEditorGrid"); settings.ShowDialog(); }
         private void Menu_NewPortal_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFolderDialog { Title = "Select a folder to mirror in the Portal Fence" };
@@ -1697,7 +1743,15 @@ namespace DesktopFences
 
             if (File.Exists(globalConfigPath))
             {
-                try { string json = await File.ReadAllTextAsync(globalConfigPath); if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config) { showInTaskbar = config.ShowTaskbarIcon; _globalGhostMode = config.EnableGhostMode; } } catch { }
+                try { 
+                    string json = await File.ReadAllTextAsync(globalConfigPath); 
+                    if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config) 
+                    { 
+                        showInTaskbar = config.ShowTaskbarIcon; 
+                        _globalGhostMode = config.EnableGhostMode;
+                        ApplyTheme(config.Theme); 
+                    } 
+                } catch { }
             }
 
             await LoadFenceStateAsync(); ApplyAcrylicBlur(_currentFenceColor, _currentOpacity);

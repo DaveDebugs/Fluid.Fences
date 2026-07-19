@@ -1,7 +1,10 @@
-﻿<Window
+<Window
     x:Class="DesktopFences.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Fluid Fence"
     Width="250"
     Height="300"
@@ -106,152 +109,13 @@
             </Setter>
         </Style>
 
-        <Style TargetType="ContextMenu">
-            <Setter Property="Background" Value="#CC1A1A1A" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#44FFFFFF" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="HasDropShadow" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ContextMenu">
-                        <Border
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8">
-                            <StackPanel
-                                Margin="{TemplateBinding Padding}"
-                                IsItemsHost="True"
-                                KeyboardNavigation.DirectionalNavigation="Cycle" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
-        <Style TargetType="MenuItem">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="10,6,15,6" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="MenuItem">
-                        <Border
-                            x:Name="Bd"
-                            Margin="4,1"
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="4">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="25" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="15" />
-                                </Grid.ColumnDefinitions>
-
-                                <Path
-                                    x:Name="CheckMark"
-                                    Grid.Column="0"
-                                    Margin="8,0,0,0"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    Data="M 2.5 5 L 4.5 7 L 9.5 1.5 L 10.5 2.5 L 4.5 9 L 1.5 6 Z"
-                                    Fill="White"
-                                    Visibility="Collapsed" />
-
-                                <ContentPresenter
-                                    Grid.Column="1"
-                                    Margin="{TemplateBinding Padding}"
-                                    VerticalAlignment="Center"
-                                    ContentSource="Header"
-                                    RecognizesAccessKey="True" />
-
-                                <Path
-                                    x:Name="RightArrow"
-                                    Grid.Column="2"
-                                    Margin="0,0,6,0"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Data="M 0 0 L 4 4 L 0 8 Z"
-                                    Fill="#BBBBBB"
-                                    Visibility="Collapsed" />
-
-                                <Popup
-                                    x:Name="PART_Popup"
-                                    AllowsTransparency="True"
-                                    Focusable="False"
-                                    HorizontalOffset="-4"
-                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Placement="Right"
-                                    PopupAnimation="Fade"
-                                    VerticalOffset="-4">
-                                    <Border
-                                        Margin="0,0,8,8"
-                                        Background="#E61A1A1A"
-                                        BorderBrush="#44FFFFFF"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
-                                        <Border.Effect>
-                                            <DropShadowEffect
-                                                BlurRadius="5"
-                                                Direction="315"
-                                                Opacity="0.5"
-                                                ShadowDepth="2"
-                                                Color="Black" />
-                                        </Border.Effect>
-                                        <ScrollViewer CanContentScroll="True">
-                                            <StackPanel
-                                                Margin="2"
-                                                IsItemsHost="True"
-                                                KeyboardNavigation.DirectionalNavigation="Cycle" />
-                                        </ScrollViewer>
-                                    </Border>
-                                </Popup>
-                            </Grid>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#33FFFFFF" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#888888" />
-                                <Setter TargetName="CheckMark" Property="Fill" Value="#888888" />
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                            <Trigger Property="Role" Value="SubmenuHeader">
-                                <Setter TargetName="RightArrow" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="Separator">
-            <Setter Property="Background" Value="#33FFFFFF" />
-            <Setter Property="Margin" Value="4,4" />
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Separator">
-                        <Rectangle
-                            Height="{TemplateBinding Height}"
-                            Margin="{TemplateBinding Margin}"
-                            Fill="{TemplateBinding Background}" />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Border
         x:Name="MainBorder"
-        Background="#01000000"
-        CornerRadius="8">
+        Background="{DynamicResource CustomBackgroundBrush}"
+        CornerRadius="{DynamicResource CustomCornerRadius}">
         <Grid x:Name="MainGrid" Background="Transparent">
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="HeaderRowTop" Height="35" />
@@ -264,13 +128,34 @@
                 <ColumnDefinition x:Name="HeaderColRight" Width="0" />
             </Grid.ColumnDefinitions>
 
+            <Grid Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3">
+                <Grid.OpacityMask>
+                    <VisualBrush>
+                        <VisualBrush.Visual>
+                            <Border Background="White" CornerRadius="{DynamicResource CustomCornerRadius}"
+                                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}" />
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.OpacityMask>
+                <MediaElement
+                    x:Name="BackgroundMedia"
+                    LoadedBehavior="Manual"
+                    UnloadedBehavior="Manual"
+                    Stretch="UniformToFill"
+                    IsMuted="True"
+                    MediaEnded="BackgroundMedia_MediaEnded"
+                    Visibility="Hidden" />
+            </Grid>
+
             <Border
                 x:Name="HeaderBorder"
                 Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Background="#22000000"
-                CornerRadius="8,8,0,0"
+                Background="{DynamicResource CustomHeaderBrush}"
+                CornerRadius="{DynamicResource CustomCornerRadius}"
+                Margin="0,0,0,0"
                 Cursor="Hand"
                 MouseLeftButtonDown="Header_MouseLeftButtonDown"
                 MouseLeftButtonUp="Header_MouseLeftButtonUp"
@@ -279,84 +164,47 @@
                 <Border.ContextMenu>
                     <ContextMenu x:Name="HeaderContextMenu">
                         <MenuItem Header="Create New...">
-                            <MenuItem Click="Menu_NewFence_Click" Header="Empty Fence" />
-                            <MenuItem Click="Menu_NewPortal_Click" Header="Folder Portal (Mirror PC Folder)" />
+                            <MenuItem.Icon>
+                                <ui:SymbolIcon Symbol="Add24" />
+                            </MenuItem.Icon>
+                            <MenuItem Click="Menu_NewFence_Click" Header="Empty Fence" Icon="{ui:SymbolIcon Symbol=Board24}" />
+                            <MenuItem Click="Menu_NewPortal_Click" Header="Folder Portal (Mirror PC Folder)" Icon="{ui:SymbolIcon Symbol=Folder24}" />
                             <Separator />
-                            <MenuItem Click="Menu_NewTab_Click" Header="New Tab Inside This Fence" />
+                            <MenuItem Click="Menu_NewTab_Click" Header="New Tab Inside This Fence" Icon="{ui:SymbolIcon Symbol=Tab24}" />
                         </MenuItem>
 
-                        <MenuItem Click="Menu_AutoOrganize_Click" Header="Auto Organize (Pull from Desktop)" />
+                        <MenuItem Click="Menu_AutoOrganize_Click" Header="Auto Organize (Pull from Desktop)" Icon="{ui:SymbolIcon Symbol=Desktop24}" />
                         <Separator />
 
                         <MenuItem
                             x:Name="MenuRollUpFence"
                             Click="Menu_RollUp_Click"
-                            Header="Roll-up Fence" />
+                            Header="Roll-up Fence"
+                            Icon="{ui:SymbolIcon Symbol=ChevronUp24}" />
 
                         <MenuItem Header="View">
+                            <MenuItem.Icon>
+                                <ui:SymbolIcon Symbol="Eye24" />
+                            </MenuItem.Icon>
                             <MenuItem Header="Icon Size">
-                                <MenuItem
-                                    Click="Menu_IconSize_Click"
-                                    Header="Small"
-                                    Tag="32" />
-                                <MenuItem
-                                    Click="Menu_IconSize_Click"
-                                    Header="Medium"
-                                    Tag="48" />
-                                <MenuItem
-                                    Click="Menu_IconSize_Click"
-                                    Header="Large"
-                                    Tag="64" />
-                                <Separator />
-                                <MenuItem
-                                    Click="Menu_IconSize_Click"
-                                    Header="Reset to Default"
-                                    Tag="Default" />
+                                <MenuItem Click="Menu_IconSize_Click" Header="Small" Tag="32" />
+                                <MenuItem Click="Menu_IconSize_Click" Header="Medium" Tag="48" />
+                                <MenuItem Click="Menu_IconSize_Click" Header="Large" Tag="64" />
+                            </MenuItem>
+                            <MenuItem Header="Sort By">
+                                <MenuItem Click="Menu_Sort_Click" Header="Name" Tag="Name" />
+                                <MenuItem Click="Menu_Sort_Click" Header="Size" Tag="Size" />
+                                <MenuItem Click="Menu_Sort_Click" Header="Item Type" Tag="Type" />
+                                <MenuItem Click="Menu_Sort_Click" Header="Date Modified" Tag="DateMod" />
+                                <MenuItem Click="Menu_Sort_Click" Header="Date Created" Tag="DateCre" />
                             </MenuItem>
                         </MenuItem>
 
-                        <MenuItem Header="Sort by">
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="None (Custom)"
-                                Tag="None" />
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="Name"
-                                Tag="Name" />
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="Size"
-                                Tag="Size" />
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="Item Type"
-                                Tag="Type" />
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="Date Modified"
-                                Tag="DateMod" />
-                            <MenuItem
-                                Click="Menu_Sort_Click"
-                                Header="Date Created"
-                                Tag="DateCre" />
-                        </MenuItem>
-
                         <Separator />
-                        <MenuItem
-                            x:Name="MenuEditColor"
-                            Click="Menu_EditColor_Click"
-                            Header="Edit Color..." />
-                        <MenuItem
-                            x:Name="MenuSettings"
-                            Click="Menu_Settings_Click"
-                            Header="Settings..." />
+                        <MenuItem x:Name="MenuEditColor" Click="Menu_EditColor_Click" Header="Edit Color..." Icon="{ui:SymbolIcon Symbol=Color24}" />
+                        <MenuItem x:Name="MenuSettings" Click="Menu_Settings_Click" Header="Settings..." Icon="{ui:SymbolIcon Symbol=Settings24}" />
                         <Separator />
-                        <MenuItem
-                            x:Name="MenuDeleteFence"
-                            Click="Menu_DeleteFence_Click"
-                            Foreground="#FF4444"
-                            Header="Delete Fence" />
+                        <MenuItem x:Name="MenuDeleteFence" Click="Menu_DeleteFence_Click" Foreground="#FF4444" Header="Delete Fence" Icon="{ui:SymbolIcon Symbol=Delete24}" />
                     </ContextMenu>
                 </Border.ContextMenu>
 
@@ -369,10 +217,14 @@
                         Orientation="Horizontal">
                         <TextBlock
                             x:Name="TitleText"
-                            FontWeight="SemiBold"
-                            Foreground="White"
-                            MouseLeftButtonDown="TitleText_MouseLeftButtonDown"
-                            Text="Fluid Fence" />
+                            Margin="10,0,10,0"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe UI Semibold"
+                            FontSize="12"
+                            Foreground="{DynamicResource CustomFontBrush}"
+                            Text="{Binding FolderName}"
+                            TextTrimming="CharacterEllipsis"
+                            MouseLeftButtonDown="TitleText_MouseLeftButtonDown" />
                     </StackPanel>
 
                     <StackPanel

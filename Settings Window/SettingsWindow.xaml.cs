@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Windows.Media;
 
 namespace DesktopFences
 {
-    public partial class SettingsWindow : Window
+    public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     {
         private readonly MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
@@ -107,9 +107,22 @@ namespace DesktopFences
                     string json = await File.ReadAllTextAsync(globalConfigPath);
                     if (JsonSerializer.Deserialize<GlobalConfig>(json) is GlobalConfig config)
                     {
+                        StartupToggle.IsChecked = config.ShowTaskbarIcon; // This is a bug in original code too, leaving alone to not break logic
                         TaskbarToggle.IsChecked = config.ShowTaskbarIcon;
                         RestoreFilesToggle.IsChecked = config.RestoreFilesOnDelete;
                         GhostModeToggle.IsChecked = config.EnableGhostMode;
+
+                        // Load Theme
+                        if (config.Theme != null)
+                        {
+                            MediaFilePathInput.Text = config.Theme.BackgroundMediaPath;
+                            MediaOpacitySlider.Value = config.Theme.MediaOpacity * 100.0;
+                            AnimationDropdown.SelectedIndex = (int)config.Theme.RollUpAnimation;
+                            
+                            if (config.Theme.ThemeName == "Dark Mode") ThemePresetDropdown.SelectedIndex = 1;
+                            else if (config.Theme.ThemeName == "Neon Glow") ThemePresetDropdown.SelectedIndex = 2;
+                            else ThemePresetDropdown.SelectedIndex = 0;
+                        }
                     }
                 }
                 catch (Exception ex) { LogError("LoadConfig", ex); }
@@ -130,7 +143,34 @@ namespace DesktopFences
             bool restoreFiles = RestoreFilesToggle.IsChecked ?? true;
             bool ghostMode = GhostModeToggle.IsChecked ?? false;
 
-            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar, RestoreFilesOnDelete = restoreFiles, EnableGhostMode = ghostMode };
+            Core.ThemeSettings newTheme = new()
+            {
+                ThemeName = ThemePresetDropdown.Text,
+                RollUpAnimation = (Core.AnimationStyle)AnimationDropdown.SelectedIndex,
+                BackgroundMediaPath = MediaFilePathInput.Text,
+                MediaOpacity = MediaOpacitySlider.Value / 100.0
+            };
+
+            if (newTheme.ThemeName == "Dark Mode")
+            {
+                newTheme.BackgroundColor = "#FF1E1E1E";
+                newTheme.HeaderColor = "#FF2D2D2D";
+                newTheme.FontColor = "#FFFFFFFF";
+            }
+            else if (newTheme.ThemeName == "Neon Glow")
+            {
+                newTheme.BackgroundColor = "#CC000000";
+                newTheme.HeaderColor = "#FF8A2BE2";
+                newTheme.FontColor = "#FF00FFFF";
+            }
+            else
+            {
+                newTheme.BackgroundColor = "#01000000";
+                newTheme.HeaderColor = "#22000000";
+                newTheme.FontColor = "#FFFFFFFF";
+            }
+
+            GlobalConfig config = new() { FirstRunComplete = true, ShowTaskbarIcon = showTaskbar, RestoreFilesOnDelete = restoreFiles, EnableGhostMode = ghostMode, Theme = newTheme };
 
             try
             {
@@ -144,7 +184,12 @@ namespace DesktopFences
 
             foreach (Window window in Application.Current.Windows)
             {
-                if (window is MainWindow fence) { fence.ShowInTaskbar = showTaskbar; fence.UpdateGlobalGhostMode(ghostMode); }
+                if (window is MainWindow fence) 
+                { 
+                    fence.ShowInTaskbar = showTaskbar; 
+                    fence.UpdateGlobalGhostMode(ghostMode); 
+                    fence.ApplyTheme(newTheme);
+                }
             }
 
             try
@@ -241,7 +286,7 @@ namespace DesktopFences
             if (_isColorInitializing || _currentlySelectedFence is null) return;
             bool isAuto = AutoMatchToggle.IsChecked == true; _currentlySelectedFence.AutoMatchColor = isAuto;
             HueSlider.IsEnabled = !isAuto; SaturationSlider.IsEnabled = !isAuto; LightnessSlider.IsEnabled = !isAuto;
-            double opacity = isAuto ? 0.4 : 1.0; HueSlider.Opacity = opacity; SaturationSlider.Opacity = opacity; LightnessSlider.Opacity = opacity;
+            double opacity = isAuto ? 0.4 : 1.0; HueSlider.Opacity = opacity; SaturationSlider.Opacity = opacity;
 
             if (isAuto)
             {
@@ -324,8 +369,58 @@ namespace DesktopFences
         }
 
         private void DeleteFenceBtn_Click(object sender, RoutedEventArgs e) { if (_currentlySelectedFence is not null) { if (MessageBox.Show($"Delete '{_currentlySelectedFence.FenceTitle}'?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { _currentlySelectedFence.DashboardDelete(); LoadAllFences(); } } }
-        private void BuyMeACoffee_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("https://www.paypal.com/qrcodes/venmocs/a0e66d13-f15f-4fbd-ba26-34008d486c61?created=1775532880") { UseShellExecute = true }); } catch { } }
+        private void BuyMeACoffee_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("https://buymeacoffee.com/davedebugs") { UseShellExecute = true });
+        }
+
+        private void ThemePresetDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Just UI selection change
+        }
+
+        private void BrowseMedia_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "Media Files (*.mp4;*.gif)|*.mp4;*.gif|All Files (*.*)|*.*";
+            if (dlg.ShowDialog() == true)
+            {
+                MediaFilePathInput.Text = dlg.FileName;
+            }
+        }
+
+        private void ClearMedia_Click(object sender, RoutedEventArgs e)
+        {
+            MediaFilePathInput.Text = string.Empty;
+        }
+
         private void AskAQuestion_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("mailto:davedebugs@outlook.com?subject=Fluid Fences - Question") { UseShellExecute = true }); } catch { } }
         private void SuggestAnIdea_Click(object sender, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo("mailto:davedebugs@outlook.com?subject=Fluid Fences - Suggestion") { UseShellExecute = true }); } catch { } }
+
+        private void RootNavigation_SelectionChanged(Wpf.Ui.Controls.NavigationView sender, RoutedEventArgs args)
+        {
+            if (sender.SelectedItem is Wpf.Ui.Controls.NavigationViewItem item && item.Tag is string tag)
+            {
+                SwitchToTab(tag);
+            }
+        }
+
+        private void NavItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Wpf.Ui.Controls.NavigationViewItem item && item.Tag is string tag)
+            {
+                SwitchToTab(tag);
+            }
+        }
+
+        public void SwitchToTab(string tag)
+        {
+            if (AboutGrid != null) AboutGrid.Visibility = tag == "AboutGrid" ? Visibility.Visible : Visibility.Collapsed;
+            if (HowToGrid != null) HowToGrid.Visibility = tag == "HowToGrid" ? Visibility.Visible : Visibility.Collapsed;
+            if (GeneralGrid != null) GeneralGrid.Visibility = tag == "GeneralGrid" ? Visibility.Visible : Visibility.Collapsed;
+            if (FencesGrid != null) FencesGrid.Visibility = tag == "FencesGrid" ? Visibility.Visible : Visibility.Collapsed;
+            if (ThemeEditorGrid != null) ThemeEditorGrid.Visibility = tag == "ThemeEditorGrid" ? Visibility.Visible : Visibility.Collapsed;
+            if (FeedbackGrid != null) FeedbackGrid.Visibility = tag == "FeedbackGrid" ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 }

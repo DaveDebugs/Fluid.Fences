@@ -1,339 +1,50 @@
-﻿<Window
+<ui:FluentWindow
     x:Class="DesktopFences.SettingsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Fluid Fences Settings"
-    Width="950"
-    Height="680"
-    Background="#1E1E1E"
+    Width="1050"
+    Height="750"
     FontFamily="Segoe UI Variable, Segoe UI, Arial"
-    Foreground="White"
     WindowStartupLocation="CenterScreen"
-    Closing="Window_Closing">
-
-    <Window.Resources>
-        <Style TargetType="TabControl">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TabControl">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border
-                                Grid.Column="0"
-                                Background="#151515"
-                                BorderBrush="#333"
-                                BorderThickness="0,0,1,0" />
-                            <StackPanel
-                                Grid.Column="0"
-                                Margin="0,20,0,0"
-                                IsItemsHost="True" />
-                            <ContentPresenter
-                                x:Name="PART_SelectedContentHost"
-                                Grid.Column="1"
-                                Margin="20"
-                                ContentSource="SelectedContent" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="TabItem">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#AAAAAA" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="20,15" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TabItem">
-                        <Border
-                            x:Name="Border"
-                            Margin="5,2"
-                            Padding="{TemplateBinding Padding}"
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="4">
-                            <ContentPresenter
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                ContentSource="Header" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#333333" />
-                                <Setter Property="Foreground" Value="White" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#2D2D2D" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#444444" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="8,5" />
-            <Setter Property="CaretBrush" Value="White" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border
-                            x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
-                            <ScrollViewer
-                                x:Name="PART_ContentHost"
-                                Focusable="false"
-                                HorizontalScrollBarVisibility="Hidden"
-                                VerticalScrollBarVisibility="Hidden" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#666666" />
-                            </Trigger>
-                            <Trigger Property="IsFocused" Value="true">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D7" />
-                                <Setter TargetName="border" Property="BorderThickness" Value="1" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="#2D2D2D" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#444444" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton
-                                x:Name="ToggleButton"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="4">
-                                            <Path
-                                                Margin="0,0,10,0"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Center"
-                                                Data="M 0 0 L 4 4 L 8 0 Z"
-                                                Fill="White" />
-                                        </Border>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-                            <ContentPresenter
-                                x:Name="ContentSite"
-                                Margin="10,0,30,0"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                Content="{TemplateBinding SelectionBoxItem}"
-                                IsHitTestVisible="False"
-                                TextElement.Foreground="White" />
-                            <Popup
-                                x:Name="Popup"
-                                AllowsTransparency="True"
-                                Focusable="False"
-                                IsOpen="{TemplateBinding IsDropDownOpen}"
-                                Placement="Bottom">
-                                <Border
-                                    Margin="0,2,0,0"
-                                    Background="#2D2D2D"
-                                    BorderBrush="#444"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
-                                    <ScrollViewer>
-                                        <StackPanel IsItemsHost="True" />
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="#2D2D2D" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Padding" Value="8,5" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border
-                            x:Name="gd"
-                            Padding="{TemplateBinding Padding}"
-                            Background="{TemplateBinding Background}">
-                            <ContentPresenter />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="gd" Property="Background" Value="#0078D7" />
-                            </Trigger>
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="gd" Property="Background" Value="#444444" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="Button">
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border
-                            x:Name="BtnBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
-                            <ContentPresenter
-                                Margin="{TemplateBinding Padding}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#555555" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style
-            x:Key="PrimaryButton"
-            BasedOn="{StaticResource {x:Type Button}}"
-            TargetType="Button">
-            <Setter Property="Background" Value="#0078D7" />
-        </Style>
-        <Style
-            x:Key="DangerButton"
-            BasedOn="{StaticResource {x:Type Button}}"
-            TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#FF4444" />
-            <Setter Property="BorderBrush" Value="#FF4444" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-        <Style x:Key="ImageButtonStyle" TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="Transparent">
-                            <ContentPresenter />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style x:Key="SectionHeader" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,0,15" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-
-        <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Background="Transparent" Orientation="Horizontal">
-                            <Border
-                                x:Name="Border"
-                                Width="40"
-                                Height="20"
-                                Margin="0,0,10,0"
-                                Background="#444"
-                                CornerRadius="10">
-                                <Ellipse
-                                    x:Name="Knob"
-                                    Width="14"
-                                    Height="14"
-                                    Margin="3,0,0,0"
-                                    HorizontalAlignment="Left"
-                                    Fill="White" />
-                            </Border>
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#0078D7" />
-                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
-                                <Setter TargetName="Knob" Property="Margin" Value="0,0,3,0" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="BlueSliderStyle" TargetType="Slider">
-            <Setter Property="Margin" Value="10,0,0,0" />
-            <Setter Property="IsSnapToTickEnabled" Value="True" />
-            <Setter Property="TickFrequency" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid>
-                            <Border
-                                Height="4"
-                                VerticalAlignment="Center"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="2" />
-                            <Track x:Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb Width="14" Height="22">
-                                        <Thumb.Template>
-                                            <ControlTemplate>
-                                                <Path Data="M0,0 L14,0 L14,14 L7,22 L0,14 Z" Fill="#0078D7" />
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
+    Closing="Window_Closing"
+    WindowBackdropType="Mica"
+    ExtendsContentIntoTitleBar="True"
+    WindowChrome.WindowChrome="{x:Null}">
 
     <Grid>
-        <TabControl x:Name="MainTabControl" SelectedIndex="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <ui:TitleBar Grid.Row="0" Title="Fluid Fences Settings" Icon="{ui:SymbolIcon Symbol=Settings24}" />
 
-            <TabItem Header="About">
-                <Grid Margin="40,20">
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            
+            <ui:NavigationView Grid.Column="0" x:Name="RootNavigation" SelectionChanged="RootNavigation_SelectionChanged">
+                <ui:NavigationView.MenuItems>
+                    <ui:NavigationViewItem Content="About" Tag="AboutGrid" Icon="{ui:SymbolIcon Symbol=Info24}" Click="NavItem_Click" />
+                    <ui:NavigationViewItem Content="How to use" Tag="HowToGrid" Icon="{ui:SymbolIcon Symbol=Question24}" Click="NavItem_Click" />
+                    <ui:NavigationViewItem Content="General" Tag="GeneralGrid" Icon="{ui:SymbolIcon Symbol=Settings24}" Click="NavItem_Click" />
+                    <ui:NavigationViewItem Content="Fences" Tag="FencesGrid" Icon="{ui:SymbolIcon Symbol=Board24}" Click="NavItem_Click" />
+                    <ui:NavigationViewItem Content="Theme Editor" Tag="ThemeEditorGrid" Icon="{ui:SymbolIcon Symbol=Color24}" Click="NavItem_Click" />
+                </ui:NavigationView.MenuItems>
+
+                <ui:NavigationView.FooterMenuItems>
+                    <ui:NavigationViewItem Content="Feedback" Tag="FeedbackGrid" Icon="{ui:SymbolIcon Symbol=Mail24}" Click="NavItem_Click" />
+                </ui:NavigationView.FooterMenuItems>
+            </ui:NavigationView>
+
+            <Grid Grid.Column="1" Margin="20">
+                
+                <!-- About Grid -->
+                <Grid x:Name="AboutGrid" Visibility="Visible">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="2*" />
                         <RowDefinition Height="Auto" />
@@ -341,124 +52,89 @@
                         <RowDefinition Height="3*" />
                     </Grid.RowDefinitions>
 
-                    <Viewbox
-                        Grid.Row="0"
-                        MaxHeight="250"
-                        Margin="0,0,0,20"
-                        Stretch="Uniform">
+                    <Viewbox Grid.Row="0" MaxHeight="250" Margin="0,0,0,20" Stretch="Uniform">
                         <Image Source="/Settings Window/FluidFences16BitLogo.png" />
                     </Viewbox>
 
-                    <TextBlock
-                        x:Name="AboutDescriptionText"
-                        Grid.Row="1"
-                        MaxWidth="600"
-                        Margin="0,0,0,20"
-                        HorizontalAlignment="Center"
-                        FontSize="14"
-                        Foreground="#CCCCCC"
-                        Text="Fluid Fences is an open-source solution for organizing your desktop. Create, resize, and take control of your clutter!"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
+                    <TextBlock x:Name="AboutDescriptionText" Grid.Row="1" MaxWidth="600" Margin="0,0,0,20" HorizontalAlignment="Center" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Fluid Fences is an open-source solution for organizing your desktop. Create, resize, and take control of your clutter!" TextAlignment="Center" TextWrapping="Wrap" />
 
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center">
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="20"
-                            FontWeight="SemiBold"
-                            Foreground="White"
-                            Text="Support my project!" />
-                        <TextBlock
-                            Margin="0,5,0,10"
-                            HorizontalAlignment="Center"
-                            FontSize="16"
-                            Foreground="#AAAAAA"
-                            Text="Scan the QR code to buy me a coffee! ☕ Or keep the internet on " />
+                        <ui:TextBlock FontTypography="Subtitle" HorizontalAlignment="Center" Text="Support my project!" />
+                        <TextBlock Margin="0,5,0,10" HorizontalAlignment="Center" FontSize="16" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Scan the QR code to buy me a coffee! ☕ Or keep the internet on" />
                     </StackPanel>
 
-                    <Viewbox
-                        Grid.Row="3"
-                        MaxHeight="350"
-                        Stretch="Uniform">
-                        <Button Click="BuyMeACoffee_Click" Style="{StaticResource ImageButtonStyle}">
+                    <Viewbox Grid.Row="3" MaxHeight="350" Stretch="Uniform">
+                        <Button Click="BuyMeACoffee_Click" Background="Transparent" BorderThickness="0" Cursor="Hand">
                             <Image Source="/Settings Window/BuyMeACoffeeQR.png" />
                         </Button>
                     </Viewbox>
                 </Grid>
-            </TabItem>
 
-            <TabItem Header="How to use">
-                <ScrollViewer Margin="40,20" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="0,0,15,0">
-                        <TextBlock Text="How to Use Fluid Fences" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,0,0,25"/>
-                        <TextBlock Foreground="White" TextWrapping="Wrap" FontSize="16" LineHeight="18">
-    <Run FontWeight="Bold" Foreground="#0078D7">THE BASICS</Run><LineBreak/>
-    <Run>• Right-click the Fluid Fences tray icon (near your clock) to create a new empty Fence or a live Folder Portal.</Run><LineBreak/>
-    <Run>• Drag and drop files, folders, or shortcuts directly into a standard Fence to store them in your vault.</Run><LineBreak/><LineBreak/>
+                <!-- How To Grid -->
+                <Grid x:Name="HowToGrid" Visibility="Collapsed">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,15,0">
+                            <ui:TextBlock Text="How to Use Fluid Fences" FontTypography="Title" Margin="0,0,0,25"/>
+                            <TextBlock TextWrapping="Wrap" FontSize="16" LineHeight="20">
+                                <Run FontWeight="Bold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}">THE BASICS</Run><LineBreak/>
+                                <Run>• Right-click the Fluid Fences tray icon (near your clock) to create a new empty Fence or a live Folder Portal.</Run><LineBreak/>
+                                <Run>• Drag and drop files, folders, or shortcuts directly into a standard Fence to store them in your vault.</Run><LineBreak/><LineBreak/>
 
-    <Run FontWeight="Bold" Foreground="#0078D7">CONTROLS &amp; HOTKEYS</Run><LineBreak/>
-    <Run>• Move &amp; Snap: Drag a fence by its header across any monitor. It will natively snap to screen edges.</Run><LineBreak/>
-    <Run>• Resize: Hover over any edge or corner of a fence to resize it.</Run><LineBreak/>
-    <Run>• Roll-up: Double-click a fence header to roll it up into a compact bar. Hover to reveal it, or double-click again to lock it open.</Run><LineBreak/>
-    <Run>• Zen Mode: Press Ctrl+Alt+Z anytime to instantly hide or show all your fences.</Run><LineBreak/><LineBreak/>
+                                <Run FontWeight="Bold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}">CONTROLS &amp; HOTKEYS</Run><LineBreak/>
+                                <Run>• Move &amp; Snap: Drag a fence by its header across any monitor. It will natively snap to screen edges.</Run><LineBreak/>
+                                <Run>• Resize: Hover over any edge or corner of a fence to resize it.</Run><LineBreak/>
+                                <Run>• Roll-up: Double-click a fence header to roll it up into a compact bar. Hover to reveal it, or double-click again to lock it open.</Run><LineBreak/>
+                                <Run>• Zen Mode: Press Ctrl+Alt+Z anytime to instantly hide or show all your fences.</Run><LineBreak/><LineBreak/>
 
-    <Run FontWeight="Bold" Foreground="#0078D7">CUSTOMIZATION</Run><LineBreak/>
-    <Run>• Right-click a fence's header to Auto-Organize your desktop, change file sorting, or adjust icon sizes.</Run><LineBreak/>
-    <Run>• Select 'Edit Color...' to match the fence to your wallpaper, or turn on 'Ghost Mode' in Global Settings to make fences fade away when not in use.</Run>
-                        </TextBlock>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
+                                <Run FontWeight="Bold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}">CUSTOMIZATION</Run><LineBreak/>
+                                <Run>• Right-click a fence's header to Auto-Organize your desktop, change file sorting, or adjust icon sizes.</Run><LineBreak/>
+                                <Run>• Select 'Theme Editor' in the Settings Window to match fences to your wallpaper.</Run>
+                            </TextBlock>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
 
-            <TabItem Header="General">
-                <Grid Margin="40">
+                <!-- General Grid -->
+                <Grid x:Name="GeneralGrid" Visibility="Collapsed">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Global Application Settings" />
-                        <TextBlock Margin="0,0,0,20" Foreground="#AAA" Text="These settings apply to the entire application." />
+                        <ui:TextBlock FontTypography="Subtitle" Text="Global Application Settings" Margin="0,0,0,5" />
+                        <TextBlock Margin="0,0,0,20" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="These settings apply to the entire application." />
 
-                        <CheckBox x:Name="StartupToggle" Margin="0,0,0,15" Content="Run Fluid Fences automatically when Windows starts" Style="{StaticResource ToggleSwitchStyle}" />
-                        <CheckBox x:Name="TaskbarToggle" Margin="0,0,0,15" Content="Show Fences in the Windows Taskbar" Style="{StaticResource ToggleSwitchStyle}" />
-                        <CheckBox x:Name="RestoreFilesToggle" Margin="0,0,0,15" Content="When deleting a fence, restore its files to the Desktop" Style="{StaticResource ToggleSwitchStyle}" />
-                        <CheckBox x:Name="GhostModeToggle" Margin="0,0,0,30" Content="Enable Global Ghost Mode (Fences auto-hide when not in use)" Style="{StaticResource ToggleSwitchStyle}" />
+                        <ui:ToggleSwitch x:Name="StartupToggle" Margin="0,0,0,15" Content="Run Fluid Fences automatically when Windows starts" />
+                        <ui:ToggleSwitch x:Name="TaskbarToggle" Margin="0,0,0,15" Content="Show Fences in the Windows Taskbar" />
+                        <ui:ToggleSwitch x:Name="RestoreFilesToggle" Margin="0,0,0,15" Content="When deleting a fence, restore its files to the Desktop" />
+                        <ui:ToggleSwitch x:Name="GhostModeToggle" Margin="0,0,0,30" Content="Enable Global Ghost Mode (Fences auto-hide when not in use)" />
 
-                        <Button Padding="20,10" HorizontalAlignment="Left" Click="SaveGlobalSettings_Click" Content="Save General Settings" Style="{StaticResource PrimaryButton}" />
+                        <ui:Button Appearance="Primary" Padding="20,10" HorizontalAlignment="Left" Click="SaveGlobalSettings_Click" Content="Save General Settings" />
 
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Layout Snapshots" Margin="0,40,0,10"/>
-                        <TextBlock Margin="0,0,0,15" Foreground="#AAA" Text="Save your current fence sizes and positions to easily restore them later (Great for multi-monitor setups)." TextWrapping="Wrap" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="Layout Snapshots" Margin="0,40,0,10"/>
+                        <TextBlock Margin="0,0,0,15" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Save your current fence sizes and positions to easily restore them later (Great for multi-monitor setups)." TextWrapping="Wrap" />
 
                         <StackPanel Orientation="Horizontal">
-                            <Button Padding="20,10" Margin="0,0,15,0" Click="SaveLayout_Click" Content="Save Current Layout" Style="{StaticResource PrimaryButton}" />
-                            <Button Padding="20,10" Click="RestoreLayout_Click" Content="Restore Last Layout" Style="{StaticResource PrimaryButton}" Background="#333" />
+                            <ui:Button Appearance="Primary" Padding="20,10" Margin="0,0,15,0" Click="SaveLayout_Click" Content="Save Current Layout" />
+                            <ui:Button Padding="20,10" Click="RestoreLayout_Click" Content="Restore Last Layout" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>
-            </TabItem>
 
-            <TabItem Header="Fences">
-                <Grid Margin="40">
+                <!-- Fences Grid -->
+                <Grid x:Name="FencesGrid" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    
                     <StackPanel Grid.Column="0" Margin="0,0,30,0">
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Select a Fence" />
-                        <ListBox
-                            x:Name="FenceListBox"
-                            Height="400"
-                            Background="#151515"
-                            BorderBrush="#333"
-                            Foreground="White"
-                            SelectionChanged="FenceListBox_SelectionChanged" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="Select a Fence" Margin="0,0,0,10" />
+                        <ui:ListView x:Name="FenceListBox" Height="500" SelectionChanged="FenceListBox_SelectionChanged" />
                     </StackPanel>
-                    <ScrollViewer
-                        Grid.Column="1"
-                        Margin="20,0,0,0"
-                        VerticalScrollBarVisibility="Auto">
+                    
+                    <ScrollViewer Grid.Column="1" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,0,15,0">
-                            <TextBlock Style="{StaticResource SectionHeader}" Text="Fence Settings" />
+                            <ui:TextBlock FontTypography="Subtitle" Text="Fence Settings" Margin="0,0,0,15" />
 
-                            <TextBlock Margin="0,0,0,5" Foreground="#AAA" Text="Fence Title" />
-                            <TextBox x:Name="TitleInput" Margin="0,0,0,20" />
+                            <TextBlock Margin="0,0,0,5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Fence Title" />
+                            <ui:TextBox x:Name="TitleInput" Margin="0,0,0,20" />
 
                             <Grid Margin="0,0,0,20">
                                 <Grid.ColumnDefinitions>
@@ -468,7 +144,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Margin="0,0,0,5" Foreground="#AAA" Text="Sort by" />
+                                    <TextBlock Margin="0,0,0,5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Sort by" />
                                     <ComboBox x:Name="SortDropdown">
                                         <ComboBoxItem Content="None" />
                                         <ComboBoxItem Content="Name" />
@@ -481,7 +157,7 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2">
-                                    <TextBlock Margin="0,0,0,5" Foreground="#AAA" Text="Ghost Mode Behavior" />
+                                    <TextBlock Margin="0,0,0,5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Ghost Mode Behavior" />
                                     <ComboBox x:Name="GhostModeDropdown">
                                         <ComboBoxItem Content="Use Global Setting" />
                                         <ComboBoxItem Content="Force Enable (Always Hide)" />
@@ -490,7 +166,7 @@
                                 </StackPanel>
                             </Grid>
 
-                            <TextBlock Margin="0,10,0,15" FontSize="16" Style="{StaticResource SectionHeader}" Text="Auto-Sort Engine" />
+                            <ui:TextBlock FontTypography="Subtitle" Text="Auto-Sort Engine" Margin="0,10,0,15" />
                             <Grid Margin="0,0,0,30">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150" />
@@ -505,190 +181,177 @@
                                     <ComboBoxItem Content="Archives (.zip)" />
                                     <ComboBoxItem Content="Apps &amp; Shortcuts" />
                                 </ComboBox>
-                                <TextBox x:Name="AutoSortInput" Grid.Column="1" />
+                                <ui:TextBox x:Name="AutoSortInput" Grid.Column="1" />
                             </Grid>
 
-                            <CheckBox x:Name="EnableSearchToggle" Margin="0,0,0,20" Content="Enable In-Fence Search Bar" Style="{StaticResource ToggleSwitchStyle}" />
+                            <ui:ToggleSwitch x:Name="EnableSearchToggle" Margin="0,0,0,20" Content="Enable In-Fence Search Bar" />
 
                             <Grid>
-                                <Button x:Name="DeleteFenceBtn" Padding="15,8" HorizontalAlignment="Left" Click="DeleteFenceBtn_Click" Content="Delete This Fence" Style="{StaticResource DangerButton}" />
-                                <Button Padding="20,10" HorizontalAlignment="Right" Click="SaveSettings_Click" Content="Save Changes" Style="{StaticResource PrimaryButton}" />
+                                <ui:Button x:Name="DeleteFenceBtn" Appearance="Danger" Padding="15,8" HorizontalAlignment="Left" Click="DeleteFenceBtn_Click" Content="Delete This Fence" />
+                                <ui:Button Appearance="Primary" Padding="20,10" HorizontalAlignment="Right" Click="SaveSettings_Click" Content="Save Changes" />
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-            </TabItem>
 
-            <TabItem Header="  ↳ Edit Colors">
-                <Grid Margin="40">
+                <!-- Theme Editor Grid -->
+                <Grid x:Name="ThemeEditorGrid" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,30,0">
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="Select a Fence" />
-                        <ListBox
-                            x:Name="ColorFenceListBox"
-                            Height="400"
-                            Background="#151515"
-                            BorderBrush="#333"
-                            Foreground="White"
-                            SelectionChanged="FenceListBox_SelectionChanged" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="Select a Fence" Margin="0,0,0,10" />
+                        <ui:ListView x:Name="ColorFenceListBox" Height="500" SelectionChanged="FenceListBox_SelectionChanged" />
+                        
+                        <ui:TextBlock FontTypography="Subtitle" Text="Global Theme" Margin="0,20,0,10" />
+                        <TextBlock Margin="0,0,0,5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Theme Preset" />
+                        <ComboBox x:Name="ThemePresetDropdown" Margin="0,0,0,20" SelectionChanged="ThemePresetDropdown_SelectionChanged">
+                            <ComboBoxItem Content="Fluid Glass (Default)" />
+                            <ComboBoxItem Content="Dark Mode" />
+                            <ComboBoxItem Content="Neon Glow" />
+                        </ComboBox>
+                        
+                        <TextBlock Margin="0,0,0,5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Roll-up Animation" />
+                        <ComboBox x:Name="AnimationDropdown" Margin="0,0,0,20">
+                            <ComboBoxItem Content="Smooth" />
+                            <ComboBoxItem Content="Bounce" />
+                            <ComboBoxItem Content="Linear" />
+                        </ComboBox>
+                        <ui:Button Appearance="Primary" Click="SaveGlobalSettings_Click" Content="Save Global Theme" />
                     </StackPanel>
-                    <ScrollViewer
-                        Grid.Column="1"
-                        Margin="20,0,0,0"
-                        VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Column="1" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,0,15,0">
-                            <TextBlock
-                                x:Name="EditColorTitleText"
-                                Style="{StaticResource SectionHeader}"
-                                Text="Edit Colors" />
+                            
+                            <ui:TextBlock x:Name="EditColorTitleText" FontTypography="Subtitle" Text="Fence Color Editor" Margin="0,0,0,15" />
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                                <CheckBox x:Name="BlendWallpaperToggle" Margin="0,0,15,0" Click="BlendWallpaperToggle_Click" Content="Blend into wallpaper" Foreground="White" />
-                                <CheckBox x:Name="AutoMatchToggle" Click="AutoMatchToggle_Click" Content="Auto-match wallpaper color" Foreground="White" />
-                            </StackPanel>
+                            <ui:CardAction Margin="0,0,0,20" IsChevronVisible="False">
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="Live Wallpaper Matching" Margin="0,0,0,10" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:ToggleSwitch x:Name="BlendWallpaperToggle" Margin="0,0,15,0" Click="BlendWallpaperToggle_Click" Content="Blend into wallpaper" />
+                                        <ui:ToggleSwitch x:Name="AutoMatchToggle" Click="AutoMatchToggle_Click" Content="Auto-match wallpaper color" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ui:CardAction>
 
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="#DDD"
-                                    Text="Hue:" />
-                                <Slider
-                                    x:Name="HueSlider"
-                                    Grid.Column="1"
-                                    Maximum="360"
-                                    Minimum="0"
-                                    Style="{StaticResource BlueSliderStyle}"
-                                    ValueChanged="ColorSlider_ValueChanged">
-                                    <Slider.Background>
-                                        <LinearGradientBrush EndPoint="1,0">
-                                            <GradientStop Offset="0" Color="Red" />
-                                            <GradientStop Offset="0.16" Color="Yellow" />
-                                            <GradientStop Offset="0.33" Color="Lime" />
-                                            <GradientStop Offset="0.5" Color="Cyan" />
-                                            <GradientStop Offset="0.66" Color="Blue" />
-                                            <GradientStop Offset="0.83" Color="Magenta" />
-                                            <GradientStop Offset="1" Color="Red" />
-                                        </LinearGradientBrush>
-                                    </Slider.Background>
-                                </Slider>
-                            </Grid>
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="#DDD"
-                                    Text="Brightness:" />
-                                <Slider
-                                    x:Name="LightnessSlider"
-                                    Grid.Column="1"
-                                    Maximum="100"
-                                    Minimum="0"
-                                    Style="{StaticResource BlueSliderStyle}"
-                                    ValueChanged="ColorSlider_ValueChanged"
-                                    Value="50">
-                                    <Slider.Background>
-                                        <LinearGradientBrush EndPoint="1,0">
-                                            <GradientStop Offset="0" Color="Black" />
-                                            <GradientStop x:Name="BrightnessEndColor" Offset="1" Color="#00A2FF" />
-                                        </LinearGradientBrush>
-                                    </Slider.Background>
-                                </Slider>
-                            </Grid>
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="#DDD"
-                                    Text="Saturation:" />
-                                <Slider
-                                    x:Name="SaturationSlider"
-                                    Grid.Column="1"
-                                    Maximum="100"
-                                    Minimum="0"
-                                    Style="{StaticResource BlueSliderStyle}"
-                                    ValueChanged="ColorSlider_ValueChanged"
-                                    Value="100">
-                                    <Slider.Background>
-                                        <LinearGradientBrush EndPoint="1,0">
-                                            <GradientStop Offset="0" Color="White" />
-                                            <GradientStop x:Name="SaturationEndColor" Offset="1" Color="#00A2FF" />
-                                        </LinearGradientBrush>
-                                    </Slider.Background>
-                                </Slider>
-                            </Grid>
-                            <Grid Margin="0,0,0,25">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="#DDD"
-                                    Text="Transparency:" />
-                                <Slider
-                                    x:Name="AlphaSlider"
-                                    Grid.Column="1"
-                                    Maximum="100"
-                                    Minimum="0"
-                                    Style="{StaticResource BlueSliderStyle}"
-                                    ValueChanged="ColorSlider_ValueChanged"
-                                    Value="70">
-                                    <Slider.Background>
-                                        <LinearGradientBrush EndPoint="1,0">
-                                            <GradientStop Offset="0" Color="#00000000" />
-                                            <GradientStop x:Name="AlphaEndColor" Offset="1" Color="#00A2FF" />
-                                        </LinearGradientBrush>
-                                    </Slider.Background>
-                                </Slider>
-                            </Grid>
+                            <ui:Card Margin="0,0,0,20">
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="Color Sliders" Margin="0,0,0,15" />
+                                    
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="Hue:" />
+                                        <Slider x:Name="HueSlider" Grid.Column="1" Maximum="360" Minimum="0" ValueChanged="ColorSlider_ValueChanged">
+                                            <Slider.Background>
+                                                <LinearGradientBrush EndPoint="1,0">
+                                                    <GradientStop Offset="0" Color="Red" />
+                                                    <GradientStop Offset="0.16" Color="Yellow" />
+                                                    <GradientStop Offset="0.33" Color="Lime" />
+                                                    <GradientStop Offset="0.5" Color="Cyan" />
+                                                    <GradientStop Offset="0.66" Color="Blue" />
+                                                    <GradientStop Offset="0.83" Color="Magenta" />
+                                                    <GradientStop Offset="1" Color="Red" />
+                                                </LinearGradientBrush>
+                                            </Slider.Background>
+                                        </Slider>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="Brightness:" />
+                                        <Slider x:Name="LightnessSlider" Grid.Column="1" Maximum="100" Minimum="0" ValueChanged="ColorSlider_ValueChanged" Value="50">
+                                            <Slider.Background>
+                                                <LinearGradientBrush EndPoint="1,0">
+                                                    <GradientStop Offset="0" Color="Black" />
+                                                    <GradientStop x:Name="BrightnessEndColor" Offset="1" Color="#00A2FF" />
+                                                </LinearGradientBrush>
+                                            </Slider.Background>
+                                        </Slider>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="Saturation:" />
+                                        <Slider x:Name="SaturationSlider" Grid.Column="1" Maximum="100" Minimum="0" ValueChanged="ColorSlider_ValueChanged" Value="100">
+                                            <Slider.Background>
+                                                <LinearGradientBrush EndPoint="1,0">
+                                                    <GradientStop Offset="0" Color="White" />
+                                                    <GradientStop x:Name="SaturationEndColor" Offset="1" Color="#00A2FF" />
+                                                </LinearGradientBrush>
+                                            </Slider.Background>
+                                        </Slider>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="Opacity:" />
+                                        <Slider x:Name="AlphaSlider" Grid.Column="1" Maximum="100" Minimum="0" ValueChanged="ColorSlider_ValueChanged" Value="70">
+                                            <Slider.Background>
+                                                <LinearGradientBrush EndPoint="1,0">
+                                                    <GradientStop Offset="0" Color="#00000000" />
+                                                    <GradientStop x:Name="AlphaEndColor" Offset="1" Color="#00A2FF" />
+                                                </LinearGradientBrush>
+                                            </Slider.Background>
+                                        </Slider>
+                                    </Grid>
+                                    
+                                    <Grid Margin="0,15,0,0">
+                                        <Border x:Name="ColorPreview" Width="40" Height="25" CornerRadius="4" HorizontalAlignment="Left" BorderBrush="#555" BorderThickness="1"/>
+                                        <ui:Button Appearance="Primary" Padding="20,10" HorizontalAlignment="Right" Click="SaveSettings_Click" Content="Save Color Changes" />
+                                    </Grid>
+                                </StackPanel>
+                            </ui:Card>
+                            
+                            <ui:Card Margin="0,0,0,20">
+                                <StackPanel>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="Background Media (MP4/GIF)" Margin="0,0,0,15" />
+                                    
+                                    <TextBlock Text="Tip: To use Wallpaper Engine backgrounds, select the .mp4 file from your steamapps/workshop/content/431960 directory." Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                                    <ui:Button Content="Clear Media" Click="ClearMedia_Click" Margin="0,10,0,0" Appearance="Danger" />
+                                    
+                                    <Grid Margin="0,10,0,20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="300" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBox x:Name="MediaFilePathInput" Grid.Column="0" IsReadOnly="True" />
+                                        <ui:Button Grid.Column="1" Margin="10,0,0,0" Padding="15,5" Content="Browse..." Click="BrowseMedia_Click" />
+                                    </Grid>
 
-                            <Grid Margin="0,15,0,0">
-                                <Border x:Name="ColorPreview" Width="40" Height="25" CornerRadius="4" HorizontalAlignment="Left" BorderBrush="#555" BorderThickness="1"/>
-                                <Button
-                                    Padding="20,10"
-                                    HorizontalAlignment="Right"
-                                    Click="SaveSettings_Click"
-                                    Content="Save Changes"
-                                    Style="{StaticResource PrimaryButton}" />
-                            </Grid>
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="Media Opacity:" />
+                                        <Slider x:Name="MediaOpacitySlider" Grid.Column="1" Maximum="100" Minimum="0" Value="100" />
+                                    </Grid>
+                                </StackPanel>
+                            </ui:Card>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-            </TabItem>
 
-            <TabItem Header="Feedback">
-                <Grid Margin="40">
+                <!-- Feedback Grid -->
+                <Grid x:Name="FeedbackGrid" Visibility="Collapsed">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="We'd love to hear from you" />
-                        <Button
-                            Width="180"
-                            Margin="0,0,0,10"
-                            Padding="15,10"
-                            HorizontalAlignment="Left"
-                            Click="AskAQuestion_Click"
-                            Content="Ask a question" />
-                        <Button
-                            Width="180"
-                            Padding="15,10"
-                            HorizontalAlignment="Left"
-                            Click="SuggestAnIdea_Click"
-                            Content="I have a suggestion" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="We'd love to hear from you" Margin="0,0,0,15" />
+                        <ui:Button Width="200" Margin="0,0,0,10" Padding="15,10" HorizontalAlignment="Left" Click="AskAQuestion_Click" Content="Ask a question" Icon="{ui:SymbolIcon Symbol=ChatHelp24}" />
+                        <ui:Button Width="200" Padding="15,10" HorizontalAlignment="Left" Click="SuggestAnIdea_Click" Content="I have a suggestion" Icon="{ui:SymbolIcon Symbol=Lightbulb24}" />
                     </StackPanel>
                 </Grid>
-            </TabItem>
-        </TabControl>
+
+            </Grid>
+        </Grid>
     </Grid>
-</Window>
+</ui:FluentWindow>

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace DesktopFences
@@ -9,6 +9,8 @@ namespace DesktopFences
         [JsonPropertyName("ShowTaskbarIcon")] public bool ShowTaskbarIcon { get; set; } = true;
         [JsonPropertyName("RestoreFilesOnDelete")] public bool RestoreFilesOnDelete { get; set; } = true;
         [JsonPropertyName("EnableGhostMode")] public bool EnableGhostMode { get; set; } = false;
+        
+        [JsonPropertyName("Theme")] public Core.ThemeSettings Theme { get; set; } = new Core.ThemeSettings();
     }
 
     public class SnapshotData
