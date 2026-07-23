@@ -14,7 +14,18 @@ namespace DesktopFences
 {
     public static class Updater
     {
-        public static readonly string CurrentVersion = "1.3.6";
+
+        public static string CurrentVersion { get; } = ResolveCurrentVersion();
+
+        private static string ResolveCurrentVersion()
+        {
+            try
+            {
+                var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                return v is null ? "0.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
+            }
+            catch { return "0.0.0"; }
+        }
         private const string GitHubApiUrl = "https://api.github.com/repos/DaveDebugs/Fluid.Fences/releases/latest";
 
         public class GitHubRelease
@@ -41,11 +52,16 @@ namespace DesktopFences
 
                 string latestTag = release.TagName.TrimStart('v', 'V');
 
-                if (Version.TryParse(latestTag, out Version latestVersion) && Version.TryParse(CurrentVersion, out Version currentVersion))
+                if (Version.TryParse(latestTag, out Version? latestVersion) && Version.TryParse(CurrentVersion, out Version? currentVersion))
                 {
                     if (latestVersion > currentVersion)
                     {
-                        GitHubAsset? exeAsset = release.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
+                        GitHubAsset? exeAsset =
+                            release.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                                                            && a.Name.Contains("setup", StringComparison.OrdinalIgnoreCase))
+                            ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
                         GitHubAsset? checksumAsset = release.Assets.FirstOrDefault(a => a.Name.Equals("checksum.txt", StringComparison.OrdinalIgnoreCase));
 
                         if (exeAsset != null && checksumAsset != null)
@@ -72,72 +88,68 @@ namespace DesktopFences
             }
         }
 
-        private static async Task ApplySecureUpdateAsync(string exeUrl, string checksumUrl)
+        private static async Task ApplySecureUpdateAsync(string installerUrl, string checksumUrl)
         {
-            string exePath = Environment.ProcessPath!;
-            string tempDownloadPath = Path.Combine(Path.GetTempPath(), $"FluidFences_Update_{Guid.NewGuid():N}.exe");
-            string backupPath = exePath + ".old";
-            string batchScriptPath = Path.Combine(Path.GetTempPath(), $"FluidFences_Update_{Guid.NewGuid():N}.bat");
+            string installerPath = Path.Combine(
+                Path.GetTempPath(), $"FluidFences_Update_{Guid.NewGuid():N}.exe");
 
             try
             {
                 using HttpClient client = new();
+                client.DefaultRequestHeaders.Add("User-Agent", "FluidFences-Updater");
 
                 string expectedHashRaw = await client.GetStringAsync(checksumUrl);
                 string expectedHash = expectedHashRaw.Trim().ToUpperInvariant().Split(' ', '\t')[0];
 
-                var response = await client.GetAsync(exeUrl);
+                var response = await client.GetAsync(installerUrl);
                 response.EnsureSuccessStatusCode();
-                using (var fs = new FileStream(tempDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var fs = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     await response.Content.CopyToAsync(fs);
                 }
 
-                string actualHash = CalculateSHA256(tempDownloadPath);
-
+                string actualHash = CalculateSHA256(installerPath);
                 if (!expectedHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase))
                 {
-                    File.Delete(tempDownloadPath);
-                    MessageBox.Show("Security Alert: The downloaded update file has been corrupted or tampered with. The installation has been securely aborted.", "Verification Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    TryDelete(installerPath);
+                    MessageBox.Show(
+                        "Security Alert: the downloaded update was corrupted or tampered with. The update has been aborted.",
+                        "Verification Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                string batchContent = $@"@echo off
-timeout /t 2 /nobreak > NUL
-if exist ""{backupPath}"" del ""{backupPath}""
-rename ""{exePath}"" ""{Path.GetFileName(backupPath)}""
-copy /y ""{tempDownloadPath}"" ""{exePath}""
-start """" ""{exePath}""
-del ""{tempDownloadPath}""
-(goto) 2>nul & del ""%~f0""
-";
-                File.WriteAllText(batchScriptPath, batchContent);
-
-                ProcessStartInfo psi = new ProcessStartInfo(batchScriptPath)
+                ProcessStartInfo psi = new(installerPath)
                 {
-                    UseShellExecute = true,
-                    Verb = "runas",
-                    WindowStyle = ProcessWindowStyle.Hidden
+                    Arguments = "/SILENT /NORESTART",
+                    UseShellExecute = true
                 };
 
                 try
                 {
                     Process.Start(psi);
+
                     Application.Current.Shutdown();
                 }
                 catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
                 {
-                    File.Delete(tempDownloadPath);
-                    File.Delete(batchScriptPath);
-                    MessageBox.Show("Update was cancelled because Administrator permissions were not granted.", "Update Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    TryDelete(installerPath);
+                    MessageBox.Show(
+                        "The update was cancelled because Administrator permission was not granted.",
+                        "Update Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                try { if (File.Exists(tempDownloadPath)) File.Delete(tempDownloadPath); } catch { }
-                try { if (File.Exists(batchScriptPath)) File.Delete(batchScriptPath); } catch { }
-                MessageBox.Show($"Failed to apply update: {ex.Message}", "Update Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                TryDelete(installerPath);
+                MessageBox.Show($"Failed to download or start the update:\n{ex.Message}",
+                                "Update Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private static void TryDelete(string path)
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { }
         }
 
         private static string CalculateSHA256(string filePath)
@@ -152,8 +164,15 @@ del ""{tempDownloadPath}""
         {
             try
             {
-                string backupPath = Environment.ProcessPath + ".old";
-                if (File.Exists(backupPath)) File.Delete(backupPath);
+                string? backupPath = Environment.ProcessPath + ".old";
+                if (backupPath is not null && File.Exists(backupPath)) File.Delete(backupPath);
+            }
+            catch { }
+
+            try
+            {
+                foreach (string leftover in Directory.GetFiles(Path.GetTempPath(), "FluidFences_Update_*.exe"))
+                    TryDelete(leftover);
             }
             catch { }
         }

@@ -1,0 +1,115 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <Color x:Key="CustomPrimaryColor">#FF0078D7</Color>
+    <SolidColorBrush x:Key="CustomPrimaryBrush" Color="{DynamicResource CustomPrimaryColor}" />
+
+    <Color x:Key="CustomPrimaryHoverColor">#FF2B88D8</Color>
+    <SolidColorBrush x:Key="CustomPrimaryHoverBrush" Color="{DynamicResource CustomPrimaryHoverColor}" />
+
+    <Color x:Key="CustomPrimaryPressedColor">#FF005A9E</Color>
+    <SolidColorBrush x:Key="CustomPrimaryPressedBrush" Color="{DynamicResource CustomPrimaryPressedColor}" />
+
+    <Color x:Key="CustomSecondaryColor">#FF2B88D8</Color>
+    <SolidColorBrush x:Key="CustomSecondaryBrush" Color="{DynamicResource CustomSecondaryColor}" />
+
+    <Color x:Key="CustomAccentColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomAccentBrush" Color="{DynamicResource CustomAccentColor}" />
+
+    <Color x:Key="CustomBackgroundColor">#01000000</Color>
+    <SolidColorBrush x:Key="CustomBackgroundBrush" Color="{DynamicResource CustomBackgroundColor}" />
+
+    <Color x:Key="CustomSurfaceColor">#FF151515</Color>
+    <SolidColorBrush x:Key="CustomSurfaceBrush" Color="{DynamicResource CustomSurfaceColor}" />
+
+    <Color x:Key="CustomSurfaceSubtleColor">#33000000</Color>
+    <SolidColorBrush x:Key="CustomSurfaceSubtleBrush" Color="{DynamicResource CustomSurfaceSubtleColor}" />
+
+    <Color x:Key="CustomSurfaceHoverColor">#22FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomSurfaceHoverBrush" Color="{DynamicResource CustomSurfaceHoverColor}" />
+
+    <Color x:Key="CustomSurfaceSelectedColor">#44FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomSurfaceSelectedBrush" Color="{DynamicResource CustomSurfaceSelectedColor}" />
+
+    <Color x:Key="CustomHeaderColor">#05FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomHeaderBrush" Color="{DynamicResource CustomHeaderColor}" />
+
+    <Color x:Key="CustomBorderColor">#FF555555</Color>
+    <SolidColorBrush x:Key="CustomBorderBrush" Color="{DynamicResource CustomBorderColor}" />
+
+    <Color x:Key="CustomBorderSubtleColor">#22FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomBorderSubtleBrush" Color="{DynamicResource CustomBorderSubtleColor}" />
+
+    <Color x:Key="CustomFocusRingColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomFocusRingBrush" Color="{DynamicResource CustomFocusRingColor}" />
+
+    <Color x:Key="CustomTextPrimaryColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomTextPrimaryBrush" Color="{DynamicResource CustomTextPrimaryColor}" />
+
+    <Color x:Key="CustomTextSecondaryColor">#FFAAAAAA</Color>
+    <SolidColorBrush x:Key="CustomTextSecondaryBrush" Color="{DynamicResource CustomTextSecondaryColor}" />
+
+    <Color x:Key="CustomTextDisabledColor">#FF6E6E6E</Color>
+    <SolidColorBrush x:Key="CustomTextDisabledBrush" Color="{DynamicResource CustomTextDisabledColor}" />
+
+    <Color x:Key="CustomTextOnAccentColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomTextOnAccentBrush" Color="{DynamicResource CustomTextOnAccentColor}" />
+
+    <Color x:Key="CustomGlyphColor">#FFCCCCCC</Color>
+    <SolidColorBrush x:Key="CustomGlyphBrush" Color="{DynamicResource CustomGlyphColor}" />
+
+    <Color x:Key="CustomGlyphHoverColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomGlyphHoverBrush" Color="{DynamicResource CustomGlyphHoverColor}" />
+
+    <Color x:Key="CustomFontColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomFontBrush" Color="{DynamicResource CustomFontColor}" />
+
+    <Color x:Key="CustomSecondaryFontColor">#FFAAAAAA</Color>
+    <SolidColorBrush x:Key="CustomSecondaryFontBrush" Color="{DynamicResource CustomSecondaryFontColor}" />
+
+    <Color x:Key="CustomSuccessColor">#FF107C10</Color>
+    <SolidColorBrush x:Key="CustomSuccessBrush" Color="{DynamicResource CustomSuccessColor}" />
+
+    <Color x:Key="CustomErrorColor">#FFE81123</Color>
+    <SolidColorBrush x:Key="CustomErrorBrush" Color="{DynamicResource CustomErrorColor}" />
+
+    <Color x:Key="CustomWarningColor">#FFFFB900</Color>
+    <SolidColorBrush x:Key="CustomWarningBrush" Color="{DynamicResource CustomWarningColor}" />
+
+    <Color x:Key="CustomInfoColor">#FF0078D7</Color>
+    <SolidColorBrush x:Key="CustomInfoBrush" Color="{DynamicResource CustomInfoColor}" />
+
+    <Color x:Key="CustomSelectionFillColor">#330078D7</Color>
+    <SolidColorBrush x:Key="CustomSelectionFillBrush" Color="{DynamicResource CustomSelectionFillColor}" />
+
+    <Color x:Key="CustomSelectionStrokeColor">#FF0078D7</Color>
+    <SolidColorBrush x:Key="CustomSelectionStrokeBrush" Color="{DynamicResource CustomSelectionStrokeColor}" />
+
+    <Color x:Key="CustomDropTargetColor">#550078D7</Color>
+    <SolidColorBrush x:Key="CustomDropTargetBrush" Color="{DynamicResource CustomDropTargetColor}" />
+
+    <Color x:Key="CustomScrollThumbColor">#44FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomScrollThumbBrush" Color="{DynamicResource CustomScrollThumbColor}" />
+
+    <Color x:Key="CustomScrollThumbHoverColor">#88FFFFFF</Color>
+    <SolidColorBrush x:Key="CustomScrollThumbHoverBrush" Color="{DynamicResource CustomScrollThumbHoverColor}" />
+
+    <Color x:Key="CustomScrollThumbActiveColor">#BBFFFFFF</Color>
+    <SolidColorBrush x:Key="CustomScrollThumbActiveBrush" Color="{DynamicResource CustomScrollThumbActiveColor}" />
+
+    <CornerRadius x:Key="CustomCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="CustomCornerRadiusSmall">4</CornerRadius>
+    <sys:Double x:Key="CustomBorderThickness">1</sys:Double>
+    <sys:Double x:Key="CustomShadowOpacity">0.35</sys:Double>
+    <sys:Double x:Key="CustomShadowBlurRadius">16</sys:Double>
+    <sys:Double x:Key="CustomShadowDepth">2</sys:Double>
+
+    <FontFamily x:Key="CustomFontFamily">Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial</FontFamily>
+    <FontFamily x:Key="CustomMonospaceFontFamily">Cascadia Mono, Consolas, Courier New</FontFamily>
+    <sys:Double x:Key="CustomFontScale">1.0</sys:Double>
+
+    <sys:Double x:Key="CustomMotionScale">1.0</sys:Double>
+    <sys:Int32 x:Key="CustomThemeTransitionMs">180</sys:Int32>
+
+</ResourceDictionary>

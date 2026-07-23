@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "luxury-gold",
+  "name": "Luxury Gold",
+  "author": "Fluid Fences",
+  "category": "Warm",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFFFD700",
+    "primaryHover": "#FFFFDD26",
+    "primaryPressed": "#FFD1B000",
+    "secondary": "#FFD4AF37",
+    "accent": "#FFFFD700",
+    "background": "#CC1F1A0F",
+    "surface": "#18FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF2B2415",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFFFD700",
+    "textPrimary": "#FFF5E6C4",
+    "textSecondary": "#FFD4AF37",
+    "textDisabled": "#80D4AF37",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFD4AF37",
+    "glyphHover": "#FFF5E6C4",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFFFD700",
+    "selectionFill": "#33FFD700",
+    "selectionStroke": "#FFFFD700",
+    "dropTarget": "#55FFD700",
+    "scrollThumb": "#4DF5E6C4",
+    "scrollThumbHover": "#8CF5E6C4",
+    "scrollThumbActive": "#C4F5E6C4"
+  },
+  "shape": {
+    "cornerRadius": 4,
+    "cornerRadiusSmall": 2,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

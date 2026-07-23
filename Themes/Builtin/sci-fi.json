@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "sci-fi",
+  "name": "Sci-Fi",
+  "author": "Fluid Fences",
+  "category": "Dark",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF0088FF",
+    "primaryHover": "#FF269AFF",
+    "primaryPressed": "#FF0070D1",
+    "secondary": "#FF88BBEE",
+    "accent": "#FF0088FF",
+    "background": "#CC050F1A",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF0A1C2E",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF0088FF",
+    "textPrimary": "#FFE0F0FF",
+    "textSecondary": "#FF88BBEE",
+    "textDisabled": "#8088BBEE",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF88BBEE",
+    "glyphHover": "#FFE0F0FF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF0088FF",
+    "selectionFill": "#330088FF",
+    "selectionStroke": "#FF0088FF",
+    "dropTarget": "#550088FF",
+    "scrollThumb": "#4DE0F0FF",
+    "scrollThumbHover": "#8CE0F0FF",
+    "scrollThumbActive": "#C4E0F0FF"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

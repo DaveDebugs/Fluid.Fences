@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "purple-dream",
+  "name": "Purple Dream",
+  "author": "Fluid Fences",
+  "category": "Cosmic",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF9933FF",
+    "primaryHover": "#FFA852FF",
+    "primaryPressed": "#FF7D2AD1",
+    "secondary": "#FFB888FF",
+    "accent": "#FF9933FF",
+    "background": "#CC1A0B2E",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF2A124C",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF9933FF",
+    "textPrimary": "#FFF0E6FF",
+    "textSecondary": "#FFB888FF",
+    "textDisabled": "#80B888FF",
+    "textOnAccent": "#FFFFFFFF",
+    "glyph": "#FFB888FF",
+    "glyphHover": "#FFF0E6FF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF9933FF",
+    "selectionFill": "#339933FF",
+    "selectionStroke": "#FF9933FF",
+    "dropTarget": "#559933FF",
+    "scrollThumb": "#4DF0E6FF",
+    "scrollThumbHover": "#8CF0E6FF",
+    "scrollThumbActive": "#C4F0E6FF"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

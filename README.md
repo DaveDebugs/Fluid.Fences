@@ -4,7 +4,7 @@ A lightning-fast, modern, and open-source desktop organization utility for Windo
 Tired of a cluttered desktop? Fluid Fences allows you to effortlessly group your shortcuts, files, and folders into sleek, native-looking translucent windows right on your desktop. Built with C# and WPF, it is highly optimized, lightweight, and deeply integrated with Windows 11 design paradigms.
 
 ✨ Key Features
-🗂️ Advanced Tabbed Workspaces: Don't just make lists—make categories! Create multiple tabs within a single fence.
+🗂️ Advanced Tabbed Workspaces: Don't just make lists, make categories. Create multiple tabs within a single fence.
 
 💨 Tear-Off & Merge: Drag a tab onto your desktop to instantly spawn a new fence, or drag a fence into another to merge them!
 
@@ -20,24 +20,10 @@ Tired of a cluttered desktop? Fluid Fences allows you to effortlessly group your
 
 📜 Roll-up Fences: Double-click the title bar to "roll up" a fence, hiding the icons but keeping the title bar accessible to save space.
 
-🔄 Auto-Updating: Built-in seamless background updating pulls the latest features directly from GitHub Releases.
+🔄 Auto-Updating: Built-in background updating pulls the latest release directly from GitHub Releases.
 
 🚀 Installation
-There are two ways to get Fluid Fences:
-
-1. Download the Executable (Recommended for Users)
-
-Navigate to the Releases page on this repository.
-
-Download the latest FluidFences.exe.
-
-Run the application. It will automatically set up its configuration folders and spawn your first fence!
-
-2. Via NuGet (For Developers)
-
-Bash
-
-dotnet add package FluidFences
+Head to the Releases page on this repository and download the latest installer. Run it, then launch Fluid Fences. On first run it sets up its configuration folders and spawns your first fence.
 
 
 
@@ -91,9 +77,6 @@ Native Win32 & COM Interop (For icon extraction and shell integration)
 Contributions, issues, and feature requests are always welcome!
 If you find a bug or have an idea for a cool new feature, feel free to open an issue or submit a pull request.
 
-📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ❤️ Support the Project
 If you find this tool useful and want to help keep the internet on, consider a donation:
 
@@ -102,4 +85,4 @@ Buymeacoffee: @ [Davedebugs](https://buymeacoffee.com/davedebugs)    Or Venmo : 
 📜 License
 This project is licensed under the GNU General Public License v3.0. See the LICENSE file for details.
 
-© 2026 [Davedebugs -- David Daniel]
+© 2026 Davedebugs (David Daniel)

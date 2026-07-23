@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "steam-inspired",
+  "name": "Steam Inspired",
+  "author": "Fluid Fences",
+  "category": "Brand",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF66C0F4",
+    "primaryHover": "#FF7DC9F6",
+    "primaryPressed": "#FF549DC8",
+    "secondary": "#FF66C0F4",
+    "accent": "#FF66C0F4",
+    "background": "#CC171A21",
+    "surface": "#18FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF1B2838",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF66C0F4",
+    "textPrimary": "#FFC6D4DF",
+    "textSecondary": "#FF66C0F4",
+    "textDisabled": "#8066C0F4",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF66C0F4",
+    "glyphHover": "#FFC6D4DF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF66C0F4",
+    "selectionFill": "#3366C0F4",
+    "selectionStroke": "#FF66C0F4",
+    "dropTarget": "#5566C0F4",
+    "scrollThumb": "#4DC6D4DF",
+    "scrollThumbHover": "#8CC6D4DF",
+    "scrollThumbActive": "#C4C6D4DF"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

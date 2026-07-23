@@ -68,7 +68,7 @@ namespace DesktopFences.Core
             get => _fontColor;
             set { _fontColor = value; OnPropertyChanged(); }
         }
-        
+
         private string _secondaryFontColor = "#FFAAAAAA";
         public string SecondaryFontColor
         {

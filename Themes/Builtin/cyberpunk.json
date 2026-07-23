@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "cyberpunk",
+  "name": "Cyberpunk",
+  "author": "Fluid Fences",
+  "category": "Vivid",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFFF007F",
+    "primaryHover": "#FFFF2692",
+    "primaryPressed": "#FFD10068",
+    "secondary": "#FFFF007F",
+    "accent": "#FFFF007F",
+    "background": "#CC0A0A1A",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF1A1A33",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFFF007F",
+    "textPrimary": "#FF00FFFF",
+    "textSecondary": "#FFFF007F",
+    "textDisabled": "#80FF007F",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFFF007F",
+    "glyphHover": "#FF00FFFF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFFF007F",
+    "selectionFill": "#33FF007F",
+    "selectionStroke": "#FFFF007F",
+    "dropTarget": "#55FF007F",
+    "scrollThumb": "#4D00FFFF",
+    "scrollThumbHover": "#8C00FFFF",
+    "scrollThumbActive": "#C400FFFF"
+  },
+  "shape": {
+    "cornerRadius": 2,
+    "cornerRadiusSmall": 0,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

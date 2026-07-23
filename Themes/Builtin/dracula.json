@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "dracula",
+  "name": "Dracula",
+  "author": "Fluid Fences",
+  "category": "Community",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFBD93F9",
+    "primaryHover": "#FFC7A3FA",
+    "primaryPressed": "#FF9B79CC",
+    "secondary": "#FF6272A4",
+    "accent": "#FFBD93F9",
+    "background": "#CC282A36",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF44475A",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFBD93F9",
+    "textPrimary": "#FFF8F8F2",
+    "textSecondary": "#FF6272A4",
+    "textDisabled": "#806272A4",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFF8F8F2",
+    "glyphHover": "#FFF8F8F2",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFBD93F9",
+    "selectionFill": "#33BD93F9",
+    "selectionStroke": "#FFBD93F9",
+    "dropTarget": "#55BD93F9",
+    "scrollThumb": "#4DF8F8F2",
+    "scrollThumbHover": "#8CF8F8F2",
+    "scrollThumbActive": "#C4F8F8F2"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

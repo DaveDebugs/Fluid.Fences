@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "desert",
+  "name": "Desert",
+  "author": "Fluid Fences",
+  "category": "Warm",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFD06030",
+    "primaryHover": "#FFD7784F",
+    "primaryPressed": "#FFAB4F27",
+    "secondary": "#FFB89070",
+    "accent": "#FFD06030",
+    "background": "#CC2B1D14",
+    "surface": "#18FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF402B1E",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFD06030",
+    "textPrimary": "#FFF0D8C0",
+    "textSecondary": "#FFB89070",
+    "textDisabled": "#80B89070",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFB89070",
+    "glyphHover": "#FFF0D8C0",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFD06030",
+    "selectionFill": "#33D06030",
+    "selectionStroke": "#FFD06030",
+    "dropTarget": "#55D06030",
+    "scrollThumb": "#4DF0D8C0",
+    "scrollThumbHover": "#8CF0D8C0",
+    "scrollThumbActive": "#C4F0D8C0"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

@@ -16,7 +16,7 @@
     DragLeave="Window_DragLeave"
     DragOver="Window_DragOver"
     Drop="Window_Drop"
-    FontFamily="Segoe UI Variable, Segoe UI, Arial"
+    FontFamily="{DynamicResource CustomFontFamily}"
     Loaded="Window_Loaded"
     MouseEnter="Window_MouseEnter"
     MouseLeave="Window_MouseLeave"
@@ -32,14 +32,14 @@
                         <Border
                             x:Name="ThumbBorder"
                             Margin="2,0,2,0"
-                            Background="#44FFFFFF"
-                            CornerRadius="4" />
+                            Background="{DynamicResource CustomScrollThumbBrush}"
+                            CornerRadius="{DynamicResource CustomCornerRadiusSmall}" />
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#88FFFFFF" />
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource CustomScrollThumbHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#BBFFFFFF" />
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource CustomScrollThumbActiveBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -80,28 +80,45 @@
 
         <Style x:Key="TabListBoxItem" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#BBBBBB" />
-            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="Foreground" Value="{DynamicResource CustomTextSecondaryBrush}" />
+            <Setter Property="Padding" Value="12,7" />
             <Setter Property="Margin" Value="0,0,4,0" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontFamily" Value="{DynamicResource CustomFontFamily}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                            <ContentPresenter
-                                Margin="{TemplateBinding Padding}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
+                        <Grid>
+                            <Border x:Name="Fill"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="{DynamicResource CustomCornerRadiusSmall}">
+                                <ContentPresenter
+                                    Margin="{TemplateBinding Padding}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </Border>
+
+                            <Border x:Name="FocusRing"
+                                    BorderBrush="{DynamicResource CustomFocusRingBrush}"
+                                    BorderThickness="2"
+                                    CornerRadius="{DynamicResource CustomCornerRadiusSmall}"
+                                    SnapsToDevicePixels="True"
+                                    Visibility="Collapsed" />
+                        </Grid>
+
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#22FFFFFF" />
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource CustomSurfaceHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource CustomTextPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#44FFFFFF" />
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource CustomSurfaceSelectedBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource CustomTextPrimaryBrush}" />
                                 <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FocusRing" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -109,6 +126,43 @@
             </Setter>
         </Style>
 
+        <Style x:Key="HeaderGlyphButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Fill"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="{DynamicResource CustomCornerRadiusSmall}" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border x:Name="FocusRing"
+                                    BorderBrush="{DynamicResource CustomFocusRingBrush}"
+                                    BorderThickness="2"
+                                    CornerRadius="{DynamicResource CustomCornerRadiusSmall}"
+                                    SnapsToDevicePixels="True"
+                                    Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource CustomSurfaceHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource CustomSurfaceSelectedBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FocusRing" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
     </Window.Resources>
 
@@ -204,7 +258,7 @@
                         <MenuItem x:Name="MenuEditColor" Click="Menu_EditColor_Click" Header="Edit Color..." Icon="{ui:SymbolIcon Symbol=Color24}" />
                         <MenuItem x:Name="MenuSettings" Click="Menu_Settings_Click" Header="Settings..." Icon="{ui:SymbolIcon Symbol=Settings24}" />
                         <Separator />
-                        <MenuItem x:Name="MenuDeleteFence" Click="Menu_DeleteFence_Click" Foreground="#FF4444" Header="Delete Fence" Icon="{ui:SymbolIcon Symbol=Delete24}" />
+                        <MenuItem x:Name="MenuDeleteFence" Click="Menu_DeleteFence_Click" Foreground="{DynamicResource CustomErrorBrush}" Header="Delete Fence" Icon="{ui:SymbolIcon Symbol=Delete24}" InputGestureText="Del" />
                     </ContextMenu>
                 </Border.ContextMenu>
 
@@ -219,9 +273,10 @@
                             x:Name="TitleText"
                             Margin="10,0,10,0"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe UI Semibold"
+                            FontFamily="{DynamicResource CustomFontFamily}"
                             FontSize="12"
-                            Foreground="{DynamicResource CustomFontBrush}"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource CustomTextPrimaryBrush}"
                             Text="{Binding FolderName}"
                             TextTrimming="CharacterEllipsis"
                             MouseLeftButtonDown="TitleText_MouseLeftButtonDown" />
@@ -232,35 +287,35 @@
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
 
-                        <Border
+                        <Button
                             x:Name="SearchIcon"
                             Margin="0,0,2,0"
-                            Padding="12,10"
-                            Background="Transparent"
-                            Cursor="Hand"
-                            MouseLeftButtonDown="SearchIcon_MouseLeftButtonDown">
+                            Click="SearchIcon_Click"
+                            Style="{StaticResource HeaderGlyphButton}"
+                            AutomationProperties.Name="Search this fence"
+                            ToolTip="Search this fence (Ctrl+F)">
                             <Path
                                 Width="14"
                                 Height="14"
                                 Data="M 15.5 14 L 10.71 9.21 C 11.52 8.08 12 6.6 12 5 C 12 2.24 9.76 0 7 0 C 4.24 0 2 2.24 2 5 C 2 7.76 4.24 10 7 10 C 8.6 10 10.08 9.52 11.21 8.71 L 16 13.5 L 15.5 14 Z M 7 8 C 5.34 8 4 6.66 4 5 C 4 3.34 5.34 2 7 2 C 8.66 2 10 3.34 10 5 C 10 6.66 8.66 8 7 8 Z"
-                                Fill="#CCCCCC"
+                                Fill="{DynamicResource CustomGlyphBrush}"
                                 Stretch="Uniform" />
-                        </Border>
+                        </Button>
 
-                        <Border
+                        <Button
                             x:Name="MenuIcon"
                             Margin="0,0,4,0"
-                            Padding="12,10"
-                            Background="Transparent"
-                            Cursor="Hand"
-                            MouseLeftButtonDown="MenuIcon_MouseLeftButtonDown">
+                            Click="MenuIcon_Click"
+                            Style="{StaticResource HeaderGlyphButton}"
+                            AutomationProperties.Name="Fence menu"
+                            ToolTip="Fence menu (F10)">
                             <Path
                                 Width="16"
                                 Height="16"
                                 Data="M 2 4 h 12 v 2 H 2 Z m 0 5 h 12 v 2 H 2 Z m 0 5 h 12 v 2 H 2 Z"
-                                Fill="#CCCCCC"
+                                Fill="{DynamicResource CustomGlyphBrush}"
                                 Stretch="Uniform" />
-                        </Border>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -277,10 +332,14 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Panel.ZIndex="999"
-                Background="#33000000"
-                BorderBrush="#555"
+                Background="{DynamicResource CustomSurfaceSubtleBrush}"
+                BorderBrush="{DynamicResource CustomBorderBrush}"
                 BorderThickness="1"
-                Foreground="White"
+                CaretBrush="{DynamicResource CustomTextPrimaryBrush}"
+                FontFamily="{DynamicResource CustomFontFamily}"
+                Foreground="{DynamicResource CustomTextPrimaryBrush}"
+                AutomationProperties.Name="Filter items in this fence"
+                KeyDown="SearchBox_KeyDown"
                 LostFocus="SearchBox_LostFocus"
                 TextChanged="SearchBox_TextChanged"
                 Visibility="Collapsed" />
@@ -323,34 +382,17 @@
                     <Button
                         x:Name="AddTabBtn"
                         Grid.Column="1"
-                        Width="22"
-                        Height="22"
+                        Width="28"
+                        Height="28"
                         Margin="4,0,0,0"
                         VerticalAlignment="Center"
-                        Background="Transparent"
-                        BorderThickness="0"
                         Click="AddTabBtn_Click"
                         Content="+"
-                        Cursor="Hand"
                         FontSize="16"
-                        Foreground="#BBBBBB">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                    <ContentPresenter
-                                        Margin="0,-2,0,0"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center" />
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#22FFFFFF" />
-                                        <Setter Property="Foreground" Value="White" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                        Foreground="{DynamicResource CustomTextSecondaryBrush}"
+                        Style="{StaticResource HeaderGlyphButton}"
+                        AutomationProperties.Name="New tab"
+                        ToolTip="New tab (Ctrl+T)" />
                 </Grid>
 
                 <ScrollViewer
@@ -361,8 +403,8 @@
                         <Canvas x:Name="SelectionCanvas">
                             <Border
                                 x:Name="SelectionBox"
-                                Background="#330078D7"
-                                BorderBrush="#0078D7"
+                                Background="{DynamicResource CustomSelectionFillBrush}"
+                                BorderBrush="{DynamicResource CustomSelectionStrokeBrush}"
                                 BorderThickness="1"
                                 Visibility="Collapsed" />
                         </Canvas>

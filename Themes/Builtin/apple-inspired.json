@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "apple-inspired",
+  "name": "Apple Inspired",
+  "author": "Fluid Fences",
+  "category": "Light",
+  "baseTheme": "Light",
+  "colors": {
+    "primary": "#FF0071E3",
+    "primaryHover": "#FF0066CC",
+    "primaryPressed": "#FF0055AA",
+    "secondary": "#FF86868B",
+    "accent": "#FF0071E3",
+    "background": "#CCF5F5F7",
+    "surface": "#22000000",
+    "surfaceSubtle": "#13000000",
+    "surfaceHover": "#14000000",
+    "surfaceSelected": "#28000000",
+    "header": "#FFE8E8ED",
+    "border": "#59000000",
+    "borderSubtle": "#1E000000",
+    "focusRing": "#FF0071E3",
+    "textPrimary": "#FF1D1D1F",
+    "textSecondary": "#FF86868B",
+    "textDisabled": "#8086868B",
+    "textOnAccent": "#FFFFFFFF",
+    "glyph": "#FF0A0A0B",
+    "glyphHover": "#FF1D1D1F",
+    "success": "#FF107C10",
+    "error": "#FFC42B1C",
+    "warning": "#FF9D5D00",
+    "info": "#FF0071E3",
+    "selectionFill": "#330071E3",
+    "selectionStroke": "#FF0071E3",
+    "dropTarget": "#550071E3",
+    "scrollThumb": "#4D1D1D1F",
+    "scrollThumbHover": "#8C1D1D1F",
+    "scrollThumbActive": "#C41D1D1F"
+  },
+  "shape": {
+    "cornerRadius": 12,
+    "cornerRadiusSmall": 6,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

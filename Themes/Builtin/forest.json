@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "forest",
+  "name": "Forest",
+  "author": "Fluid Fences",
+  "category": "Nature",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF22CC55",
+    "primaryHover": "#FF43D46E",
+    "primaryPressed": "#FF1CA746",
+    "secondary": "#FF66AA77",
+    "accent": "#FF22CC55",
+    "background": "#CC0A1A0F",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF0F2B18",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF22CC55",
+    "textPrimary": "#FFD0F0D8",
+    "textSecondary": "#FF66AA77",
+    "textDisabled": "#8066AA77",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF66AA77",
+    "glyphHover": "#FFD0F0D8",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF22CC55",
+    "selectionFill": "#3322CC55",
+    "selectionStroke": "#FF22CC55",
+    "dropTarget": "#5522CC55",
+    "scrollThumb": "#4DD0F0D8",
+    "scrollThumbHover": "#8CD0F0D8",
+    "scrollThumbActive": "#C4D0F0D8"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "catppuccin-mocha",
+  "name": "Catppuccin Mocha",
+  "author": "Fluid Fences",
+  "category": "Community",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFCBA6F7",
+    "primaryHover": "#FFD3B3F8",
+    "primaryPressed": "#FFA688CB",
+    "secondary": "#FFA6ADC8",
+    "accent": "#FFCBA6F7",
+    "background": "#CC1E1E2E",
+    "surface": "#18FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF313244",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFCBA6F7",
+    "textPrimary": "#FFCDD6F4",
+    "textSecondary": "#FFA6ADC8",
+    "textDisabled": "#80A6ADC8",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFA6ADC8",
+    "glyphHover": "#FFCDD6F4",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFCBA6F7",
+    "selectionFill": "#33CBA6F7",
+    "selectionStroke": "#FFCBA6F7",
+    "dropTarget": "#55CBA6F7",
+    "scrollThumb": "#4DCDD6F4",
+    "scrollThumbHover": "#8CCDD6F4",
+    "scrollThumbActive": "#C4CDD6F4"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

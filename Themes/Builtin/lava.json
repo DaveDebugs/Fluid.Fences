@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "lava",
+  "name": "Lava",
+  "author": "Fluid Fences",
+  "category": "Warm",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFFF2200",
+    "primaryHover": "#FFFF4326",
+    "primaryPressed": "#FFD11C00",
+    "secondary": "#FFFF5500",
+    "accent": "#FFFF2200",
+    "background": "#CC1A0500",
+    "surface": "#1AFFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF2B0800",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFFF2200",
+    "textPrimary": "#FFFFD0A0",
+    "textSecondary": "#FFFF5500",
+    "textDisabled": "#80FF5500",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFFF5500",
+    "glyphHover": "#FFFFD0A0",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFFF2200",
+    "selectionFill": "#33FF2200",
+    "selectionStroke": "#FFFF2200",
+    "dropTarget": "#55FF2200",
+    "scrollThumb": "#4DFFD0A0",
+    "scrollThumbHover": "#8CFFD0A0",
+    "scrollThumbActive": "#C4FFD0A0"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

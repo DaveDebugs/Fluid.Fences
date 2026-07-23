@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "discord-inspired",
+  "name": "Discord Inspired",
+  "author": "Fluid Fences",
+  "category": "Brand",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF5865F2",
+    "primaryHover": "#FF717CF4",
+    "primaryPressed": "#FF4853C6",
+    "secondary": "#FF949BA4",
+    "accent": "#FF5865F2",
+    "background": "#CC313338",
+    "surface": "#1AFFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF2B2D31",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFDBDEE1",
+    "textPrimary": "#FFDBDEE1",
+    "textSecondary": "#FF949BA4",
+    "textDisabled": "#80949BA4",
+    "textOnAccent": "#FFFFFFFF",
+    "glyph": "#FF949BA4",
+    "glyphHover": "#FFDBDEE1",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF5865F2",
+    "selectionFill": "#335865F2",
+    "selectionStroke": "#FF5865F2",
+    "dropTarget": "#555865F2",
+    "scrollThumb": "#4DDBDEE1",
+    "scrollThumbHover": "#8CDBDEE1",
+    "scrollThumbActive": "#C4DBDEE1"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

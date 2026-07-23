@@ -9,7 +9,10 @@ namespace DesktopFences
         [JsonPropertyName("ShowTaskbarIcon")] public bool ShowTaskbarIcon { get; set; } = true;
         [JsonPropertyName("RestoreFilesOnDelete")] public bool RestoreFilesOnDelete { get; set; } = true;
         [JsonPropertyName("EnableGhostMode")] public bool EnableGhostMode { get; set; } = false;
-        
+        [JsonPropertyName("PauseMediaOnRollup")] public bool PauseMediaOnRollup { get; set; } = true;
+
+        [JsonPropertyName("ThemeId")] public string? ThemeId { get; set; }
+
         [JsonPropertyName("Theme")] public Core.ThemeSettings Theme { get; set; } = new Core.ThemeSettings();
     }
 
@@ -58,9 +61,10 @@ namespace DesktopFences
         [JsonPropertyName("IconSize")] public double IconSize { get; set; } = 48;
         [JsonPropertyName("ShowSearch")] public bool ShowSearch { get; set; } = true;
         [JsonPropertyName("AutoMatchColor")] public bool AutoMatchColor { get; set; } = false;
+
+        [JsonPropertyName("ColorSource")] public string? ColorSource { get; set; }
         [JsonPropertyName("GhostModeOverride")] public int GhostModeOverride { get; set; } = 0;
 
-        // Legacy properties for migration
         [JsonPropertyName("Title")] public string Title { get; set; } = "Fluid Fence";
         [JsonPropertyName("SortMethod")] public string SortMethod { get; set; } = "None";
         [JsonPropertyName("AutoSortExtensions")] public string AutoSortExtensions { get; set; } = "";

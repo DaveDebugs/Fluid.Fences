@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "aurora",
+  "name": "Aurora",
+  "author": "Fluid Fences",
+  "category": "Nature",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF00FF99",
+    "primaryHover": "#FF26FFA8",
+    "primaryPressed": "#FF00D17D",
+    "secondary": "#FF66CCA5",
+    "accent": "#FF00FF99",
+    "background": "#CC051015",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF0A1F29",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF00FF99",
+    "textPrimary": "#FFE0F8E0",
+    "textSecondary": "#FF66CCA5",
+    "textDisabled": "#8066CCA5",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF66CCA5",
+    "glyphHover": "#FFE0F8E0",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF00FF99",
+    "selectionFill": "#3300FF99",
+    "selectionStroke": "#FF00FF99",
+    "dropTarget": "#5500FF99",
+    "scrollThumb": "#4DE0F8E0",
+    "scrollThumbHover": "#8CE0F8E0",
+    "scrollThumbActive": "#C4E0F8E0"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

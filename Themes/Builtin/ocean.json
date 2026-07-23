@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "ocean",
+  "name": "Ocean",
+  "author": "Fluid Fences",
+  "category": "Nature",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF0099FF",
+    "primaryHover": "#FF26A8FF",
+    "primaryPressed": "#FF007DD1",
+    "secondary": "#FF66CCFF",
+    "accent": "#FF0099FF",
+    "background": "#CC001133",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF001A4D",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF0099FF",
+    "textPrimary": "#FFCCFFFF",
+    "textSecondary": "#FF66CCFF",
+    "textDisabled": "#8066CCFF",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF66CCFF",
+    "glyphHover": "#FFCCFFFF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF0099FF",
+    "selectionFill": "#330099FF",
+    "selectionStroke": "#FF0099FF",
+    "dropTarget": "#550099FF",
+    "scrollThumb": "#4DCCFFFF",
+    "scrollThumbHover": "#8CCCFFFF",
+    "scrollThumbActive": "#C4CCFFFF"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

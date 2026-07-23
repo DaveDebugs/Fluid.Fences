@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "midnight-gold",
+  "name": "Midnight Gold",
+  "author": "Fluid Fences",
+  "category": "Dark",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFD4AF37",
+    "primaryHover": "#FFDABB55",
+    "primaryPressed": "#FFAE902D",
+    "secondary": "#FF94A3B8",
+    "accent": "#FFD4AF37",
+    "background": "#CC0F172A",
+    "surface": "#19FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF1E293B",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFD4AF37",
+    "textPrimary": "#FFF8FAFC",
+    "textSecondary": "#FF94A3B8",
+    "textDisabled": "#8094A3B8",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF94A3B8",
+    "glyphHover": "#FFF8FAFC",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFD4AF37",
+    "selectionFill": "#33D4AF37",
+    "selectionStroke": "#FFD4AF37",
+    "dropTarget": "#55D4AF37",
+    "scrollThumb": "#4DF8FAFC",
+    "scrollThumbHover": "#8CF8FAFC",
+    "scrollThumbActive": "#C4F8FAFC"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

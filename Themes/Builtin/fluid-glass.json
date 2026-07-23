@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "fluid-glass",
+  "name": "Fluid Glass (Default)",
+  "author": "Fluid Fences",
+  "category": "Signature",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFFFFFFF",
+    "primaryHover": "#FFFFFFFF",
+    "primaryPressed": "#FFD1D1D1",
+    "secondary": "#FFAAAAAA",
+    "accent": "#FFFFFFFF",
+    "background": "#01000000",
+    "surface": "#2AFFFFFF",
+    "surfaceSubtle": "#17FFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#05FFFFFF",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFFFFFFF",
+    "textPrimary": "#FFFFFFFF",
+    "textSecondary": "#FFAAAAAA",
+    "textDisabled": "#80AAAAAA",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFFFFFFF",
+    "glyphHover": "#FFFFFFFF",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFFFFFFF",
+    "selectionFill": "#33FFFFFF",
+    "selectionStroke": "#FFFFFFFF",
+    "dropTarget": "#55FFFFFF",
+    "scrollThumb": "#4DFFFFFF",
+    "scrollThumbHover": "#8CFFFFFF",
+    "scrollThumbActive": "#C4FFFFFF"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

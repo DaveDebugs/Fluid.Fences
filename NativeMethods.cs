@@ -142,22 +142,17 @@ namespace DesktopFences
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
         internal static extern int SHFileOperation(ref SHFILEOPSTRUCT FileOp);
 
-        internal static int PerformFileOperation(IntPtr hwnd, uint wFunc, string pFrom, string pTo, ushort fFlags)
+        private static string EnsureDoubleNullTerminated(string value) =>
+            value.EndsWith("\0\0", StringComparison.Ordinal) ? value : value + "\0\0";
+
+        internal static int PerformFileOperation(IntPtr hwnd, uint wFunc, string? pFrom, string? pTo, ushort fFlags)
         {
             IntPtr pFromPtr = IntPtr.Zero;
             IntPtr pToPtr = IntPtr.Zero;
             try
             {
-                if (pFrom != null)
-                {
-                    string fromStr = pFrom.EndsWith("\0\0") ? pFrom : pFrom + "\0\0";
-                    pFromPtr = Marshal.StringToHGlobalUni(fromStr);
-                }
-                if (pTo != null)
-                {
-                    string toStr = pTo.EndsWith("\0\0") ? pTo : pTo + "\0\0";
-                    pToPtr = Marshal.StringToHGlobalUni(toStr);
-                }
+                if (pFrom != null) pFromPtr = Marshal.StringToHGlobalUni(EnsureDoubleNullTerminated(pFrom));
+                if (pTo   != null) pToPtr   = Marshal.StringToHGlobalUni(EnsureDoubleNullTerminated(pTo));
 
                 SHFILEOPSTRUCT shf = new SHFILEOPSTRUCT
                 {

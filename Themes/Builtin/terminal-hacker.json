@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "terminal-hacker",
+  "name": "Terminal Hacker",
+  "author": "Fluid Fences",
+  "category": "Vivid",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF33FF33",
+    "primaryHover": "#FF52FF52",
+    "primaryPressed": "#FF2AD12A",
+    "secondary": "#FF118811",
+    "accent": "#FF33FF33",
+    "background": "#E6000000",
+    "surface": "#1FFFFFFF",
+    "surfaceSubtle": "#11FFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF111111",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF33FF33",
+    "textPrimary": "#FF33FF33",
+    "textSecondary": "#FF118811",
+    "textDisabled": "#80118811",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF118811",
+    "glyphHover": "#FF33FF33",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF33FF33",
+    "selectionFill": "#3333FF33",
+    "selectionStroke": "#FF33FF33",
+    "dropTarget": "#5533FF33",
+    "scrollThumb": "#4D33FF33",
+    "scrollThumbHover": "#8C33FF33",
+    "scrollThumbActive": "#C433FF33"
+  },
+  "shape": {
+    "cornerRadius": 0,
+    "cornerRadiusSmall": 0,
+    "borderThickness": 1,
+    "shadowOpacity": 0.0,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Cascadia Mono, Consolas, Courier New",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

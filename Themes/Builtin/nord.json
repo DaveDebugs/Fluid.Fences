@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "nord",
+  "name": "Nord",
+  "author": "Fluid Fences",
+  "category": "Community",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FF88C0D0",
+    "primaryHover": "#FF9AC9D7",
+    "primaryPressed": "#FF709DAB",
+    "secondary": "#FF81A1C1",
+    "accent": "#FF88C0D0",
+    "background": "#CC2E3440",
+    "surface": "#1AFFFFFF",
+    "surfaceSubtle": "#0EFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF3B4252",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FF88C0D0",
+    "textPrimary": "#FFECEFF4",
+    "textSecondary": "#FF81A1C1",
+    "textDisabled": "#8081A1C1",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FF81A1C1",
+    "glyphHover": "#FFECEFF4",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FF88C0D0",
+    "selectionFill": "#3388C0D0",
+    "selectionStroke": "#FF88C0D0",
+    "dropTarget": "#5588C0D0",
+    "scrollThumb": "#4DECEFF4",
+    "scrollThumbHover": "#8CECEFF4",
+    "scrollThumbActive": "#C4ECEFF4"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}

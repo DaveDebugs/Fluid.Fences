@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "mocha-earth",
+  "name": "Mocha Earth",
+  "author": "Fluid Fences",
+  "category": "Warm",
+  "baseTheme": "Dark",
+  "colors": {
+    "primary": "#FFC26E4A",
+    "primaryHover": "#FFCB8465",
+    "primaryPressed": "#FF9F5A3D",
+    "secondary": "#FFB3A194",
+    "accent": "#FFC26E4A",
+    "background": "#CC2A1E18",
+    "surface": "#18FFFFFF",
+    "surfaceSubtle": "#0DFFFFFF",
+    "surfaceHover": "#1CFFFFFF",
+    "surfaceSelected": "#38FFFFFF",
+    "header": "#FF3D2E26",
+    "border": "#4DFFFFFF",
+    "borderSubtle": "#24FFFFFF",
+    "focusRing": "#FFC26E4A",
+    "textPrimary": "#FFEBE3D5",
+    "textSecondary": "#FFB3A194",
+    "textDisabled": "#80B3A194",
+    "textOnAccent": "#FF000000",
+    "glyph": "#FFB3A194",
+    "glyphHover": "#FFEBE3D5",
+    "success": "#FF6CCB5F",
+    "error": "#FFFF6B6B",
+    "warning": "#FFFFC83D",
+    "info": "#FFC26E4A",
+    "selectionFill": "#33C26E4A",
+    "selectionStroke": "#FFC26E4A",
+    "dropTarget": "#55C26E4A",
+    "scrollThumb": "#4DEBE3D5",
+    "scrollThumbHover": "#8CEBE3D5",
+    "scrollThumbActive": "#C4EBE3D5"
+  },
+  "shape": {
+    "cornerRadius": 8,
+    "cornerRadiusSmall": 4,
+    "borderThickness": 1,
+    "shadowOpacity": 0.35,
+    "shadowBlurRadius": 16,
+    "shadowDepth": 2
+  },
+  "typography": {
+    "fontFamily": "Segoe UI Variable Text, Segoe UI Variable, Segoe UI, Arial",
+    "monospaceFontFamily": "Cascadia Mono, Consolas, Courier New",
+    "scale": 1.0,
+    "titleWeight": "SemiBold"
+  },
+  "motion": {
+    "speedMultiplier": 1.0,
+    "rollUpStyle": "Smooth",
+    "themeTransitionMs": 180
+  }
+}
