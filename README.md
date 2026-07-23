@@ -1,88 +1,93 @@
-🌊 Fluid Fences
-A lightning-fast, modern, and open-source desktop organization utility for Windows.
+# 🌊 Fluid Fences
 
-Tired of a cluttered desktop? Fluid Fences allows you to effortlessly group your shortcuts, files, and folders into sleek, native-looking translucent windows right on your desktop. Built with C# and WPF, it is highly optimized, lightweight, and deeply integrated with Windows 11 design paradigms.
+A fast, open-source desktop organizer for Windows. Group your shortcuts, files, and
+folders into clean translucent containers right on your desktop, and keep everything
+where you can find it.
 
-✨ Key Features
-🗂️ Advanced Tabbed Workspaces: Don't just make lists, make categories. Create multiple tabs within a single fence.
+Built with C# and WPF for Windows 10 and 11.
 
-💨 Tear-Off & Merge: Drag a tab onto your desktop to instantly spawn a new fence, or drag a fence into another to merge them!
+![License](https://img.shields.io/badge/license-GPLv3-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)
 
-🪞 Folder Portals: Mirror any existing folder on your hard drive directly to your desktop. Changes made in the portal instantly reflect on your PC.
+## Features
 
-🧹 Auto-Organize: Tell Fluid Fences your preferred file extensions (e.g., .jpg, .png), and it will automatically sweep them off your desktop and into your vault.
+**Organizing your desktop**
 
-🎨 Dynamic Customization: Adjust opacity, tint, and icon sizes, or enable Auto-Match to let your fences automatically blend with your current desktop wallpaper.
+- Tabbed fences. Put several tabs inside a single fence instead of spreading lists across the screen.
+- Tear-off and merge. Drag a tab onto the desktop to spawn a new fence, or drop one fence onto another to combine them.
+- Folder Portals. Mirror a real folder from your drive onto the desktop. A change in the portal changes the folder, and the other way around.
+- Auto-Organize. Pick the file types you care about and Fluid Fences sweeps them off the desktop into the fence you choose.
+- Snapshots. Save your layout so your fences come back to the right spot on every monitor.
 
-🧘 Zen Mode: Need to focus? Press Ctrl + Alt + Z to instantly hide all fences and enjoy a clean desktop. Press it again to bring them back.
+**Look and feel**
 
-👻 Ghost Mode: Enable this in settings to make your fences almost invisible until you hover your mouse over them.
+- A set of built-in themes, each with an animated background.
+- Auto-Match. Fluid Fences samples your wallpaper and tints your fences to match it. Change the wallpaper and the fences follow.
+- Adjustable opacity, tint, and icon size.
+- Ghost Mode. Fences stay nearly invisible until you hover over them.
 
-📜 Roll-up Fences: Double-click the title bar to "roll up" a fence, hiding the icons but keeping the title bar accessible to save space.
+**Getting around**
 
-🔄 Auto-Updating: Built-in background updating pulls the latest release directly from GitHub Releases.
+- Zen Mode. Press Ctrl + Alt + Z to hide every fence for a clean desktop, and again to bring them back.
+- Roll-up. Double-click a title bar to collapse a fence down to its header.
+- Search. Filter the icons in a fence from the search box.
+- Sort by name, size, type, or date.
 
-🚀 Installation
-Head to the Releases page on this repository and download the latest installer. Run it, then launch Fluid Fences. On first run it sets up its configuration folders and spawns your first fence.
+**Keeping it current**
 
+- Start with Windows, if you want it to.
+- Auto-updating. The app pulls new releases from GitHub, checks the download, and installs it for you.
 
+## Installation
 
-📖 How to Use Fluid Fences
-When you launch the app, a small Fluid Fences icon will appear in your Windows System Tray (near the clock). This is your command center.
+Download the latest installer from the [Releases page](https://github.com/DaveDebugs/Fluid.Fences/releases),
+run it, and launch Fluid Fences.
 
-Getting Started
-Create a new Fence: Right-click the system tray icon and select "Create New Fence".
+- It installs over an older version in place and keeps your fences and settings.
+- The build is self-contained, so you do not need to install .NET separately.
+- Requires Windows 10 or 11, 64-bit.
 
-Add Files: Simply drag and drop any file, folder, or shortcut from your PC directly into the translucent area of the fence.
+## Getting started
 
-Resize and Move: Click and drag the top header to move the fence. Drag the edges or corners to resize it.
+Fluid Fences lives in the system tray, near the clock.
 
-Mastering Tabs
-Fluid Fences features a powerful tabbed engine to keep massive amounts of files organized in a small footprint.
+1. Create a fence. Right-click the tray icon and choose "Create New Fence".
+2. Add files. Drag any file, folder, or shortcut into the fence.
+3. Move and resize. Drag the header to move a fence, drag an edge or corner to resize it.
 
-Create a Tab: Right-click the header of any fence and select "New Tab Inside This Fence" (or click the + button).
+**Tabs**
 
-Reorder Tabs: Click and drag a tab left or right to reorder them.
+- New tab: right-click a fence header and choose "New Tab Inside This Fence", or click the + button.
+- Reorder: drag a tab left or right.
+- Tear-off: drag a tab onto the empty desktop to turn it into its own fence.
+- Merge: drag one fence's header onto another to combine them.
 
-Tear-Off: Click and drag a tab out of the fence and drop it onto the empty desktop to instantly turn it into its own independent window.
+**Settings**
 
-Merge Fences: Click and drag the header of one fence and drop it onto another to merge them together.
+Double-click the tray icon to open the settings dashboard. From there you can pick a theme,
+turn on Auto-Match, set your Auto-Organize file types, choose what happens to deleted files,
+save a layout snapshot, and toggle start-with-Windows.
 
-Managing Your Workspace
-Roll-Up: Double-click the title bar of any fence to snap it shut. Hover over it to temporarily peek inside, or double-click again to lock it open.
+## Built with
 
-Search: Click the magnifying glass in the top right of any fence to instantly filter the icons currently visible.
+- C# and .NET 8
+- WPF (Windows Presentation Foundation)
+- Win32 and COM interop for icon extraction and shell integration
 
-Sort: Right-click a fence header to quickly sort your files by Name, Size, Item Type, or Date.
+## Contributing
 
-Global Settings
-Double-click the System Tray icon to open the Settings Dashboard. From here, you can:
+Bug reports, ideas, and pull requests are welcome. Open an issue or a pull request on the repository.
 
-Configure the app to start with Windows.
+## License
 
-Change the default behavior for deleted files.
+Fluid Fences is released under the GNU General Public License v3.0. See the [LICENSE](LICENSE)
+file for the full text.
 
-Set up specific file extensions for the "Auto-Organize" feature.
+## Support
 
-Save a "Snapshot" of your layout so your fences always remember exactly where they belong on your monitors.
+If the app is useful to you and you feel like chipping in:
 
-🛠️ Built With
-C# / .NET 8
-
-WPF (Windows Presentation Foundation)
-
-Native Win32 & COM Interop (For icon extraction and shell integration)
-
-🤝 Contributing
-Contributions, issues, and feature requests are always welcome!
-If you find a bug or have an idea for a cool new feature, feel free to open an issue or submit a pull request.
-
-❤️ Support the Project
-If you find this tool useful and want to help keep the internet on, consider a donation:
-
-Buymeacoffee: @ [Davedebugs](https://buymeacoffee.com/davedebugs)    Or Venmo : [Davedebugs](https://account.venmo.com/u/davedebugs)
-
-📜 License
-This project is licensed under the GNU General Public License v3.0. See the LICENSE file for details.
+- Buy Me a Coffee: [@Davedebugs](https://buymeacoffee.com/davedebugs)
+- Venmo: [@Davedebugs](https://account.venmo.com/u/davedebugs)
 
 © 2026 Davedebugs (David Daniel)
