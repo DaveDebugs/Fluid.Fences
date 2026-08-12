@@ -1,0 +1,29 @@
+name: Publish NuGet Package
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and Pack
+        run: dotnet pack DesktopFences.csproj -c Release -p:BaseOutputPath=./bin/ -p:PackageVersion=${{ github.event.release.tag_name || '2.0.5' }}
+        
+      - name: Publish to NuGet
+        run: dotnet nuget push "bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json
