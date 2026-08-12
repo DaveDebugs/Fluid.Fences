@@ -46,6 +46,19 @@ namespace DesktopFences
         {
             base.OnStartup(e);
 
+            try {
+                System.Diagnostics.PresentationTraceSources.DataBindingSource.Switch.Level = System.Diagnostics.SourceLevels.Warning;
+                System.Diagnostics.PresentationTraceSources.DataBindingSource.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Path.Combine(ConfigFolder, "wpf_trace.log")));
+                
+                AppDomain.CurrentDomain.FirstChanceException += (s, args) => {
+                    try { File.AppendAllText(Path.Combine(ConfigFolder, "debug_exceptions.log"), $"[FirstChance] {args.Exception.Message}\n{args.Exception.StackTrace}\n"); } catch { }
+                };
+                
+                this.DispatcherUnhandledException += (s, args) => {
+                    try { File.AppendAllText(Path.Combine(ConfigFolder, "debug_exceptions.log"), $"[Unhandled] {args.Exception.Message}\n{args.Exception.StackTrace}\n"); } catch { }
+                };
+            } catch { }
+
             bool wantsSettings = e.Args.Any(a =>
                 string.Equals(a, SettingsArgument, StringComparison.OrdinalIgnoreCase));
 

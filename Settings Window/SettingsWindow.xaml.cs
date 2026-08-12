@@ -15,6 +15,14 @@ namespace DesktopFences
 {
     public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     {
+        public class FenceListItem
+        {
+            public MainWindow Fence { get; }
+            public string Title { get; set; }
+            public FenceListItem(MainWindow fence) { Fence = fence; Title = fence.FenceTitle; }
+            public override string ToString() => Title;
+        }
+
         private readonly MainWindow? _callingFence;
         private MainWindow? _currentlySelectedFence;
         private bool _isLoadingFenceData;
@@ -606,7 +614,7 @@ namespace DesktopFences
             {
                 if (window is MainWindow { Visibility: Visibility.Visible } fence)
                 {
-                    ListBoxItem item = new() { Content = fence.FenceTitle, Tag = fence };
+                    FenceListItem item = new(fence);
                     FenceListBox.Items.Add(item);
 
                     if (fence == _callingFence || (_callingFence is null && FenceListBox.SelectedItem is null))
@@ -622,8 +630,9 @@ namespace DesktopFences
 
         private void FenceListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ListBox { SelectedItem: ListBoxItem { Tag: MainWindow fence } } sourceBox)
+            if (sender is ListView { SelectedItem: FenceListItem listItem } sourceBox)
             {
+                MainWindow fence = listItem.Fence;
 
                 _currentlySelectedFence = fence; _isLoadingFenceData = true;
                 TitleInput.Text = fence.FenceTitle; AutoSortInput.Text = fence.AutoSortExtensions;
@@ -785,7 +794,7 @@ namespace DesktopFences
 
                 _currentlySelectedFence.DashboardSaveAndRefresh();
 
-                if (FenceListBox.SelectedItem is ListBoxItem item1) { item1.Content = TitleInput.Text; }
+                if (FenceListBox.SelectedItem is FenceListItem item1) { item1.Title = TitleInput.Text; FenceListBox.Items.Refresh(); }
             }
         }
 
@@ -1013,7 +1022,7 @@ namespace DesktopFences
         {
             if (!_autoSaveArmed || _isLoadingFenceData) return;
             SaveCurrentFenceSettings();
-            if (FenceListBox.SelectedItem is ListBoxItem item) item.Content = TitleInput.Text;
+            if (FenceListBox.SelectedItem is FenceListItem item) { item.Title = TitleInput.Text; FenceListBox.Items.Refresh(); }
             ShowStatus("Saved.", StatusKind.Success);
         }
 

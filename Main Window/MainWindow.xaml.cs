@@ -20,6 +20,12 @@ namespace DesktopFences
 {
     public partial class MainWindow : Window, IDisposable
     {
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string? windowTitle);
+
         private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
         { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp", ".ico" };
 
@@ -159,7 +165,7 @@ namespace DesktopFences
         {
             ProcessVaultOnDeletion();
             _isDeleted = true;
-            if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath);
+            try { if (File.Exists(_saveFilePath)) File.Delete(_saveFilePath); } catch (Exception ex) { LogError("DashboardDelete", ex); }
             this.Close();
         }
 
@@ -358,17 +364,20 @@ namespace DesktopFences
             Keyboard.ClearFocus();
             FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
             SearchBox.Text = ""; SearchBox.Visibility = Visibility.Collapsed;
-
+            
             if (_isRolledUp && _isTemporarilyRevealed) { AnimateRollUp(); _isTemporarilyRevealed = false; }
-            AnimateGhostMode(false);
+            
+            if (!this.IsMouseOver)
+            {
+                AnimateGhostMode(false);
+            }
         }
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (Keyboard.FocusedElement is TextBox textBox && !textBox.IsMouseOver)
             {
-                Keyboard.ClearFocus();
-                FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
+                this.Focus();
             }
         }
 
@@ -515,6 +524,7 @@ namespace DesktopFences
                         _isRolledUp = data.IsRolledUp;
                         _expandedHeight = data.ExpandedHeight; _expandedWidth = data.ExpandedWidth > 0 ? data.ExpandedWidth : 250;
                         _expandedLeft = data.ExpandedWidth > 0 ? data.ExpandedLeft : data.Left; _expandedTop = data.ExpandedWidth > 0 ? data.ExpandedTop : data.Top;
+                        if (!isOnScreen) { _expandedLeft = 100; _expandedTop = 100; }
                         TitleText.Text = data.Title;
 
                         if (SearchIcon is not null) SearchIcon.Visibility = data.ShowSearch ? Visibility.Visible : Visibility.Collapsed;
@@ -823,10 +833,10 @@ namespace DesktopFences
 
         private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Keyboard.ClearFocus(); FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
+            this.Focus();
             if (e.ChangedButton == MouseButton.Left)
             {
-                if (e.ClickCount == 2) { ToggleRollUp(); return; }
+                if (e.ClickCount == 2) { ToggleRollUp(); e.Handled = true; return; }
                 this.BeginAnimation(Window.LeftProperty, null); this.BeginAnimation(Window.TopProperty, null);
                 this.BeginAnimation(Window.WidthProperty, null); this.BeginAnimation(Window.HeightProperty, null);
                 _wasRolledUpBeforeDrag = _isRolledUp || _isTemporarilyRevealed;
@@ -834,6 +844,7 @@ namespace DesktopFences
                 _isRolledUp = false; _isTemporarilyRevealed = false; _isManualDragging = true;
                 _manualDragStartMouse = new System.Windows.Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
                 _manualDragStartLeft = this.Left; _manualDragStartTop = this.Top; HeaderBorder.CaptureMouse();
+                e.Handled = true;
             }
         }
 
@@ -2049,7 +2060,7 @@ namespace DesktopFences
             textBlock.MouseLeftButtonDown += (s, args) => { if (args.ClickCount == 2) return; args.Handled = true; TriggerRename(); };
             System.Windows.Point? dragStartPoint = null;
 
-            itemContainer.PreviewMouseLeftButtonDown += (s, args) => { Keyboard.ClearFocus(); FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null); dragStartPoint = args.GetPosition(null); bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl); if (isCtrlPressed) { if (_selectedItems.Contains(itemContainer)) { itemContainer.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(itemContainer); } else { itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } } else if (!_selectedItems.Contains(itemContainer)) { ClearSelection(); itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } };
+            itemContainer.PreviewMouseLeftButtonDown += (s, args) => { this.Focus(); dragStartPoint = args.GetPosition(null); bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl); if (isCtrlPressed) { if (_selectedItems.Contains(itemContainer)) { itemContainer.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(itemContainer); } else { itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } } else if (!_selectedItems.Contains(itemContainer)) { ClearSelection(); itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } };
             itemContainer.PreviewMouseRightButtonDown += (s, args) => { if (!_selectedItems.Contains(itemContainer)) { ClearSelection(); itemContainer.Background = _highlightBrush; _selectedItems.Add(itemContainer); } };
             itemContainer.PreviewMouseMove += (s, args) => { if (args.LeftButton == MouseButtonState.Pressed && dragStartPoint.HasValue) { System.Windows.Point currentPoint = args.GetPosition(null); if (Math.Abs(currentPoint.X - dragStartPoint.Value.X) > SystemParameters.MinimumHorizontalDragDistance || Math.Abs(currentPoint.Y - dragStartPoint.Value.Y) > SystemParameters.MinimumVerticalDragDistance) { string[] draggedFiles; if (_selectedItems.Contains(itemContainer) && _selectedItems.Count > 1) { draggedFiles = _selectedItems.Select(panel => panel.ToolTip.ToString()!).ToArray(); } else { draggedFiles = [currentFilePath]; } DataObject dragData = new(DataFormats.FileDrop, draggedFiles); dragData.SetData("FenceSourceId", FenceId); DragDropEffects result = DragDrop.DoDragDrop(itemContainer, dragData, DragDropEffects.Move | DragDropEffects.Copy); if (result == DragDropEffects.Move) { foreach (string f in draggedFiles) _currentFiles.Remove(f); ClearSelection(); ApplySorting(); SaveFenceState(); } dragStartPoint = null; } } };
             itemContainer.MouseDown += (s, args) => { if (args.ClickCount == 2 && args.ChangedButton == MouseButton.Left) { if (File.Exists(currentFilePath) || Directory.Exists(currentFilePath)) { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = currentFilePath, UseShellExecute = true }); } catch (Exception ex) { MessageBox.Show($"Could not open file.\nError: {ex.Message}", "Launch Error"); } } else { MessageBox.Show("This file or folder no longer exists.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning); _currentFiles.Remove(currentFilePath); RefreshIconUI(); SaveFenceState(); } } };
@@ -2298,7 +2309,7 @@ namespace DesktopFences
 
             var helper = new WindowInteropHelper(this); IntPtr myWindowHandle = helper.Handle; IntPtr exStyle = NativeMethods.GetWindowLongPtr(myWindowHandle, NativeMethods.GWL_EXSTYLE);
             NativeMethods.SetWindowLongPtr(myWindowHandle, NativeMethods.GWL_EXSTYLE, new IntPtr(exStyle.ToInt64() | NativeMethods.WS_EX_TOOLWINDOW));
-            NativeMethods.SetWindowPos(myWindowHandle, (IntPtr)NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+
             if (HwndSource.FromHwnd(myWindowHandle) is HwndSource source) { _wndProcHook = new HwndSourceHook(WndProc); source.AddHook(_wndProcHook); }
 
             this.PreviewKeyDown += Window_PreviewKeyDown; this.PreviewMouseDown += Window_PreviewMouseDown;
@@ -2328,7 +2339,6 @@ namespace DesktopFences
             if (msg == NativeMethods.WM_WINDOWPOSCHANGING)
             {
                 NativeMethods.WINDOWPOS windowPos = Marshal.PtrToStructure<NativeMethods.WINDOWPOS>(lParam)!;
-                windowPos.hwndInsertAfter = (IntPtr)NativeMethods.HWND_BOTTOM;
                 if ((windowPos.flags & NativeMethods.SWP_NOMOVE) == 0 && (windowPos.flags & NativeMethods.SWP_NOSIZE) != 0)
                 {
                     int snapMargin = 20;
@@ -2387,12 +2397,18 @@ namespace DesktopFences
         {
             if (_isClosing) { base.OnClosing(e); return; }
 
+            if (_isDeleted || _loadFailed)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
             e.Cancel = true;
             _isClosing = true;
 
             try
             {
-                if (!_isDeleted && !_loadFailed) await PerformDiskWriteAsync();
+                await PerformDiskWriteAsync();
             }
             catch (Exception ex)
             {
@@ -2404,7 +2420,7 @@ namespace DesktopFences
             }
         }
         private void ClearSelection() { foreach (var item in _selectedItems) item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Clear(); }
-        private void IconPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { Keyboard.ClearFocus(); FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null); if (e.OriginalSource is ScrollViewer || e.OriginalSource is WrapPanel) { ClearSelection(); _selectionStartPoint = e.GetPosition(SelectionCanvas); _isDraggingSelectionBox = true; SelectionBox.Visibility = Visibility.Visible; SelectionBox.Width = 0; SelectionBox.Height = 0; Canvas.SetLeft(SelectionBox, _selectionStartPoint.X); Canvas.SetTop(SelectionBox, _selectionStartPoint.Y); IconPanel.CaptureMouse(); } }
+        private void IconPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { this.Focus(); if (e.OriginalSource is ScrollViewer || e.OriginalSource is WrapPanel) { ClearSelection(); _selectionStartPoint = e.GetPosition(SelectionCanvas); _isDraggingSelectionBox = true; SelectionBox.Visibility = Visibility.Visible; SelectionBox.Width = 0; SelectionBox.Height = 0; Canvas.SetLeft(SelectionBox, _selectionStartPoint.X); Canvas.SetTop(SelectionBox, _selectionStartPoint.Y); IconPanel.CaptureMouse(); } }
         private void IconPanel_MouseMove(object sender, MouseEventArgs e) { if (_isDraggingSelectionBox) { System.Windows.Point currentPoint = e.GetPosition(SelectionCanvas); double x = Math.Min(currentPoint.X, _selectionStartPoint.X); double y = Math.Min(currentPoint.Y, _selectionStartPoint.Y); double width = Math.Abs(currentPoint.X - _selectionStartPoint.X); double height = Math.Abs(currentPoint.Y - _selectionStartPoint.Y); Canvas.SetLeft(SelectionBox, x); Canvas.SetTop(SelectionBox, y); SelectionBox.Width = width; SelectionBox.Height = height; Rect selectionRect = new(x, y, width, height); foreach (UIElement child in IconPanel.Children) { if (child is StackPanel item) { System.Windows.Point itemPos = item.TranslatePoint(new System.Windows.Point(0, 0), SelectionCanvas); Rect itemRect = new(itemPos, new Size(item.ActualWidth, item.ActualHeight)); if (selectionRect.IntersectsWith(itemRect)) { if (!_selectedItems.Contains(item)) { item.Background = _highlightBrush; _selectedItems.Add(item); } } else if (_selectedItems.Contains(item)) { item.Background = System.Windows.Media.Brushes.Transparent; _selectedItems.Remove(item); } } } } }
         private void IconPanel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) { if (_isDraggingSelectionBox) { _isDraggingSelectionBox = false; SelectionBox.Visibility = Visibility.Collapsed; IconPanel.ReleaseMouseCapture(); } }
         public void Dispose()
