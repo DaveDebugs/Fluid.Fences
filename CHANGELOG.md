@@ -5,6 +5,17 @@ All notable changes to Fluid Fences are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-08-12
+
+### Added
+- Automated CI/CD pipeline to build and publish the FluidFences NuGet package.
+
+### Changed
+- Rebuilt the Settings window list selection logic using a custom data class to correctly render the native ModernWpf/Wpf.Ui container, restoring hover effects and full-width click hitboxes.
+
+### Fixed
+- Fixed an issue where clicking on a rolled-up fence after disconnecting a multi-monitor display could cause the window to instantly teleport off-screen and disappear.
+
 ## [2.0.0] - 2026-07-23
 
 The biggest release since the project started. The theming layer was rebuilt from
