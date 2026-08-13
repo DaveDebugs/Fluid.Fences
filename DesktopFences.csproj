@@ -18,7 +18,7 @@
 
 		<NoWarn>$(NoWarn);WFAC010</NoWarn>
 
-		<BaseOutputPath>P:\Programming Repositories\Compiled\Nuget</BaseOutputPath>
+		<BaseOutputPath Condition="'$(GITHUB_ACTIONS)' != 'true'">P:\Programming Repositories\Compiled\Nuget</BaseOutputPath><BaseOutputPath Condition="'$(GITHUB_ACTIONS)' == 'true'">bin\</BaseOutputPath>
 		<Title>Fluid.Fences</Title>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>

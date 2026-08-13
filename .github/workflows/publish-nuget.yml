@@ -23,7 +23,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Build and Pack
-        run: dotnet pack DesktopFences.csproj -c Release -p:BaseOutputPath=./bin/ -p:PackageVersion=${{ github.event.release.tag_name || '2.0.5' }}
+        run: dotnet pack DesktopFences.csproj -c Release  -p:PackageVersion=${{ github.event.release.tag_name || '2.0.5' }}
         
       - name: Publish to NuGet
         run: dotnet nuget push "bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json
