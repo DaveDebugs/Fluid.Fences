@@ -26,4 +26,4 @@ jobs:
         run: dotnet build DesktopFences.csproj -c Release  -p:PackageVersion=${{ github.event.release.tag_name || '2.0.5' }}
         
       - name: Publish to NuGet
-        run: dotnet nuget push "bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json
+        run: Get-ChildItem "bin\Release\*.nupkg" | ForEach-Object { dotnet nuget push $_.FullName --source https://api.nuget.org/v3/index.json }
