@@ -68,7 +68,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\..\Compiled\Fluid Fences\LICENSE.txt">
+		<None Include="..\LICENSE">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
